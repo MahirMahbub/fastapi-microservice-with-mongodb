@@ -58,7 +58,7 @@ services:
       - AMQP_ADMIN_PORT=15672
       - FLOWER_BASIC_AUTH=user:test
     ports:
-      - "5556:5556"
+      - "5556:5555"
     depends_on:
       - rabbitmq
       - redis
