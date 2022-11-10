@@ -20,10 +20,10 @@ async def start_database():
 
 
 #
-PORT = 8000
-BIND = '127.0.0.1'
-WORKERS = 10
-RELOAD = True
+# PORT = 8000
+# BIND = '127.0.0.1'
+# WORKERS = 10
+# RELOAD = True
 # app = FastAPI(
 #     title="SkillMatrix",
 #     description="Skill Matrix Application",
