@@ -2,6 +2,7 @@ import os
 import re
 from typing import Optional
 
+from anyio import to_thread
 from asyncer import asyncify
 from beanie import PydanticObjectId
 from fastapi import Depends, Request
@@ -13,12 +14,9 @@ from fastapi_users.authentication import (
 )
 from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 from password_strength import PasswordPolicy
-
-# from auth_app.config import config
-# from auth_app.config.config import Settings
 from auth_app.entities.user import User, get_user_db
 from auth_app.schemas.user import UserCreate
-from auth_app.utils.email import EmailGenerator
+from auth_app.utils.tasks import send_account_verify_email, send_account_reset_password_email
 
 
 class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
@@ -62,16 +60,13 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
             self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"User {user.id} has forgot their password. Reset token: {token}")
-        await EmailGenerator().get_account_change_password_email(to_email=user.email,
-                                                                 url=os.getenv("FRONT_END_URL") + "?reset_password=" + token)
+        await to_thread.run_sync(send_account_reset_password_email.delay, user.email, token)
 
     async def on_after_request_verify(
             self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
-        print(user)
-        await EmailGenerator().get_account_verify_email(to_email=user.email,
-                                                        url=os.getenv("FRONT_END_URL") + "?user_verify=" + token)
+        await to_thread.run_sync(send_account_verify_email.delay, user.email, token)
 
 
 async def get_user_manager(user_db: BeanieUserDatabase = Depends(get_user_db)):

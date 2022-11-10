@@ -3,7 +3,7 @@ import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from asyncer import asyncify
+from asyncer import asyncify, syncify
 from jinja2 import Environment, select_autoescape, FileSystemLoader
 
 # from auth_app.config.config import Settings
@@ -28,7 +28,7 @@ class EmailGenerator(metaclass=SingletonMeta):
         self.smtp_server = os.getenv("SMTP_SERVER")
         self.tls = os.getenv("TLS")
 
-    async def send_email(self, to, subject, body):
+    def send_email(self, to, subject, body):
         sender_address = self.sender_email
         sender_pass = self.sender_password
         receiver_address = to
@@ -46,20 +46,20 @@ class EmailGenerator(metaclass=SingletonMeta):
         session.quit()
         print('Mail Sent')
 
-    async def get_account_verify_email(self, to_email, **kwargs):
-        template = await self.get_jinja_template(template_name='verify_email.html')
-        await self.send_email(to_email, "Verify Account", template.render(**kwargs))
+    def get_account_verify_email(self, to_email, **kwargs):
+        template = self.get_jinja_template(template_name='verify_email.html')
+        self.send_email(to_email, "Verify Account", template.render(**kwargs))
 
-    async def get_account_change_password_email(self, to_email='mahirmahbub7@gmail.com', **kwargs):
-        template = await self.get_jinja_template(template_name='reset_password.html')
-        await self.send_email(to_email, "Reset Password", template.render(**kwargs))
+    def get_account_change_password_email(self, to_email='mahirmahbub7@gmail.com', **kwargs):
+        template = self.get_jinja_template(template_name='reset_password.html')
+        self.send_email(to_email, "Reset Password", template.render(**kwargs))
 
     @staticmethod
-    async def get_jinja_template(template_name):
-        env = await asyncify(Environment)(
+    def get_jinja_template(template_name):
+        env = Environment(
             loader=FileSystemLoader(searchpath='auth_app/static/template/'),
             autoescape=select_autoescape(['html', 'xml'])
         )
-        template = await asyncify(env.get_template)(template_name)
+        template = env.get_template(template_name)
         return template
 

@@ -1,6 +1,6 @@
 import uvicorn
 from fastapi import FastAPI
-
+from celery import Celery
 from auth_app.config.config import initiate_database
 from auth_app.controller.router import api_router
 
@@ -12,6 +12,7 @@ auth_app = FastAPI(
 )
 
 auth_app.include_router(api_router)
+
 
 
 @auth_app.on_event("startup")
