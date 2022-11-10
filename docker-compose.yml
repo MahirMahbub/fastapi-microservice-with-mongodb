@@ -1,0 +1,45 @@
+version: '3'
+
+services:
+  auth:
+    build:
+      context: ./auth_app
+      dockerfile: Dockerfile
+    container_name: Authentication
+    command: 'bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003 --reload"'
+    volumes:
+      - '.:/auth_app'
+    ports:
+      - '7003:7003'
+    env_file: auth_app/.env
+    networks:
+      - share-network
+    restart: "always"
+#    depends_on:
+#      - mongodb_auth
+
+  mongodb_auth:
+#    image: mongo:latest
+    container_name: mongodb_auth
+    image: bitnami/mongodb:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - data:/bitnami/mongodb
+    networks:
+      - share-network
+volumes:
+  data:
+#    env_file:
+#      - auth_app/.env
+#    ports:
+#      - "27017:27017"
+#    environment:
+#      - "MONGO_INITDB_DATABASE=${MONGO_DB}"
+#      - "MONGO_INITDB_ROOT_USERNAME=${MONGO_USER}"
+#      - "MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASS}"
+#    command:
+#      mongod --quiet --logpath /dev/null
+networks:
+  share-network:
+    driver: bridge

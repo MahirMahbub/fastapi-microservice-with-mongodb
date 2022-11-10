@@ -1,0 +1,9 @@
+FROM python:3.10.1
+ENV PYTHONUNBUFFERED 1
+RUN mkdir /auth_app
+WORKDIR /auth_app
+COPY . /auth_app
+#COPY requirements.txt /app
+RUN pip install --upgrade pip
+RUN #apk install python3-dotenv
+RUN pip install --no-cache-dir -r requirements.txt
