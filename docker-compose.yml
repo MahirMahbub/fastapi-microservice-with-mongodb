@@ -1,15 +1,14 @@
 version: '3'
 
 services:
-  rabbitmq:
-    hostname: "rabbitmq"
-    container_name: "rabbitmq"
+  auth-rabbitmq:
+    hostname: "auth-rabbitmq"
+    container_name: "auth-rabbitmq"
     image: "bitnami/rabbitmq:latest"
-    environment:
-      - RABBITMQ_USERNAME=user
-      - RABBITMQ_PASSWORD=Pass@123
+    env_file:
+      - auth-rabbitmq.env
     networks:
-      - share-network
+      - auth-network
     ports:
       - "4369:4369"
       - "5672:5672"
@@ -21,74 +20,67 @@ services:
       timeout: 10s
       retries: 5
     volumes:
-      - "rabbitmq_data:/bitnami"
+      - "auth_rabbitmq_data:/bitnami"
 
-  redis:
-    container_name: "redis"
+  auth-redis:
+    hostname: "auth-redis"
+    container_name: "auth-redis"
     image: "bitnami/redis:5.0.4"
-    environment:
-      - REDIS_PASSWORD=Pass@123
+    env_file:
+      - auth-redis.env
     networks:
-      - share-network
+      - auth-network
     ports:
       - "6379:6379"
     volumes:
-      - "redis_data:/bitnami/redis/data"
+      - "auth_redis_data:/bitnami/redis/data"
 
   auth:
     build:
       context: ./auth_app
       dockerfile: Dockerfile
     container_name: Authentication
-    command: 'bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003 --reload"'
+    command: 'bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003 --log-config=auth_app/logging.conf --reload"'
     volumes:
       - '.:/auth_app'
     ports:
       - '7003:7003'
     env_file: auth_app/.env
     networks:
-      - share-network
+      - auth-network
     restart: on-failure
 #    depends_on:
 #      - mongodb_auth
 
-  celery-flower:
-    container_name: "celery-flower"
+  auth-celery-flower:
+    container_name: "auth-celery-flower"
     image: gregsi/latest-celery-flower-docker:latest
-    environment:
-      - AMQP_USERNAME=user
-      - AMQP_PASSWORD=Pass@123
-      - AMQP_ADMIN_USERNAME=user
-      - AMQP_ADMIN_PASSWORD=Pass@123
-      - AMQP_HOST=rabbitmq
-      - AMQP_PORT=5672
-      - AMQP_ADMIN_HOST=rabbitmq
-      - AMQP_ADMIN_PORT=15672
-      - FLOWER_BASIC_AUTH=admin:Pass@123
+    env_file:
+      - auth-celery-flower.env
     ports:
       - "5556:5555"
     depends_on:
-      - rabbitmq
-      - redis
+      - auth-rabbitmq
+      - auth-redis
     networks:
-      - share-network
+      - auth-network
   email-worker:
     hostname: "email-worker"
     container_name: "email-worker"
     build:
       context: ./auth_app
       dockerfile: Dockerfile
-    command: "celery -A auth_app.utils.tasks.celery worker --loglevel=info --logfile=email_worker.log -Q send_verify_email,send_change_password_email"
+    command: "celery -A auth_app.utils.tasks.celery worker --loglevel=info --logfile=auth_app/logs/email_worker.log -Q send_verify_email,send_change_password_email"
     env_file: email-worker.env
     volumes:
       - '.:/auth_app'
     links:
-      - rabbitmq
+      - auth-rabbitmq
     depends_on:
-      - rabbitmq
-      - redis
+      - auth-rabbitmq
+      - auth-redis
     networks:
-      - share-network
+      - auth-network
 
 #  mongodb_auth:
 ##    image: mongo:latest
@@ -99,13 +91,13 @@ services:
 #    volumes:
 #      - data:/bitnami/mongodb
 #    networks:
-#      - share-network
+#      - auth-network
 volumes:
   data:
-  rabbitmq_data:
+  auth_rabbitmq_data:
     driver: local
-  redis_data:
+  auth_redis_data:
     driver: local
 networks:
-  share-network:
+  auth-network:
     driver: bridge

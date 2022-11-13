@@ -6,8 +6,8 @@ from auth_app.utils.email import EmailGenerator
 
 celery_app = Celery(
     "email-worker",
-    backend="redis://:Pass@123@redis:6379/0",
-    broker="amqp://user:Pass@123@rabbitmq:5672//"
+    backend="redis://:Pass@123@auth-redis:6379/0",
+    broker="amqp://user:Pass@123@auth-rabbitmq:5672//"
 )
 celery_app.conf.task_routes = {
     "auth_app.utils.tasks.send_account_verify_email": "send_verify_email",

@@ -1,6 +1,7 @@
-import uvicorn
+import logging
+
 from fastapi import FastAPI
-from celery import Celery
+
 from auth_app.config.config import initiate_database
 from auth_app.controller.router import api_router
 
@@ -14,11 +15,12 @@ auth_app = FastAPI(
 auth_app.include_router(api_router)
 
 
-
 @auth_app.on_event("startup")
 async def start_database():
+    logger = logging.getLogger(__name__)
+    logger.info("Initiating database........")
     await initiate_database()
-
+    logger.info("Initiating database completed........")
 
 #
 # PORT = 8000
