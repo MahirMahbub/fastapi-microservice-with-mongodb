@@ -5,6 +5,9 @@ services:
     hostname: "rabbitmq"
     container_name: "rabbitmq"
     image: "bitnami/rabbitmq:latest"
+    environment:
+      - RABBITMQ_USERNAME=user
+      - RABBITMQ_PASSWORD=Pass@123
     networks:
       - share-network
     ports:
@@ -12,6 +15,11 @@ services:
       - "5672:5672"
       - "25672:25672"
       - "15672:15672"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:15672" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
     volumes:
       - "rabbitmq_data:/bitnami"
 
@@ -19,7 +27,7 @@ services:
     container_name: "redis"
     image: "bitnami/redis:5.0.4"
     environment:
-      - REDIS_PASSWORD=password123
+      - REDIS_PASSWORD=Pass@123
     networks:
       - share-network
     ports:
@@ -40,7 +48,7 @@ services:
     env_file: auth_app/.env
     networks:
       - share-network
-    restart: "always"
+    restart: on-failure
 #    depends_on:
 #      - mongodb_auth
 
@@ -49,14 +57,14 @@ services:
     image: gregsi/latest-celery-flower-docker:latest
     environment:
       - AMQP_USERNAME=user
-      - AMQP_PASSWORD=bitnami
+      - AMQP_PASSWORD=Pass@123
       - AMQP_ADMIN_USERNAME=user
-      - AMQP_ADMIN_PASSWORD=bitnami
+      - AMQP_ADMIN_PASSWORD=Pass@123
       - AMQP_HOST=rabbitmq
       - AMQP_PORT=5672
       - AMQP_ADMIN_HOST=rabbitmq
       - AMQP_ADMIN_PORT=15672
-      - FLOWER_BASIC_AUTH=user:test
+      - FLOWER_BASIC_AUTH=admin:Pass@123
     ports:
       - "5556:5555"
     depends_on:
@@ -64,14 +72,14 @@ services:
       - redis
     networks:
       - share-network
-  worker:
-    hostname: "worker"
-    container_name: "worker"
+  email-worker:
+    hostname: "email-worker"
+    container_name: "email-worker"
     build:
       context: ./auth_app
       dockerfile: Dockerfile
-    command: "celery -A auth_app.utils.tasks.celery worker --loglevel=info -Q send_auth_email"
-    env_file: worker.env
+    command: "celery -A auth_app.utils.tasks.celery worker --loglevel=info --logfile=email_worker.log -Q send_verify_email,send_change_password_email"
+    env_file: email-worker.env
     volumes:
       - '.:/auth_app'
     links:

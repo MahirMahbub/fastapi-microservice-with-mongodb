@@ -5,12 +5,13 @@ from celery import Celery
 from auth_app.utils.email import EmailGenerator
 
 celery_app = Celery(
-    "worker",
-    backend="redis://:password123@redis:6379/0",
-    broker="amqp://user:bitnami@rabbitmq:5672//"
+    "email-worker",
+    backend="redis://:Pass@123@redis:6379/0",
+    broker="amqp://user:Pass@123@rabbitmq:5672//"
 )
 celery_app.conf.task_routes = {
-    "auth_app.utils.tasks.*": "send_auth_email"}
+    "auth_app.utils.tasks.send_account_verify_email": "send_verify_email",
+    "auth_app.utils.tasks.send_account_reset_password_email": "send_change_password_email"}
 
 celery = celery_app
 
