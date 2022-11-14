@@ -10,9 +10,12 @@ auth_app = FastAPI(
     title="AuthApp",
     description="Authentication Application",
     version="1.0.0",
+    openapi_url="/api/v1/auth/openapi.json",
+    docs_url="/api/v1/auth/docs",
+    # root_path="/api/v1"
 )
 
-auth_app.include_router(api_router)
+auth_app.include_router(api_router, prefix='/api/v1/auth')
 
 
 @auth_app.on_event("startup")
