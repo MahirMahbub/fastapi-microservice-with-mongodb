@@ -6,14 +6,9 @@ services:
     container_name: "auth_rabbitmq"
     image: "rabbitmq:3-management"
     env_file:
-      - dev.auth-rabbitmq.env
+      - auth-rabbitmq.env
     networks:
       - auth_network
-    ports:
-#      - "4369:4369"
-#      - "5672:5672"
-#      - "25672:25672"
-      - "15672:15672"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://auth_rabbitmq:15672" ]
       interval: 30s
@@ -29,11 +24,9 @@ services:
     image: "redis:latest"
     command: /bin/sh -c "redis-server --requirepass $$REDIS_PASSWORD"
     env_file:
-      - dev.auth-redis.env
+      - auth-redis.env
     networks:
       - auth_network
-#    ports:
-#      - "6379:6379"
     restart: always
     volumes:
       - auth_redis_data:/data
@@ -51,8 +44,6 @@ services:
     command: bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003 --log-config=auth_app/logging.conf  --reload"
     volumes:
       - ./:/auth_app
-#    ports:
-#      - '7003:7003'
     env_file: auth_app/.env
     networks:
       - auth_network
@@ -61,20 +52,13 @@ services:
       - email_worker
       - auth_rabbitmq
       - auth_redis
-#    depends_on:
-#      - mongodb_auth
 
   auth_celery_flower:
     container_name: "auth_celery_flower"
     image: mher/flower:1.2
-#    build:
-#      context: ./auth_app
-#      dockerfile: Dockerfile
-#    command:
-#      - celery -A auth_app.utils.tasks.celery flower
     restart: always
     env_file:
-      - dev.auth-celery-flower.env
+      - auth-celery-flower.env
     ports:
       - "5556:5555"
     depends_on:
@@ -92,7 +76,7 @@ services:
       context: ./auth_app
       dockerfile: Dockerfile
     command: "celery -A auth_app.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_app/logs/email_worker.log -Q send_verify_email,send_change_password_email"
-    env_file: dev.email-worker.env
+    env_file: email-worker.env
     volumes:
       - './:/auth_app'
     links:
@@ -111,9 +95,8 @@ services:
       - "8080:8080"
     volumes:
       - ./nginx/nginx_config.conf:/etc/nginx/conf.d/nginx_config.conf
-#    depends_on:
-#      - auth
-#      - auth_rabbitmq
+    depends_on:
+      - auth
     networks:
       - auth_network
     restart: always
