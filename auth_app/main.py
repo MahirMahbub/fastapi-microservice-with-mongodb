@@ -30,16 +30,11 @@ auth_app.include_router(api_router, prefix='/api/v1/auth')
 
 
 @auth_app.on_event("startup")
-async def start_database():
+async def start_database() -> None:
     logger = get_logger()
     logger.info("Initiating database........")
     await initiate_database()
     logger.info("Initiating database completed........")
-
-
-@auth_app.on_event("startup")
-async def initiate_logger():
-    pass
 
 #
 # PORT = 8000

@@ -1,14 +1,14 @@
-from beanie import Document, PydanticObjectId
-from fastapi.security import HTTPBasicCredentials
+from typing import AsyncGenerator, Any
+
+from beanie import PydanticObjectId
 from fastapi_users.db import BeanieBaseUser, BeanieUserDatabase
-from pydantic import BaseModel, EmailStr, SecretStr
 
 
 class User(BeanieBaseUser[PydanticObjectId]):
     pass
 
 
-async def get_user_db():
+async def get_user_db() -> AsyncGenerator[BeanieUserDatabase[BeanieBaseUser[Any], Any], Any]:
     yield BeanieUserDatabase(User)
 # class User(Document):
 #     first_name: str

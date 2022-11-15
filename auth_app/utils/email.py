@@ -2,17 +2,18 @@ import os
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Any
 
-from asyncer import asyncify, syncify
-from jinja2 import Environment, select_autoescape, FileSystemLoader
+from jinja2 import Environment, select_autoescape, FileSystemLoader, Template
+
 
 # from auth_app.config.config import Settings
 
 
 class SingletonMeta(type):
-    _instances = {}
+    _instances: dict[Any, Any] = {}
 
-    def __call__(cls, *args, **kwargs):
+    def __call__(cls, *args: str, **kwargs: str) -> Any:
         if cls not in cls._instances:
             instance = super().__call__(*args, **kwargs)
             cls._instances[cls] = instance
@@ -21,14 +22,14 @@ class SingletonMeta(type):
 
 class EmailGenerator(metaclass=SingletonMeta):
 
-    def __init__(self):
-        self.sender_email = os.getenv("SENDER_EMAIL")
-        self.sender_password = os.getenv("SENDER_PASSWORD")
-        self.gmail_port = os.getenv("GMAIL_PORT")
-        self.smtp_server = os.getenv("SMTP_SERVER")
-        self.tls = os.getenv("TLS")
+    def __init__(self) -> None:
+        self.sender_email = str(os.getenv("SENDER_EMAIL"))
+        self.sender_password = str(os.getenv("SENDER_PASSWORD"))
+        self.gmail_port = str(os.getenv("GMAIL_PORT"))
+        self.smtp_server = str(os.getenv("SMTP_SERVER"))
+        self.tls = str(os.getenv("TLS"))
 
-    def send_email(self, to, subject, body):
+    def send_email(self, to: str, subject: str, body: str) -> None:
         sender_address = self.sender_email
         sender_pass = self.sender_password
         receiver_address = to
@@ -46,20 +47,19 @@ class EmailGenerator(metaclass=SingletonMeta):
         session.quit()
         print('Mail Sent')
 
-    def get_account_verify_email(self, to_email, **kwargs):
+    def get_account_verify_email(self, to_email: str, **kwargs: Any) -> None:
         template = self.get_jinja_template(template_name='verify_email.html')
         self.send_email(to_email, "Verify Account", template.render(**kwargs))
 
-    def get_account_change_password_email(self, to_email='mahirmahbub7@gmail.com', **kwargs):
+    def get_account_change_password_email(self, to_email: str, **kwargs: Any)-> None:
         template = self.get_jinja_template(template_name='reset_password.html')
         self.send_email(to_email, "Reset Password", template.render(**kwargs))
 
     @staticmethod
-    def get_jinja_template(template_name):
+    def get_jinja_template(template_name: str)-> Template:
         env = Environment(
             loader=FileSystemLoader(searchpath='auth_app/static/template/'),
             autoescape=select_autoescape(['html', 'xml'])
         )
         template = env.get_template(template_name)
         return template
-

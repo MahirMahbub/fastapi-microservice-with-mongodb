@@ -17,6 +17,7 @@ class UserRead(schemas.BaseUser[PydanticObjectId]):
             }
         }
 
+
 class UserReadVerify(CreateUpdateDictModel):
     email: EmailStr
     is_active: bool
@@ -34,8 +35,6 @@ class UserReadVerify(CreateUpdateDictModel):
                 "is_verified": False
             }
         }
-
-
 
 
 class UserCreate(CreateUpdateDictModel):

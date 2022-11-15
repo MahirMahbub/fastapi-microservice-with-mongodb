@@ -1,10 +1,7 @@
-import logging
 import os
-from typing import Optional
 
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
-from pydantic import BaseSettings
 
 from auth_app.entities.user import User
 
@@ -27,8 +24,8 @@ from auth_app.entities.user import User
 #         orm_mode = True
 
 
-async def initiate_database():
-    if os.getenv("ENVIRONMENT")=="local":
+async def initiate_database() -> None:
+    if os.getenv("ENVIRONMENT") == "local":
         client = AsyncIOMotorClient(os.getenv("LOCAL_DATABASE_URL"))
     else:
         client = AsyncIOMotorClient(os.getenv("DATABASE_URL"))
