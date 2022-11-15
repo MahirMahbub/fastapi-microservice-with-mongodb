@@ -1,4 +1,4 @@
-# Skill Matrix
+
 ## Run Application with docker:
 ### Development
     docker-compose -f docker-compose.dev.yml  up --build -d
