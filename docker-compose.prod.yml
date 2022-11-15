@@ -21,7 +21,7 @@ services:
       retries: 5
     volumes:
       - auth_rabbitmq_data:/var/lib/rabbitmq/
-    restart: on-failure
+    restart: always
 
   auth_redis:
     hostname: "auth_redis"
@@ -34,7 +34,7 @@ services:
       - auth_network
 #    ports:
 #      - "6379:6379"
-    restart: on-failure
+    restart: always
     volumes:
       - auth_redis_data:/data
       - /etc/timezone:/etc/timezone:ro
@@ -56,7 +56,7 @@ services:
     env_file: auth_app/.env
     networks:
       - auth_network
-    restart: on-failure
+    restart: always
     depends_on:
       - email_worker
       - auth_rabbitmq
@@ -72,7 +72,7 @@ services:
 #      dockerfile: Dockerfile
 #    command:
 #      - celery -A auth_app.utils.tasks.celery flower
-    restart: on-failure
+    restart: always
     env_file:
       - auth-celery-flower.env
     ports:
@@ -102,7 +102,7 @@ services:
       - auth_redis
     networks:
       - auth_network
-    restart: on-failure
+    restart: always
 
   nginx:
     container_name: "nginx"
@@ -116,6 +116,7 @@ services:
 #      - auth_rabbitmq
     networks:
       - auth_network
+    restart: always
 volumes:
   auth_rabbitmq_data:
   auth_redis_data:

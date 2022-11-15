@@ -54,7 +54,7 @@ services:
     volumes:
       - ./:/auth_app
     ports:
-      - '7003:7003'
+      - "7003:7003"
     env_file: auth_app/.env
     networks:
       - auth_network
