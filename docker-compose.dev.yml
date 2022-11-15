@@ -21,6 +21,7 @@ services:
       retries: 5
     volumes:
       - auth_rabbitmq_data:/var/lib/rabbitmq/
+      - ./volume/auth_rabbitmq_data:/var/lib/rabbitmq/
     restart: on-failure
 
   auth_redis:
@@ -37,6 +38,7 @@ services:
     restart: on-failure
     volumes:
       - auth_redis_data:/data
+      - ./volume/auth_redis_data:/data
       - /etc/timezone:/etc/timezone:ro
       - /etc/localtime:/etc/localtime:ro
     depends_on:
@@ -66,22 +68,25 @@ services:
   auth_celery_flower:
     container_name: "auth_celery_flower"
     image: mher/flower:1.2
-    build:
-      context: ./auth_app
-      dockerfile: Dockerfile
+#    build:
+#      context: ./auth_app
+#      dockerfile: Dockerfile
+#    command:
+#      - celery flower
     restart: on-failure
     env_file:
       - auth-celery-flower.env
     ports:
-      - "5556:5555"
+      - "5557:5555"
     depends_on:
       - auth_rabbitmq
       - auth_redis
       - email_worker
     networks:
       - auth_network
-    volumes:
-      - auth_flower_data:/data
+#    volumes:
+#      - auth_flower_data:/data
+#      - ./volume/auth_flower_data:/data
   email_worker:
     hostname: "email_worker"
     container_name: "email_worker"
@@ -91,7 +96,7 @@ services:
     command: "celery -A auth_app.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_app/logs/email_worker.log -Q send_verify_email,send_change_password_email"
     env_file: email-worker.env
     volumes:
-      - './:/auth_app'
+      - ./:/auth_app
     links:
       - auth_rabbitmq
     depends_on:
@@ -104,13 +109,13 @@ services:
   auth_mongodb:
     container_name: auth_mongodb
     image: bitnami/mongodb:latest
-#    env_file:
-#      - auth_app/dev-auth-mongodb.env
+    #    env_file:
+    #      - auth_app/dev-auth-mongodb.env
     ports:
       - "27017:27017"
     volumes:
       - auth_mongodb_data:/bitnami/mongodb
-      - ./mongodb-persistence:/bitnami/mongodb
+      - ./volume/mongodb-persistence:/bitnami/mongodb
     networks:
       - auth_network
 

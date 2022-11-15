@@ -67,9 +67,11 @@ services:
   auth_celery_flower:
     container_name: "auth_celery_flower"
     image: mher/flower:1.2
-    build:
-      context: ./auth_app
-      dockerfile: Dockerfile
+#    build:
+#      context: ./auth_app
+#      dockerfile: Dockerfile
+#    command:
+#      - celery -A auth_app.utils.tasks.celery flower
     restart: on-failure
     env_file:
       - auth-celery-flower.env
