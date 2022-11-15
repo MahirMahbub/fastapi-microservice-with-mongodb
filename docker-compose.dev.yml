@@ -6,7 +6,7 @@ services:
     container_name: "auth_rabbitmq"
     image: "rabbitmq:3-management"
     env_file:
-      - auth-rabbitmq.env
+      - dev.auth-rabbitmq.env
     networks:
       - auth_network
     ports:
@@ -30,7 +30,7 @@ services:
     image: "redis:latest"
     command: /bin/sh -c "redis-server --requirepass $$REDIS_PASSWORD"
     env_file:
-      - auth-redis.env
+      - dev.auth-redis.env
     networks:
       - auth_network
     ports:
@@ -75,7 +75,7 @@ services:
 #      - celery flower
     restart: on-failure
     env_file:
-      - auth-celery-flower.env
+      - dev.auth-celery-flower.env
     ports:
       - "5557:5555"
     depends_on:
@@ -94,7 +94,7 @@ services:
       context: ./auth_app
       dockerfile: Dockerfile
     command: "celery -A auth_app.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_app/logs/email_worker.log -Q send_verify_email,send_change_password_email"
-    env_file: email-worker.env
+    env_file: dev.email-worker.env
     volumes:
       - ./:/auth_app
     links:
