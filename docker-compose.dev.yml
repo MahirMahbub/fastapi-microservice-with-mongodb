@@ -84,9 +84,9 @@ services:
       - email_worker
     networks:
       - auth_network
-#    volumes:
-#      - auth_flower_data:/data
-#      - ./volume/auth_flower_data:/data
+    volumes:
+      - auth_flower_data:/data
+      - ./volume/auth_flower_data:/data
   email_worker:
     hostname: "email_worker"
     container_name: "email_worker"
