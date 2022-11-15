@@ -48,7 +48,7 @@ services:
       dockerfile: Dockerfile
     container_name: "auth"
     hostname: "auth"
-    command: bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003 --log-config=auth_app/logging.conf  --reload"
+    command: bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003 --log-config=auth_app/dev_logging.conf --reload"
     volumes:
       - ./:/auth_app
     ports:
@@ -61,8 +61,7 @@ services:
       - email_worker
       - auth_rabbitmq
       - auth_redis
-#    depends_on:
-#      - mongodb_auth
+      - auth_mongodb
 
   auth_celery_flower:
     container_name: "auth_celery_flower"
@@ -102,10 +101,24 @@ services:
       - auth_network
     restart: on-failure
 
+  auth_mongodb:
+    container_name: auth_mongodb
+    image: bitnami/mongodb:latest
+#    env_file:
+#      - auth_app/dev-auth-mongodb.env
+    ports:
+      - "27017:27017"
+    volumes:
+      - auth_mongodb_data:/bitnami/mongodb
+      - ./mongodb-persistence:/bitnami/mongodb
+    networks:
+      - auth_network
+
 volumes:
   auth_rabbitmq_data:
   auth_redis_data:
   auth_flower_data:
+  auth_mongodb_data:
 networks:
   auth_network:
     driver: bridge

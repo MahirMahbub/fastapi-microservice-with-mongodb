@@ -28,6 +28,9 @@ from auth_app.entities.user import User
 
 
 async def initiate_database():
-    client = AsyncIOMotorClient(os.getenv("DATABASE_URL"))
+    if os.getenv("ENVIRONMENT")=="local":
+        client = AsyncIOMotorClient(os.getenv("LOCAL_DATABASE_URL"))
+    else:
+        client = AsyncIOMotorClient(os.getenv("DATABASE_URL"))
     await init_beanie(database=client.get_default_database(),
                       document_models=[User])

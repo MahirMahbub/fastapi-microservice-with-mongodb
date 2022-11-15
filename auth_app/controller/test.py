@@ -5,10 +5,11 @@ from fastapi import APIRouter
 
 # from auth_app.config.config import Settings
 from auth_app.utils.email import EmailGenerator
+from auth_app.utils.logger import get_logger
 
 from auth_app.utils.tasks import send_account_verify_email
 test_router = APIRouter()
-logger = logging.getLogger(__name__)
+logger = get_logger()
 
 
 @test_router.get("/hello/{name}")

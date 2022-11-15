@@ -1,29 +1,45 @@
-import logging
+import os
 
 from fastapi import FastAPI
-
 from auth_app.config.config import initiate_database
 from auth_app.controller.router import api_router
+from auth_app.utils.logger import get_logger
 
 # API Doc
-auth_app = FastAPI(
-    title="AuthApp",
-    description="Authentication Application",
-    version="1.0.0",
-    openapi_url="/api/v1/auth/openapi.json",
-    docs_url="/api/v1/auth/docs",
-    # root_path="/api/v1"
-)
+if os.getenv("ENVIRONMENT") == "local":
+    auth_app = FastAPI(
+        title="AuthApp",
+        description="Authentication Application",
+        version="1.0.0",
+        openapi_url="/api/v1/auth/openapi.json",
+        docs_url="/api/v1/auth/docs",
+        # root_path="/api/v1"
+    )
+else:
+    auth_app = FastAPI(
+        title="AuthApp",
+        description="Authentication Application",
+        version="1.0.0",
+        openapi_url="/api/v1/auth/openapi.json",
+        docs_url="/api/v1/auth/docs",
+        debug=True
+        # root_path="/api/v1"
+    )
 
 auth_app.include_router(api_router, prefix='/api/v1/auth')
 
 
 @auth_app.on_event("startup")
 async def start_database():
-    logger = logging.getLogger(__name__)
+    logger = get_logger()
     logger.info("Initiating database........")
     await initiate_database()
     logger.info("Initiating database completed........")
+
+
+@auth_app.on_event("startup")
+async def initiate_logger():
+    pass
 
 #
 # PORT = 8000
