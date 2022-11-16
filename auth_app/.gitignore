@@ -1,0 +1,4 @@
+/.env
+/.idea/
+/.mypy_cache/
+/logs/
