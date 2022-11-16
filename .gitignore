@@ -5,3 +5,5 @@
 /auth-redis.env
 /venv/
 /docker-compose.png
+/.mypy_cache/
+/out/
