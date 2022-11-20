@@ -11,8 +11,8 @@ if os.getenv("ENVIRONMENT") == "local":
         title="SkillManagementApp",
         description="Skill Management Application",
         version="1.0.0",
-        openapi_url="/api/v1/skill/openapi.json",
-        docs_url="/api/v1/skill/docs",
+        openapi_url="/api/v1/openapi.json",
+        docs_url="/api/v1/docs",
         # root_path="/api/v1"
     )
 else:
@@ -20,13 +20,13 @@ else:
         title="SkillManagementApp",
         description="Skill Management Application",
         version="1.0.0",
-        openapi_url="/api/v1/skill/openapi.json",
-        docs_url="/api/v1/skill/docs",
+        openapi_url="/api/v1/openapi.json",
+        docs_url="/api/v1/docs",
         debug=True
         # root_path="/api/v1"
     )
 
-skill_app.include_router(api_router, prefix='/api/v1/skill')
+skill_app.include_router(api_router, prefix='/api/v1')
 
 
 @skill_app.on_event("startup")
