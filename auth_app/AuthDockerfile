@@ -5,5 +5,5 @@ WORKDIR /auth_app
 COPY . /auth_app
 #COPY requirements.txt /app
 RUN pip install --upgrade pip
-RUN #apk install python3-dotenv
+# RUN #apk install python3-dotenv
 RUN pip install --no-cache-dir -r requirements.txt

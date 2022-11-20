@@ -8,3 +8,4 @@
 /.mypy_cache/
 /out/
 /.idea/
+/skill_management/.env
