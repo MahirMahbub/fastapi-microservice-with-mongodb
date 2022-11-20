@@ -47,10 +47,10 @@ services:
   auth:
     build:
       context: ./auth_app
-      dockerfile: Dockerfile
+      dockerfile: AuthDockerfile
     container_name: "auth"
     hostname: "auth"
-    command: bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003 --log-config=auth_app/dev_logging.conf --reload"
+    command: bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003  --reload"
     volumes:
       - ./:/auth_app
     ports:
@@ -63,6 +63,27 @@ services:
       - email_worker
       - auth_rabbitmq
       - auth_redis
+      - auth_mongodb
+
+  skill_management:
+    build:
+      context: ./skill_management
+      dockerfile: SkillDockerfile
+    container_name: "skill_management"
+    hostname: "skill_management"
+    command: bash -c "uvicorn skill_management.main:skill_app --host 0.0.0.0 --port 7004 --reload"
+    volumes:
+      - ./:/skill_management
+    ports:
+      - "7004:7004"
+    env_file: skill_management/.env
+    networks:
+      - skill_management_network
+    restart: always
+    depends_on:
+      #      - email_worker
+      #      - auth_rabbitmq
+      #      - auth_redis
       - auth_mongodb
 
   auth_celery_flower:
@@ -87,7 +108,7 @@ services:
     container_name: "email_worker"
     build:
       context: ./auth_app
-      dockerfile: Dockerfile
+      dockerfile: auth_app/AuthDockerfile
     command: "celery -A auth_app.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_app/logs/email_worker.log -Q send_verify_email,send_change_password_email"
     env_file: email-worker.env
     volumes:
@@ -111,12 +132,15 @@ services:
       - ./volume/mongodb-persistence:/bitnami/mongodb
     networks:
       - auth_network
-
+      - skill_management_network
 volumes:
   auth_rabbitmq_data:
   auth_redis_data:
   auth_flower_data:
   auth_mongodb_data:
+  skill_management:
 networks:
   auth_network:
+    driver: bridge
+  skill_management_network:
     driver: bridge

@@ -38,7 +38,7 @@ services:
   auth:
     build:
       context: ./auth_app
-      dockerfile: Dockerfile
+      dockerfile: auth_app/AuthDockerfile
     container_name: "auth"
     hostname: "auth"
     command: bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003 --log-config=auth_app/logging.conf  --reload"
@@ -75,7 +75,7 @@ services:
     container_name: "email_worker"
     build:
       context: ./auth_app
-      dockerfile: Dockerfile
+      dockerfile: auth_app/AuthDockerfile
     command: "celery -A auth_app.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_app/logs/email_worker.log -Q send_verify_email,send_change_password_email"
     env_file: email-worker.env
     volumes:
