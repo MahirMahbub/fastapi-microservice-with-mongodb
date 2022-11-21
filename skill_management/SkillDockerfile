@@ -1,8 +1,8 @@
 FROM python:3.10.1
 ENV PYTHONUNBUFFERED 1
 RUN mkdir /skill_management
-WORKDIR /skill_app
-COPY . /skill_app
+WORKDIR /skill_management
+COPY . /skill_management
 #COPY requirements.txt /app
 RUN pip install --upgrade pip
 # RUN #apk install python3-dotenv

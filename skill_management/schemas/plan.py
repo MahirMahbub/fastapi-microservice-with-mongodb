@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
 from pydantic import BaseModel, Field, validator, UUID4
@@ -23,7 +23,7 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    status: str = Field(description="status of task")
+    status: str = Field(max_length=10, description="status of task")
 
     @validator("status", always=True)
     def validate_status(cls, value: str) -> Optional[str]:
@@ -34,6 +34,7 @@ class TaskCreate(TaskBase):
 
 class TaskResponse(TaskBase):
     id: int = Field(gt=0, description="Autoincrement id of task")
+    status: EnumData = Field(description="status of skill from fixed list of values")
 
 
 class PlanBase(BaseModel):
@@ -41,7 +42,7 @@ class PlanBase(BaseModel):
     notes: Optional[str] = Field(max_length=255, description="notes for plan")
 
 
-class PlanCreate(PlanBase):
+class PlanRequest(PlanBase):
     skill_id: int = Field(gt=0, description="skill_id is related to skill collection")
     profile_id: int = Field(gt=0, description="profile_id is related to profile collection")
     task: list[TaskCreate] = []
@@ -57,8 +58,8 @@ class PlanCreate(PlanBase):
                 "task": [
                     {
                         "description": "It is a task for the planning",
-                        "start_date": datetime.now(),
-                        "end_date": datetime.now() + timedelta(days=1),
+                        "start_date": datetime.now(timezone.utc),
+                        "end_date": datetime.now(timezone.utc) + timedelta(days=1),
                         "status": "active"
                     }
                 ]
@@ -72,7 +73,7 @@ class PlanCreate(PlanBase):
 
 class PlanResponse(BaseModel):
     id: UUID4
-    plan_type: EnumData = Field(description="Fixed plan type in int-enum")
+    plan_type: EnumData = Field(description="Fixed plan type")
     notes: Optional[str] = Field(max_length=255, description="notes for plan")
     skill_id: int = Field(gt=0, description="skill_id is related to skill collection")
     profile_id: int = Field(gt=0, description="profile_id is related to profile collection")
@@ -93,10 +94,11 @@ class PlanResponse(BaseModel):
                     {
                         "id": 1,
                         "description": "It is a task for the planning",
-                        "start_date": datetime.now(),
-                        "end_date": datetime.now() + timedelta(days=1),
+                        "start_date": datetime.now(timezone.utc),
+                        "end_date": datetime.now(timezone.utc) + timedelta(days=1),
                         "status": {
-
+                            "id": 1,
+                            "name": "active"
                         }
                     }
                 ]
