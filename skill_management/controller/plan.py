@@ -24,5 +24,5 @@ logger = get_logger()
                   )
 async def plan_create(request: Request,  # type: ignore
                       plan: PlanRequest = Body(...),
-                      jwt_data: str = Depends(JWTBearer())):
+                      user_id: str = Depends(JWTBearer())):
     pass

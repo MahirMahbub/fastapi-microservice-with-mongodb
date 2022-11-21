@@ -50,20 +50,22 @@ class PlanRequest(PlanBase):
     class Config:
         # validate_assignment = True
         schema_extra = {
-            "example": {
-                "plan_type": 1,
-                "notes": "It is a note for the planning",
-                "skill_id": 1,
-                "profile_id": 1,
-                "start_date": datetime.now(timezone.utc),
-                "end_date": datetime.now(timezone.utc) + timedelta(days=1),
-                "task": [
-                    {
-                        "description": "It is a task for the planning",
-                        "status": "active"
-                    }
-                ]
-            }
+            "example":
+                {
+                    "plan_type": 1,
+                    "notes": "It is a note for the planning",
+                    "skill_id": 1,
+                    "profile_id": 1,
+                    "start_date": datetime.now(timezone.utc),
+                    "end_date": datetime.now(timezone.utc) + timedelta(days=1),
+                    "task":
+                        [
+                            {
+                                "description": "It is a task for the planning",
+                                "status": "active"
+                            }
+                        ]
+                }
         }
 
     # @validator("task")
@@ -91,31 +93,33 @@ class PlanResponse(BaseModel):
 
     class Config:
         schema_extra = {
-            "example": {
-                "id": uuid.uuid4(),
-                "plan_type": {
-                    "id": 1,
-                    "name": "course"
-                },
-                "notes": "It is a note for the planning",
-                "skill_id": 1,
-                "profile_id": 1,
-                "start_date": datetime.now(timezone.utc),
-                "end_date": datetime.now(timezone.utc) + timedelta(days=1),
-                "task":
-                    [
+            "example":
+                {
+                    "id": uuid.uuid4(),
+                    "plan_type":
                         {
                             "id": 1,
-                            "description": "It is a task for the planning",
-                            "status":
-                                {
-                                    "id": 1,
-                                    "name": "active"
-                                }
-                        }
-                    ]
+                            "name": "course"
+                        },
+                    "notes": "It is a note for the planning",
+                    "skill_id": 1,
+                    "profile_id": 1,
+                    "start_date": datetime.now(timezone.utc),
+                    "end_date": datetime.now(timezone.utc) + timedelta(days=1),
+                    "task":
+                        [
+                            {
+                                "id": 1,
+                                "description": "It is a task for the planning",
+                                "status":
+                                    {
+                                        "id": 1,
+                                        "name": "active"
+                                    }
+                            }
+                        ]
 
-            }
+                }
         }
 
         id: int = Field(gt=0, description="Autoincrement id of task")
