@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Body, Request
 
-from skill_management.schemas.base import Message
+from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.plan import PlanRequest, PlanResponse
 from skill_management.utils.auth_manager import JWTBearer
 from skill_management.utils.logger import get_logger
@@ -14,14 +14,15 @@ logger = get_logger()
                   status_code=201,
                   responses={
                       400: {
-                          "model": Message,
+                          "model": ErrorMessage,
                           "description": "The plan is not created"
                       },
                       201: {
-                          "description": "The plan was successfully created",
+                          "description": "The plan is successfully created",
                       },
                   },
                   )
-async def plan_create(request: Request, plan: PlanRequest = Body(...),
-                      jwt_data: str = Depends(JWTBearer())):  # type: ignore
+async def plan_create(request: Request,  # type: ignore
+                      plan: PlanRequest = Body(...),
+                      jwt_data: str = Depends(JWTBearer())):
     pass

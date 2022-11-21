@@ -125,3 +125,8 @@ class SkillDataResponse(SkillExtraDataBase, SkillCreate):
                 }
             }
         }
+
+
+class SkillCertificateResponse(BaseModel):
+    succeed_upload_list: list[str] = []
+    failed_upload_list: list[str] = []

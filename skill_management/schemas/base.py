@@ -7,7 +7,8 @@ from pydantic import BaseModel, root_validator, dataclasses, Field
 @dataclasses.dataclass
 class EnumData:
     id: int = Field(gt=0, description="id is enum value")
-    name:str = Field(description="name is enum key")
+    name: str = Field(description="name is enum key")
+
 
 class DateMixin(BaseModel):
     created_at: datetime = datetime.now()
@@ -26,5 +27,6 @@ class DateMixin(BaseModel):
 
 
 # class ResponseSchema(BaseModel):
-class Message(BaseModel):
+class ErrorMessage(BaseModel):
     message: str = "An error message"
+    # error_data: dict[str, Any] = {}
