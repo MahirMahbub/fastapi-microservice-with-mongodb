@@ -10,16 +10,6 @@ from skill_management.schemas.base import EnumData
 
 class TaskBase(BaseModel):
     description: str = Field(max_length=255, description="description of task")
-    start_date: datetime = Field(description="start date of task")
-    end_date: datetime = Field(description="end date of task, must be none or greater than start_date")
-
-    @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> Optional[datetime]:
-        if values["start_date"] is None:
-            return None
-        if values["start_date"] > value:
-            raise ValueError("end_date must be greater than start_date")
-        return value
 
 
 class TaskCreate(TaskBase):
@@ -46,6 +36,16 @@ class PlanRequest(PlanBase):
     skill_id: int = Field(gt=0, description="skill_id is related to skill collection")
     profile_id: int = Field(gt=0, description="profile_id is related to profile collection")
     task: list[TaskCreate] = []
+    start_date: datetime = Field(description="start date of plan")
+    end_date: datetime = Field(description="end date of plan, must be none or greater than start_date")
+
+    @validator("end_date", always=True)
+    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> Optional[datetime]:
+        if values["start_date"] is None:
+            return None
+        if values["start_date"] > value:
+            raise ValueError("end_date must be greater than start_date")
+        return value
 
     class Config:
         # validate_assignment = True
@@ -55,11 +55,11 @@ class PlanRequest(PlanBase):
                 "notes": "It is a note for the planning",
                 "skill_id": 1,
                 "profile_id": 1,
+                "start_date": datetime.now(timezone.utc),
+                "end_date": datetime.now(timezone.utc) + timedelta(days=1),
                 "task": [
                     {
                         "description": "It is a task for the planning",
-                        "start_date": datetime.now(timezone.utc),
-                        "end_date": datetime.now(timezone.utc) + timedelta(days=1),
                         "status": "active"
                     }
                 ]
@@ -78,6 +78,16 @@ class PlanResponse(BaseModel):
     skill_id: int = Field(gt=0, description="skill_id is related to skill collection")
     profile_id: int = Field(gt=0, description="profile_id is related to profile collection")
     task: list[TaskResponse] = Field([], description="task list for plan")
+    start_date: datetime = Field(description="start date of plan")
+    end_date: datetime = Field(description="end date of plan, must be none or greater than start_date")
+
+    @validator("end_date", always=True)
+    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> Optional[datetime]:
+        if values["start_date"] is None:
+            return None
+        if values["start_date"] > value:
+            raise ValueError("end_date must be greater than start_date")
+        return value
 
     class Config:
         schema_extra = {
@@ -90,18 +100,20 @@ class PlanResponse(BaseModel):
                 "notes": "It is a note for the planning",
                 "skill_id": 1,
                 "profile_id": 1,
-                "task": [
-                    {
-                        "id": 1,
-                        "description": "It is a task for the planning",
-                        "start_date": datetime.now(timezone.utc),
-                        "end_date": datetime.now(timezone.utc) + timedelta(days=1),
-                        "status": {
+                "start_date": datetime.now(timezone.utc),
+                "end_date": datetime.now(timezone.utc) + timedelta(days=1),
+                "task":
+                    [
+                        {
                             "id": 1,
-                            "name": "active"
+                            "description": "It is a task for the planning",
+                            "status":
+                                {
+                                    "id": 1,
+                                    "name": "active"
+                                }
                         }
-                    }
-                ]
+                    ]
 
             }
         }
