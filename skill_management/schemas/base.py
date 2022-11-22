@@ -30,3 +30,13 @@ class DateMixin(BaseModel):
 class ErrorMessage(BaseModel):
     message: str = "An error message"
     # error_data: dict[str, Any] = {}
+
+
+class PaginatedResponse(BaseModel):
+    items: list[BaseModel]
+    previous_page: Optional[int] = None
+    next_page: Optional[int] = None
+    has_previous: bool
+    has_next: bool
+    total_items: int
+    pages: int

@@ -138,6 +138,7 @@ class ProfileEducationResponse(BaseModel):
             raise ValueError("Not a valid year, must be between 1970 and this year")
         return value
 
+
 class ProfileCVFileUpload(BaseModel):
     status: EnumData = Field(description="CV file status")
     _cv_url: str = Field(description="cv url file response api url")
@@ -208,8 +209,8 @@ class ProfileResponse(BaseModel):
                                 "designation_id": 1,
                                 "designation": "Software Developer"
                             },
-                            "start_date": datetime.now(timezone.utc)-timedelta(days=1000),
-                            "end_date": datetime.now(timezone.utc)-timedelta(days=500),
+                            "start_date": datetime.now(timezone.utc) - timedelta(days=1000),
+                            "end_date": datetime.now(timezone.utc) - timedelta(days=500),
                             "status": {
                                 "id": 1,
                                 "name": "active"
@@ -251,5 +252,55 @@ class ProfileResponse(BaseModel):
                         "id": 1,
                         "name": "full_time"
                     }
+                }
+        }
+
+
+class PaginatedProfileResponse(BaseModel):
+    items: list[ProfileBasicResponse]
+    previous_page: int | None = None
+    next_page: int | None = None
+    has_previous: bool
+    has_next: bool
+    total_items: int
+    pages: int
+
+    class Config:
+        schema_extra = {
+            "example":
+                {
+                    "items": [
+                        {
+                            "id": "954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0",
+                            "_url": "/admin/user-profiles/954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0",
+                            "email": "developer.ixorasolution@gmail.com",
+                            "name": "Chelsey Adams",
+                            "mobile": "+01611123456",
+                            "designation": {
+                                "designation_id": 1,
+                                "designation": "Software Engineer"
+                            },
+                            "skills": [
+                                {
+                                    "experience_year": 4,
+                                    "level": 4,
+                                    "skill_name": "react",
+                                    "skill_id": 1
+                                },
+                                {
+                                    "experience_year": 4,
+                                    "level": 7,
+                                    "skill_name": "django",
+                                    "skill_id": 2
+                                }
+                            ]
+                        }
+                    ],
+                    "previous_page": 0,
+                    "next_page": 2,
+                    "has_previous": False,
+                    "has_next": True,
+                    "total_items": 100,
+                    "pages": 10
                 }
         }

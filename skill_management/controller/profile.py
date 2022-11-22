@@ -5,7 +5,7 @@ from pydantic import EmailStr
 from starlette.requests import Request
 
 from skill_management.schemas.base import ErrorMessage
-from skill_management.schemas.profile import ProfileResponse, ProfileBasicResponse
+from skill_management.schemas.profile import ProfileResponse, ProfileBasicResponse, PaginatedProfileResponse
 from skill_management.utils.auth_manager import JWTBearerAdmin
 from skill_management.utils.logger import get_logger
 
@@ -14,7 +14,7 @@ logger = get_logger()
 
 
 @profile_router.get("/admin/user-profiles",
-                    response_model=ProfileBasicResponse,
+                    response_model=PaginatedProfileResponse,
                     status_code=200,
                     responses={
                         400: {
@@ -31,6 +31,8 @@ async def get_user_profiles_for_admin(request: Request,  # type: ignore
                                                                          description="input skill_category as string"),
                                       skill_name: str | None = Query(default=None,
                                                                      description="input skill_name as string"),
+                                      page_number: int = Query(default=1, description="page number of pagination", gt=0),
+                                      page_size: int = Query(default=10, description="number of element in page", gt=0),
                                       admin_user_id: str = Depends(JWTBearerAdmin())):
     pass
 
