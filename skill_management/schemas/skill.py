@@ -11,7 +11,7 @@ from skill_management.schemas.base import EnumData
 
 
 class SkillCreate(BaseModel):
-    skill_id: int = Field(description="Id of skill to add to skill list")
+    skill_id: int = Field(description="autoincrement id of skill to add to skill list")
 
 
 class SkillExtraDataBase(BaseModel):
@@ -98,7 +98,7 @@ class CreateSkillDataResponse(SkillExtraDataBase, SkillCreate):
             "example":
                 {
                     "skill_id": 1,
-                    "skill_name": "Framework",
+                    "skill_name": "react",
                     "skill_type":
                         {
                             "id": 1,
@@ -142,7 +142,7 @@ class GetSkillDataResponse(SkillCreate):
             "example":
                 {
                     "id": 1,
-                    "skill_name": "Framework",
+                    "skill_name": "react",
                     "skill_type":
                         {
                             "id": 1,
@@ -164,6 +164,77 @@ class GetSkillDataResponse(SkillCreate):
         }
 
 
+class GetSkillDataResponseList(BaseModel):
+    skills: list[GetSkillDataResponse]
+
+    class Config:
+        schema_extra = {
+            "example":
+                {
+                    "skills": [
+                        {
+                            "id": 1,
+                            "skill_name": "react",
+                            "skill_type":
+                                {
+                                    "id": 1,
+                                    "name": "core_skill"
+                                }
+                            ,
+                            "skill_category":
+                                [
+                                    {
+                                        "id": 1,
+                                        "name": "frontend"
+                                    },
+                                    {
+                                        "id": 2,
+                                        "name": "backend"
+                                    }
+                                ]
+                        },
+                        {
+                            "id": 2,
+                            "skill_name": "django",
+                            "skill_type":
+                                {
+                                    "id": 1,
+                                    "name": "core_skill"
+                                }
+                            ,
+                            "skill_category":
+                                [
+                                    {
+                                        "id": 2,
+                                        "name": "backend"
+                                    }
+                                ]
+                        }
+                    ]
+                }
+        }
+
+
 class SkillCertificateResponse(BaseModel):
     succeed_upload_list: list[str] = []
     failed_upload_list: list[str] = []
+
+
+class ProfileSkillDataResponse(SkillCreate):
+    experience_year: int = Field(le=45, description="experience of the indicated skill")
+    level: int = Field(le=1, ge=10, description="level of proficiency on the skill")
+    skill_name: str = Field(max_length=20, description="name of skill from fixed list of values")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "experience_year": 4,
+                "level": 6,
+                "skill_name": "react",
+                "skill_id": 1
+            }
+        }
+
+
+# class ProfileSkillDataListResponse(BaseModel):
+#     skills: list[ProfileSkillDataResponse]

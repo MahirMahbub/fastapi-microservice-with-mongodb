@@ -25,3 +25,14 @@ class SkillCategoryEnum(enum.IntEnum):
 class SkillTypeEnum(enum.IntEnum):
     core_skill: int = 1
     soft_skill: int = 2
+
+
+class DesignationStatusEnum(enum.IntEnum):
+    active: int = 1
+    inactive: int = 2
+
+
+class GenderEnum(enum.IntEnum):
+    male: int = 1
+    female: int = 2
+    others: int = 3

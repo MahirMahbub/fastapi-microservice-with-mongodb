@@ -40,7 +40,7 @@ class PlanRequest(PlanBase):
     end_date: datetime = Field(description="end date of plan, must be none or greater than start_date")
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> Optional[datetime]:
+    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -74,7 +74,7 @@ class PlanRequest(PlanBase):
 
 
 class PlanResponse(BaseModel):
-    id: UUID4
+    id: UUID4 = Field(description="id of plan of type UUID")
     plan_type: EnumData = Field(description="Fixed plan type")
     notes: Optional[str] = Field(max_length=255, description="notes for plan")
     skill_id: int = Field(gt=0, description="skill_id is related to skill collection")
@@ -95,7 +95,7 @@ class PlanResponse(BaseModel):
         schema_extra = {
             "example":
                 {
-                    "id": uuid.uuid4(),
+                    "id": "954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0",
                     "plan_type":
                         {
                             "id": 1,
