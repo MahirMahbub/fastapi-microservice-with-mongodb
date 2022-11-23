@@ -1,8 +1,6 @@
-from typing import Optional
-
 from pydantic import BaseModel, Field, FilePath, validator
 
-from skill_management.enums import StatusEnum
+from skill_management.enums import StatusEnum, UserStatusEnum
 from skill_management.schemas.base import EnumData
 
 
@@ -13,7 +11,7 @@ class SkillCreate(BaseModel):
 class SkillExtraDataBase(BaseModel):
     experience_year: int = Field(le=45, description="experience of the indicated skill")
     number_of_projects: int = Field(le=80, description="number of projects on that skill")
-    level: int = Field(le=1, ge=10, description="level of proficiency on the skill")
+    level: int = Field(le=10, ge=1, description="level of proficiency on the skill")
     training_duration: int = Field(le=100, description="training duration in months")
     achievements: str = Field(max_length=1, description='''marker for having the achievements
     
@@ -24,7 +22,7 @@ class SkillExtraDataBase(BaseModel):
     0 or 1''')
 
     @validator("achievements", always=True)
-    def validate_achievements(cls, value: str) -> str|None:
+    def validate_achievements(cls, value: str) -> str | None:
         try:
             ascii_value = ord(value)
         except TypeError as type_exec:
@@ -37,7 +35,7 @@ class SkillExtraDataBase(BaseModel):
         return value
 
     @validator("certificate", always=True)
-    def validate_certificate(cls, value: str) -> str|None:
+    def validate_certificate(cls, value: str) -> str | None:
         try:
             ascii_value = ord(value)
         except TypeError as type_exec:
@@ -61,10 +59,48 @@ class SkillDataCreate(SkillExtraDataBase, SkillCreate):
         return value
 
 
-class CreateSkillDataRequest(SkillCreate, SkillExtraDataBase):
-    status: str = Field(max_length=10, description='''fixed skill status
-    
-    '''+ ", ".join([data.name for data in StatusEnum]))
+class CreateSkillDataRequest(SkillCreate):
+    experience_year: int | None = Field(None, le=45, description="experience of the indicated skill")
+    number_of_projects: int | None = Field(None, le=80, description="number of projects on that skill")
+    level: int | None = Field(None, le=10, ge=1, description="level of proficiency on the skill")
+    training_duration: int | None = Field(None, le=100, description="training duration in months")
+    achievements: str | None = Field(None, max_length=1, description='''marker for having the achievements
+
+    0 or 1''')
+    achievements_description: str | None = Field(None, max_length=255, description="description of the achievement")
+    certificate: str | None = Field(None, max_length=1, description='''marker for having the certificate
+
+    0 or 1''')
+    status: UserStatusEnum | None = Field(UserStatusEnum.active,
+                                          description="""skill data validity status 
+
+    1: active, 3: delete""")
+
+    @validator("achievements", always=True)
+    def validate_achievements(cls, value: str) -> str | None:
+        try:
+            ascii_value = ord(value)
+        except TypeError as type_exec:
+            raise ValueError("not a valid value, not a valid number marker")
+        if ascii_value > 49 or ascii_value < 48:
+            """
+            Ascii_value of "0" is 48 and "1" is 49.
+            """
+            raise ValueError("not a valid value, out of ascii value range")
+        return value
+
+    @validator("certificate", always=True)
+    def validate_certificate(cls, value: str) -> str | None:
+        try:
+            ascii_value = ord(value)
+        except TypeError as type_exec:
+            raise ValueError("not a valid value, not a valid number marker")
+        if ascii_value > 49 or ascii_value < 48:
+            """
+            Ascii_value of "0" is 48 and "1" is 49.
+            """
+            raise ValueError("not a valid value, out of ascii value range")
+        return value
 
     @validator("status", always=True)
     def validate_status(cls, value: str) -> str | None:

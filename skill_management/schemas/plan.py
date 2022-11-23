@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
-from pydantic import BaseModel, Field, validator, UUID4
+from pydantic import BaseModel, Field, validator, UUID4, root_validator
 
-from skill_management.enums import PlanEnum, StatusEnum
+from skill_management.enums import PlanEnum, StatusEnum, UserStatusEnum
 from skill_management.schemas.base import EnumData
 
 
@@ -12,10 +12,11 @@ class TaskBase(BaseModel):
 
 
 class TaskCreate(TaskBase):
-    status: str = Field(max_length=10, description="status of task")
+    task_id: int | None = Field(None, description="id of task for plan creation ")
+    status: UserStatusEnum | None = Field(None, description="status of task")
 
     @validator("status", always=True)
-    def validate_status(cls, value: str) -> Optional[str]:
+    def validate_status(cls, value: str) -> str | None:
         if value not in [data.name for data in StatusEnum]:
             raise ValueError("status must be valid")
         return value
@@ -27,20 +28,33 @@ class TaskResponse(TaskBase):
 
 
 class PlanBase(BaseModel):
-    plan_type: str = Field(description='''fixed plan type
+    plan_type: PlanEnum | None = Field(None, description='''the type of the plan
     
-    '''+ ", ".join([data.name for data in PlanEnum]))
-    notes: Optional[str] = Field(max_length=255, description="notes for plan")
+    1: course, 2: exam''')
+    notes: str | None = Field(max_length=255, description="notes for plan")
 
 
 class PlanCreateRequest(PlanBase):
-    skill_id: int = Field(gt=0, description="skill_id is related to skill collection")
-    profile_id: int = Field(gt=0, description="profile_id is related to profile collection")
-    task: list[TaskCreate] = []
-    start_date: datetime = Field(description="start date of plan")
-    end_date: datetime = Field(description='''end date of plan, 
+    plan_id: UUID4 | None = Field(description="id for plan")
+    skill_id: int | None = Field(gt=0, description="skill_id is related to skill collection")
+    task: list[TaskCreate] | None = []
+    start_date: datetime | None = Field(description="start date of plan")
+    end_date: datetime | None = Field(description='''end date of plan
     
     > start_date''')
+
+    @root_validator
+    def any_of(cls, v: dict[str, Any]) -> dict[str, Any]:
+        plan_id = v.pop('plan_id')
+        if plan_id is None:
+            notes = v.pop('notes')
+            task = v.pop('task')
+            if None in v.values():
+                raise ValueError('You must provide skill_id, start_date, end_date, plan_type for creating a plan')
+            v["notes"] = notes
+            v["task"] = task
+        v["plan_id"] = plan_id
+        return v
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:

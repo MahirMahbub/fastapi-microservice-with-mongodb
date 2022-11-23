@@ -1,21 +1,13 @@
 import re
 from datetime import datetime, date, timezone, timedelta
-from typing import Any, Sequence
 
 from pydantic import Field, BaseModel, EmailStr, UUID4, validator
 
 from skill_management.schemas.base import EnumData, PaginatedResponse
+from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignationResponse
 from skill_management.schemas.education import ProfileEducationResponse
 from skill_management.schemas.experience import ProfileExperienceResponse
 from skill_management.schemas.skill import ProfileSkillDataResponse, ProfileSkillResponse
-
-
-class DesignationBase(BaseModel):
-    designation: str = Field(min_length=2, description="designation of the employee")
-
-
-class DesignationDataResponse(DesignationBase):
-    designation_id: int = Field(gt=0, description="autoincrement id of designation")
 
 
 class ProfileBase(BaseModel):
@@ -74,26 +66,12 @@ class ProfileBasicResponse(ProfileBase):
 class ProfilePersonalDetails(BaseModel):
     name: str = Field(max_length=20, min_length=2, description="name of the user")
     date_of_birth: date = Field(description="date of birth of the user")
-    gender: EnumData = Field(description="gender of the user")
+    gender: int = Field(description="gender of the user")
     mobile: str = Field(description="mobile number of the user")
     address: str = Field(max_length=255, description="address of the user")
     about: str = Field(max_length=500, description="about of the user")
     _picture_url: str = Field(max_length=255, description="image response api url of user profile picture")
     experience_year: int = Field(description="experience year of the user")
-
-
-class ProfileDesignationResponse(DesignationDataResponse):
-    start_date: datetime = Field(description="start date of designated job")
-    end_date: datetime = Field(description="end date of designated job")
-    designation_status: EnumData = Field(description="designation status of designated job")
-
-    @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
-        if values["start_date"] is None:
-            return None
-        if values["start_date"] > value:
-            raise ValueError("end_date must be greater than start_date")
-        return value
 
 
 class ProfileResponse(BaseModel):
@@ -105,6 +83,7 @@ class ProfileResponse(BaseModel):
     education: list[ProfileEducationResponse]
     personal_details: ProfilePersonalDetails
     profile_status: EnumData = Field(description="profile status/ job type of the user")
+    _latest_cv_url: str = Field(description="latest CV file response api url")
 
     class Config:
         schema_extra = {
@@ -122,6 +101,17 @@ class ProfileResponse(BaseModel):
                             "name": "active"
                         }
                     },
+                    "personal_details":
+                        {
+                            "name": "Chelsey Adams",
+                            "date_of_birth": datetime.now(timezone.utc).date() - timedelta(days=10000),
+                            "gender": 1,
+                            "mobile": "+01611123456",
+                            "address": "House: X, State:Y, Z, Country",
+                            "about": "Personal Information",
+                            "experience_year": 4,
+                            "_picture_url": "/files/2"
+                        },
                     "skills": [
                         {
                             "skill_id": 1,
@@ -205,6 +195,7 @@ class ProfileResponse(BaseModel):
                         "id": 1,
                         "name": "full_time"
                     },
+                    "_latest_cv_url": "/file/1"
                 }
         }
 

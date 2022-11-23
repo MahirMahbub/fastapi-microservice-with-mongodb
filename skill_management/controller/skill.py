@@ -29,6 +29,13 @@ async def create_skill(request: Request,  # type: ignore
                        skill: CreateSkillDataRequest = Body(..., description="provide all required attributes to "
                                                                              "create a new skill"),
                        user_id: str = Depends(JWTBearer())):
+
+    """
+    **Create:** Must provide all the data for creating a new skill.
+
+
+    **Update:** For update purposes provide skill id. Other attributes are optional
+    """
     pass
 
 

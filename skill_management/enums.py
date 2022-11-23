@@ -12,6 +12,11 @@ class StatusEnum(enum.IntEnum):
     delete: int = 3
 
 
+class UserStatusEnum(enum.IntEnum):
+    active: int = 1
+    delete: int = 3
+
+
 class SkillCategoryEnum(enum.IntEnum):
     frontend: int = 1
     backend: int = 2

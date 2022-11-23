@@ -27,4 +27,10 @@ logger = get_logger()
 async def create_education(request: Request,  # type: ignore
                            education: EducationCreateRequest = Body(..., description="input education data"),
                            user_id: str = Depends(JWTBearer())):
+    """
+    **Create:** Must provide all the data except education id [status is optional]
+
+
+    **Update:** Must provide education id. Other attributes are optional.
+    """
     pass

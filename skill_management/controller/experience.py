@@ -27,4 +27,10 @@ logger = get_logger()
 async def create_experience(request: Request,  # type: ignore
                             experience: ExperienceCreateRequest = Body(..., description="input experience data"),
                             user_id: str = Depends(JWTBearer())):
+    """
+    **Create:** Must provide all the data except experience id [status is optional]
+
+
+    **Update:** Must provide experience id. Other attributes are optional.
+    """
     pass

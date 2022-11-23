@@ -1,9 +1,9 @@
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, root_validator
 
-from skill_management.enums import StatusEnum
+from skill_management.enums import StatusEnum, UserStatusEnum
 from skill_management.schemas.base import EnumData
 
 
@@ -31,16 +31,29 @@ class ProfileExperienceResponse(BaseModel):
 
 
 class ExperienceCreateRequest(BaseModel):
-    company_name: str = Field(max_length=30, description="name of company that user worked on")
-    job_responsibility: str = Field(max_length=255, description="responsibility for job on the company")
-    designation_id: int = Field(description="designation id for profile experience")
-    start_date: datetime = Field(description="start date of experience")
-    end_date: datetime = Field(description='''end date of experience
+    experience_id: int | None = Field(ge=1, description="id of experiment for user")
+    company_name: str | None = Field(max_length=30, description="name of company that user worked on")
+    job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
+    designation_id: int | None = Field(description="designation id for profile experience")
+    start_date: datetime | None = Field(description="start date of experience")
+    end_date: datetime | None = Field(description='''end date of experience
     
     > start_date''')
-    status: str = Field(description='''designation status of experience
-    
-    '''+", ".join([data.name for data in StatusEnum]))
+    status: UserStatusEnum = Field(UserStatusEnum.active,
+                                   description="""experience data validity status
+                                   
+    1: active, 3: delete""")
+
+    @root_validator
+    def any_of(cls, values: dict[str, Any]) -> dict[str, Any]:
+        experience_id = values.pop('experience_id')
+        status = values.pop('status')
+        if experience_id is None:
+            if None in values.values():
+                raise ValueError("You must provide all the experience information when constructing the new experience")
+        values['experience_id'] = experience_id
+        values['status'] = status
+        return values
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
@@ -65,7 +78,7 @@ class ExperienceCreateRequest(BaseModel):
                     "designation_id": 2,
                     "start_date": datetime.now(timezone.utc) - timedelta(days=500),
                     "end_date": datetime.now(timezone.utc) - timedelta(days=200),
-                    "status": "active"
+                    "status": 1
                 }
         }
 
