@@ -1,11 +1,13 @@
 import re
 from datetime import datetime, date, timezone, timedelta
-from typing import Any
+from typing import Any, Sequence
 
 from pydantic import Field, BaseModel, EmailStr, UUID4, validator
 
-from skill_management.schemas.base import EnumData
-from skill_management.schemas.skill import ProfileSkillDataResponse, CreateSkillDataResponse
+from skill_management.schemas.base import EnumData, PaginatedResponse
+from skill_management.schemas.education import ProfileEducationResponse
+from skill_management.schemas.experience import ProfileExperienceResponse
+from skill_management.schemas.skill import ProfileSkillDataResponse, ProfileSkillResponse
 
 
 class DesignationBase(BaseModel):
@@ -80,10 +82,6 @@ class ProfilePersonalDetails(BaseModel):
     experience_year: int = Field(description="experience year of the user")
 
 
-class ProfileSkillResponse(CreateSkillDataResponse):
-    _filename_url: str = Field(max_length=255, description="file response api url of user profile picture")
-
-
 class ProfileDesignationResponse(DesignationDataResponse):
     start_date: datetime = Field(description="start date of designated job")
     end_date: datetime = Field(description="end date of designated job")
@@ -98,52 +96,6 @@ class ProfileDesignationResponse(DesignationDataResponse):
         return value
 
 
-class ProfileExperienceDesignationResponse(BaseModel):
-    designation_id: int = Field(description="designation id for profile experience")
-    designation: str = Field(description="designation for profile experience")
-
-
-class ProfileExperienceResponse(BaseModel):
-    experience_id: int = Field(gt=0, description="autoincrement experience id for this profile")
-    company_name: str = Field(max_length=30, description="name of company that user worked on")
-    job_responsibility: str = Field(max_length=255, description="responsibility for job on the company")
-    designation: ProfileExperienceDesignationResponse = Field(description="designation for this profile experience")
-    start_date: datetime = Field(description="start date of experience")
-    end_date: datetime = Field(description="end date of experience")
-    status: EnumData = Field(description="designation status of experience")
-
-    @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
-        if values["start_date"] is None:
-            return None
-        if values["start_date"] > value:
-            raise ValueError("end_date must be greater than start_date")
-        return value
-
-
-class ProfileEducationResponse(BaseModel):
-    education_id: int = Field(gt=0, description="autoincrement id of the user education")
-    degree_name: str = Field(max_length=30, description="degree name of the user education")
-    school_name: str = Field(max_length=30, description="school name of the user education")
-    passing_year: str = Field(max_length=4, description="passing year of the user education")
-    grade: float = Field(ge=2.5, le=5.0)
-
-    @validator("passing_year", always=True)
-    def validate_passing_year(cls, value: str) -> str:
-        try:
-            passing_year: int = int(value)
-        except ValueError as val_exec:
-            raise ValueError("Not a year")
-        if not 1971 <= passing_year <= date.today().year:
-            raise ValueError("Not a valid year, must be between 1970 and this year")
-        return value
-
-
-class ProfileCVFileUpload(BaseModel):
-    status: EnumData = Field(description="CV file status")
-    _cv_url: str = Field(description="cv url file response api url")
-
-
 class ProfileResponse(BaseModel):
     id: UUID4 = Field(description="id of the user profile")
     email: EmailStr = Field(description="email address of the user")
@@ -151,6 +103,7 @@ class ProfileResponse(BaseModel):
     skills: list[ProfileSkillResponse]
     experience: list[ProfileExperienceResponse]
     education: list[ProfileEducationResponse]
+    personal_details: ProfilePersonalDetails
     profile_status: EnumData = Field(description="profile status/ job type of the user")
 
     class Config:
@@ -251,19 +204,13 @@ class ProfileResponse(BaseModel):
                     "profile_status": {
                         "id": 1,
                         "name": "full_time"
-                    }
+                    },
                 }
         }
 
 
-class PaginatedProfileResponse(BaseModel):
+class PaginatedProfileResponse(PaginatedResponse):
     items: list[ProfileBasicResponse]
-    previous_page: int | None = None
-    next_page: int | None = None
-    has_previous: bool
-    has_next: bool
-    total_items: int
-    pages: int
 
     class Config:
         schema_extra = {

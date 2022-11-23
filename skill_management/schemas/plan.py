@@ -1,4 +1,3 @@
-import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
@@ -23,21 +22,25 @@ class TaskCreate(TaskBase):
 
 
 class TaskResponse(TaskBase):
-    id: int = Field(gt=0, description="Autoincrement id of task")
+    id: int = Field(gt=0, description="autoincrement id of task")
     status: EnumData = Field(description="status of skill from fixed list of values")
 
 
 class PlanBase(BaseModel):
-    plan_type: PlanEnum = Field(description="Fixed plan type in int-enum")
+    plan_type: str = Field(description='''fixed plan type
+    
+    '''+ ", ".join([data.name for data in PlanEnum]))
     notes: Optional[str] = Field(max_length=255, description="notes for plan")
 
 
-class PlanRequest(PlanBase):
+class PlanCreateRequest(PlanBase):
     skill_id: int = Field(gt=0, description="skill_id is related to skill collection")
     profile_id: int = Field(gt=0, description="profile_id is related to profile collection")
     task: list[TaskCreate] = []
     start_date: datetime = Field(description="start date of plan")
-    end_date: datetime = Field(description="end date of plan, must be none or greater than start_date")
+    end_date: datetime = Field(description='''end date of plan, 
+    
+    > start_date''')
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
@@ -47,12 +50,18 @@ class PlanRequest(PlanBase):
             raise ValueError("end_date must be greater than start_date")
         return value
 
+    @validator("plan_type", always=True)
+    def validate_plan_type(cls, value: str) -> str | None:
+        if value not in [data.name for data in PlanEnum]:
+            raise ValueError("status must be valid")
+        return value
+
     class Config:
         # validate_assignment = True
         schema_extra = {
             "example":
                 {
-                    "plan_type": 1,
+                    "plan_type": "course",
                     "notes": "It is a note for the planning",
                     "skill_id": 1,
                     "profile_id": 1,
@@ -68,12 +77,8 @@ class PlanRequest(PlanBase):
                 }
         }
 
-    # @validator("task")
-    # def set_task(cls, tasks: None | list[TaskBase]) -> Sequence[Optional[TaskBase]]:
-    #     return tasks or []
 
-
-class PlanResponse(BaseModel):
+class PlanCreateResponse(BaseModel):
     id: UUID4 = Field(description="id of plan of type UUID")
     plan_type: EnumData = Field(description="Fixed plan type")
     notes: Optional[str] = Field(max_length=255, description="notes for plan")

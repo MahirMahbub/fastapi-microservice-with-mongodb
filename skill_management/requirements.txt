@@ -12,3 +12,4 @@ asyncer==0.0.2
 python-dotenv==0.21.0
 python-multipart==0.0.5
 mypy==0.991
+orjson==3.8.2

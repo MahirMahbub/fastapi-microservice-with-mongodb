@@ -26,17 +26,14 @@ class DateMixin(BaseModel):
         return values
 
 
-# class ResponseSchema(BaseModel):
 class ErrorMessage(BaseModel):
     message: str = "An error message"
-    # error_data: dict[str, Any] = {}
 
 
 class PaginatedResponse(BaseModel):
-    items: list[BaseModel]
-    previous_page: Optional[int] = None
-    next_page: Optional[int] = None
-    has_previous: bool
-    has_next: bool
-    total_items: int
-    pages: int
+    previous_page: int = Field(description="previous page of current pagination page")
+    next_page: int = Field(description="next page of current pagination page")
+    has_previous: bool = Field(description="bool indicator whether current page has previous page")
+    has_next: bool = Field(description="bool indicator whether current page has next page")
+    total_items: int = Field(description="total number of items")
+    pages: int = Field(description="total number of pages")

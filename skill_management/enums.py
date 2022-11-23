@@ -36,3 +36,10 @@ class GenderEnum(enum.IntEnum):
     male: int = 1
     female: int = 2
     others: int = 3
+
+
+class FileTypeEnum(enum.IntEnum):
+    picture: int = 1
+    resume: int = 2
+    letter: int = 3
+    certificate: int = 4

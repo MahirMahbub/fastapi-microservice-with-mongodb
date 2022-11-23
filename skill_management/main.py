@@ -1,9 +1,11 @@
 import os
 
 from fastapi import FastAPI
-from .config.config import initiate_database
-from .controller.router import api_router
-from .utils.logger import get_logger
+from fastapi.middleware.gzip import GZipMiddleware
+
+from skill_management.config.config import initiate_database
+from skill_management.controller.router import api_router
+from skill_management.utils.logger import get_logger
 
 # API Doc
 if os.getenv("ENVIRONMENT") == "local":
@@ -13,6 +15,7 @@ if os.getenv("ENVIRONMENT") == "local":
         version="1.0.0",
         openapi_url="/api/v1/openapi.json",
         docs_url="/api/v1/docs",
+        redoc_url="/api/v1/redoc",
         # root_path="/api/v1"
     )
 else:
@@ -22,10 +25,11 @@ else:
         version="1.0.0",
         openapi_url="/api/v1/openapi.json",
         docs_url="/api/v1/docs",
+        redoc_url="/api/v1/redoc",
         debug=True
         # root_path="/api/v1"
     )
-
+skill_app.add_middleware(GZipMiddleware)
 skill_app.include_router(api_router, prefix='/api/v1')
 
 

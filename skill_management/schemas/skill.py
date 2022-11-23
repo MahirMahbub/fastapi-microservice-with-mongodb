@@ -6,12 +6,8 @@ from skill_management.enums import StatusEnum
 from skill_management.schemas.base import EnumData
 
 
-# class SkillBase(BaseModel):
-#     skill_name: str = Field(max_length=20, description="name of skill from fixed list of values")
-
-
 class SkillCreate(BaseModel):
-    skill_id: int = Field(description="autoincrement id of skill to add to skill list")
+    skill_id: int = Field(description="id of skill")
 
 
 class SkillExtraDataBase(BaseModel):
@@ -19,12 +15,16 @@ class SkillExtraDataBase(BaseModel):
     number_of_projects: int = Field(le=80, description="number of projects on that skill")
     level: int = Field(le=1, ge=10, description="level of proficiency on the skill")
     training_duration: int = Field(le=100, description="training duration in months")
-    achievements: str = Field(max_length=1, description="marker for having the achievements")
+    achievements: str = Field(max_length=1, description='''marker for having the achievements
+    
+    0 or 1''')
     achievements_description: str = Field(max_length=255, description="description of the achievement")
-    certificate: str = Field(max_length=1, description="marker for having the certificate")
+    certificate: str = Field(max_length=1, description='''marker for having the certificate
+    
+    0 or 1''')
 
     @validator("achievements", always=True)
-    def validate_achievements(cls, value: str) -> Optional[str]:
+    def validate_achievements(cls, value: str) -> str|None:
         try:
             ascii_value = ord(value)
         except TypeError as type_exec:
@@ -37,7 +37,7 @@ class SkillExtraDataBase(BaseModel):
         return value
 
     @validator("certificate", always=True)
-    def validate_certificate(cls, value: str) -> Optional[str]:
+    def validate_certificate(cls, value: str) -> str|None:
         try:
             ascii_value = ord(value)
         except TypeError as type_exec:
@@ -55,17 +55,19 @@ class SkillDataCreate(SkillExtraDataBase, SkillCreate):
     status: str = Field(max_length=10, description="status of task")
 
     @validator("status", always=True)
-    def validate_status(cls, value: str) -> Optional[str]:
+    def validate_status(cls, value: str) -> str | None:
         if value not in [data.name for data in StatusEnum]:
             raise ValueError("status must be valid")
         return value
 
 
-class CreateSkillDataRequest(SkillExtraDataBase, SkillCreate):
-    status: str = Field(max_length=10, description="status of task")
+class CreateSkillDataRequest(SkillCreate, SkillExtraDataBase):
+    status: str = Field(max_length=10, description='''fixed skill status
+    
+    '''+ ", ".join([data.name for data in StatusEnum]))
 
     @validator("status", always=True)
-    def validate_status(cls, value: str) -> Optional[str]:
+    def validate_status(cls, value: str) -> str | None:
         if value not in [data.name for data in StatusEnum]:
             raise ValueError("status must be valid")
         return value
@@ -132,7 +134,7 @@ class CreateSkillDataResponse(SkillExtraDataBase, SkillCreate):
 
 
 class GetSkillDataResponse(SkillCreate):
-    id: int = Field(description="Id of skill to add to skill list")
+    # id: int = Field(description="Id of skill to add to skill list")
     skill_type: EnumData = Field(description="type of skill from fixed list of values")
     skill_category: list[EnumData] = Field(max_items=7, description="category of skill from fixed list of items")
     skill_name: str = Field(max_length=20, description="name of skill from fixed list of values")
@@ -215,11 +217,6 @@ class GetSkillDataResponseList(BaseModel):
         }
 
 
-class SkillCertificateResponse(BaseModel):
-    succeed_upload_list: list[str] = []
-    failed_upload_list: list[str] = []
-
-
 class ProfileSkillDataResponse(SkillCreate):
     experience_year: int = Field(le=45, description="experience of the indicated skill")
     level: int = Field(le=1, ge=10, description="level of proficiency on the skill")
@@ -236,5 +233,5 @@ class ProfileSkillDataResponse(SkillCreate):
         }
 
 
-# class ProfileSkillDataListResponse(BaseModel):
-#     skills: list[ProfileSkillDataResponse]
+class ProfileSkillResponse(CreateSkillDataResponse):
+    _filename_url: str = Field(max_length=255, description="file response api url of user profile picture")
