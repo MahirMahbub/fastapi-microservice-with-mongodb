@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
 
 from skill_management.config.config import initiate_database
-from skill_management.controller.router import api_router
+from skill_management.controllers.router import api_router
 from skill_management.utils.logger import get_logger
 
 # API Doc

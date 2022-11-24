@@ -1,9 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
-from fastapi_versioning import VersionedFastAPI
 
 # from auth_app.config.config import Settings
 from auth_app.main import auth_app
+
 # settings =Settings()
 
 PORT = 8000

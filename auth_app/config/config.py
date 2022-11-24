@@ -29,5 +29,5 @@ async def initiate_database() -> None:
         client = AsyncIOMotorClient(os.getenv("LOCAL_DATABASE_URL"))
     else:
         client = AsyncIOMotorClient(os.getenv("DATABASE_URL"))
-    await init_beanie(database=client.get_default_database(),
+    await init_beanie(database=client.auth,
                       document_models=[User])

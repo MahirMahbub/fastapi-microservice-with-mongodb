@@ -3,7 +3,7 @@ from typing import Optional, Any
 
 from pydantic import BaseModel, Field, validator, UUID4, root_validator
 
-from skill_management.enums import PlanEnum, StatusEnum, UserStatusEnum
+from skill_management.enums import PlanTypeEnum, StatusEnum, UserStatusEnum
 from skill_management.schemas.base import ResponseEnumData
 
 
@@ -13,7 +13,7 @@ class TaskBase(BaseModel):
 
 class TaskCreate(TaskBase):
     task_id: int | None = Field(None, description="id of task for plan creation ")
-    status: PlanEnum | None = Field(None, description="""status of task
+    status: PlanTypeEnum | None = Field(None, description="""status of task
     
     1: active, 3: delete""")
 
@@ -31,7 +31,7 @@ class TaskResponse(BaseModel):
 
 
 class PlanBase(BaseModel):
-    plan_type: PlanEnum | None = Field(None, description='''the type of the plan
+    plan_type: PlanTypeEnum | None = Field(None, description='''the type of the plan
     
     1: course, 2: exam''')
     notes: str | None = Field(max_length=255, description="notes for plan")
@@ -69,7 +69,7 @@ class PlanCreateRequest(PlanBase):
 
     @validator("plan_type", always=True)
     def validate_plan_type(cls, value: str) -> str | None:
-        if value not in [data.name for data in PlanEnum]:
+        if value not in [data.name for data in PlanTypeEnum]:
             raise ValueError("status must be valid")
         return value
 

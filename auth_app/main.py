@@ -1,9 +1,9 @@
 import os
 
 from fastapi import FastAPI
-from .config.config import initiate_database
-from .controller.router import api_router
-from .utils.logger import get_logger
+from auth_app.config.config import initiate_database
+from auth_app.controllers.router import api_router
+from auth_app.utils.logger import get_logger
 
 # API Doc
 if os.getenv("ENVIRONMENT") == "local":

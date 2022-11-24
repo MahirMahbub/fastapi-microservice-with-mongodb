@@ -43,6 +43,27 @@ services:
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - auth_rabbitmq
+  auth_mongodb:
+    container_name: auth_mongodb
+    image: bitnami/mongodb:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - auth_mongodb_data:/mongodb
+      - ./volume/mongodb-persistence:/mongodb
+    networks:
+      - auth_network
+
+  skill_management_mongodb:
+    container_name: skill_management_mongodb
+    image: bitnami/mongodb:latest
+    ports:
+      - "27018:27017"
+    volumes:
+      - skill_management_mongodb_data:/mongodb
+      - ./volume/mongodb-persistence_skill:/mongodb
+    networks:
+      - skill_management_network
 
   auth:
     build:
@@ -81,10 +102,7 @@ services:
       - skill_management_network
     restart: always
     depends_on:
-      #      - email_worker
-      #      - auth_rabbitmq
-      #      - auth_redis
-      - auth_mongodb
+      - skill_management_mongodb
 
   auth_celery_flower:
     container_name: "auth_celery_flower"
@@ -122,23 +140,13 @@ services:
       - auth_network
     restart: on-failure
 
-  auth_mongodb:
-    container_name: auth_mongodb
-    image: bitnami/mongodb:latest
-    ports:
-      - "27017:27017"
-    volumes:
-      - auth_mongodb_data:/bitnami/mongodb
-      - ./volume/mongodb-persistence:/bitnami/mongodb
-    networks:
-      - auth_network
-      - skill_management_network
 volumes:
   auth_rabbitmq_data:
   auth_redis_data:
   auth_flower_data:
   auth_mongodb_data:
   skill_management:
+  skill_management_mongodb_data:
 networks:
   auth_network:
     driver: bridge

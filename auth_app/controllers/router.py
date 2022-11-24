@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from auth_app.controller import test
+from auth_app.controllers import test
 from auth_app.schemas.user import UserRead, UserCreate, UserUpdate, UserReadVerify
 from auth_app.utils.auth_manager import fastapi_users, auth_backend
 

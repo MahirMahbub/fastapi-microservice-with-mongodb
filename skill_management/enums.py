@@ -1,7 +1,7 @@
 import enum
 
 
-class PlanEnum(enum.IntEnum):
+class PlanTypeEnum(enum.IntEnum):
     course: int = 1
     exam: int = 2
 
