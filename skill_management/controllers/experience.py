@@ -57,9 +57,9 @@ async def create_experience(request: Request,  # type: ignore
                             }, description="input experience data"),
                             user_id: str = Depends(JWTBearer())):
     """
-    **Create:** Must provide all the data except experience id [status is optional]
+    **Create:** Must provide all the data except *"experience_id"*. *"status"* is optional.
 
 
-    **Update:** Must provide experience id. Other attributes are optional.
+    **Update:** Must provide *"experience_id"*. Other attributes are optional.
     """
     pass

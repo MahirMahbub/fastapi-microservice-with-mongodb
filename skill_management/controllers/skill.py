@@ -27,14 +27,49 @@ logger = get_logger()
                        },
                    })
 async def create_skill(request: Request,  # type: ignore
-                       skill: CreateSkillDataRequest = Body(..., description="provide all required attributes to "
-                                                                             "create a new skill"),
+                       skill: CreateSkillDataRequest = Body(..., examples={
+                           "CREATE": {
+                               "summary": "Create Body",
+                               "description": "a example of body for create operation",
+                               "value": {
+                                   "skill_id": 1,
+                                   "experience_year": 4,
+                                   "number_of_projects": 4,
+                                   "level": 5,
+                                   "training_duration": 2,
+                                   "achievements": "1",
+                                   "achievements_description": "It is the achievement's description",
+                                   "certificate": "1",
+                               },
+                           },
+
+                           "UPDATE":
+                               {
+                                   "summary": "Update Body",
+                                   "description": "a example of body for update operation",
+                                   "value":
+                                       {
+                                           "skill_id": 1,
+                                           "experience_year": 4, # Optional
+                                           "number_of_projects": 4,
+                                           "level": 5,
+                                           "training_duration": 2,
+                                           "achievements": "1",
+                                           "achievements_description": "It is the achievement's description",
+                                           "certificate": "1",
+                                           "status": 2
+                                       },
+                               }
+
+                       },
+                                                            description="provide all required attributes to "
+                                                                        "create a new skill"),
                        user_id: str = Depends(JWTBearer())):
     """
-    **Create:** Must provide all the data for creating a new skill.
+    **Create:** Must provide all the data necessary including *"skill_id"* for creating a new skill. *"status"* is optional.
 
 
-    **Update:** For update purposes provide skill id. Other attributes are optional
+    **Update:** For update purposes provide *"skill_id"*. Other attributes are optional.
     """
     pass
 

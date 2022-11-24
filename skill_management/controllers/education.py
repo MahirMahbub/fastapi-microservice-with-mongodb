@@ -59,10 +59,10 @@ async def create_education(request: Request,  # type: ignore
                                description="input education data"),
                            user_id: str = Depends(JWTBearer())):
     """
-    **Create:** Must provide all the data except education id [status is optional]
+    **Create:** Must provide all the data except *"education_id"*. *"status"* is optional.
     
     
-    **Update:** Must provide education id. Other attributes are optional.
+    **Update:** Must provide *"education_id"*. Other attributes are optional.
     """
 
 

@@ -96,9 +96,9 @@ async def create_designation(request: Request,  # type: ignore
                              }, ),
                              user_id: str = Depends(JWTBearer())):
     """
-    **Create:** Must provide all the data for creating a new designation.
+    **Create:** Must provide all the data including *"designation_id"* for creating a new designation.
 
 
-    **Update:** For update purposes provide designation id. Other attributes are optional
+    **Update:** For update purposes provide *"designation_id"*. Other attributes are optional.
     """
     pass
