@@ -3,7 +3,7 @@ from datetime import datetime, date, timezone, timedelta
 
 from pydantic import Field, BaseModel, EmailStr, UUID4, validator
 
-from skill_management.schemas.base import EnumData, PaginatedResponse
+from skill_management.schemas.base import EnumData, PaginatedResponse, ResponseEnumData
 from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignationResponse
 from skill_management.schemas.education import ProfileEducationResponse
 from skill_management.schemas.experience import ProfileExperienceResponse
@@ -11,17 +11,17 @@ from skill_management.schemas.skill import ProfileSkillDataResponse, ProfileSkil
 
 
 class ProfileBase(BaseModel):
-    name: str = Field(max_length=20, min_length=2, description="name of the user")
+    name: str | None = Field(max_length=20, min_length=2, description="name of the user")
     # email: EmailStr = Field(description="email address of the user")
 
 
 class ProfileBasicResponse(ProfileBase):
-    id: UUID4 = Field(description="id of the user profile")
-    url: str = Field(description="api endpoint for profile details by id")
-    email: EmailStr = Field(description="email address of the user")
-    mobile: str = Field(description="mobile number of the user")
-    designation: DesignationDataResponse = Field(description="designation basic details of the profile user")
-    skills: list[ProfileSkillDataResponse]
+    id: UUID4 | None = Field(description="id of the user profile")
+    url: str | None = Field(description="api endpoint for profile details by id")
+    email: EmailStr | None = Field(description="email address of the user")
+    mobile: str | None = Field(description="mobile number of the user")
+    designation: DesignationDataResponse | None = Field(description="designation basic details of the profile user")
+    skills: list[ProfileSkillDataResponse] | None
 
     @validator("mobile", always=True)
     def validate_mobile(cls, value: str) -> str:
@@ -74,16 +74,27 @@ class ProfilePersonalDetails(BaseModel):
     experience_year: int = Field(description="experience year of the user")
 
 
+class ProfilePersonalDetailsResponse(BaseModel):
+    name: str | None = Field(max_length=20, min_length=2, description="name of the user")
+    date_of_birth: date | None = Field(description="date of birth of the user")
+    gender: int | None = Field(description="gender of the user")
+    mobile: str | None = Field(description="mobile number of the user")
+    address: str | None = Field(max_length=255, description="address of the user")
+    about: str | None = Field(max_length=500, description="about of the user")
+    _picture_url: str | None = Field(max_length=255, description="image response api url of user profile picture")
+    experience_year: int | None = Field(description="experience year of the user")
+
+
 class ProfileResponse(BaseModel):
-    id: UUID4 = Field(description="id of the user profile")
-    email: EmailStr = Field(description="email address of the user")
-    designation: ProfileDesignationResponse = Field(description="designation details of the profile user")
-    skills: list[ProfileSkillResponse]
-    experience: list[ProfileExperienceResponse]
-    education: list[ProfileEducationResponse]
-    personal_details: ProfilePersonalDetails
-    profile_status: EnumData = Field(description="profile status/ job type of the user")
-    _latest_cv_url: str = Field(description="latest CV file response api url")
+    id: UUID4 | None = Field(description="id of the user profile")
+    email: EmailStr | None = Field(description="email address of the user")
+    designation: ProfileDesignationResponse | None = Field(description="designation details of the profile user")
+    skills: list[ProfileSkillResponse] | None
+    experience: list[ProfileExperienceResponse] | None
+    education: list[ProfileEducationResponse] | None
+    personal_details: ProfilePersonalDetailsResponse | None
+    profile_status: ResponseEnumData | None = Field(description="profile status/ job type of the user")
+    _latest_cv_url: str | None = Field(description="latest CV file response api url")
 
     class Config:
         schema_extra = {
@@ -201,7 +212,7 @@ class ProfileResponse(BaseModel):
 
 
 class PaginatedProfileResponse(PaginatedResponse):
-    items: list[ProfileBasicResponse]
+    items: list[ProfileBasicResponse] | None
 
     class Config:
         schema_extra = {

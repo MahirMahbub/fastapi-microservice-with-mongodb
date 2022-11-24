@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, FilePath, validator
 
 from skill_management.enums import StatusEnum, UserStatusEnum
-from skill_management.schemas.base import EnumData
+from skill_management.schemas.base import ResponseEnumData
 
 
 class SkillCreate(BaseModel):
@@ -125,11 +125,50 @@ class CreateSkillDataRequest(SkillCreate):
         }
 
 
-class CreateSkillDataResponse(SkillExtraDataBase, SkillCreate):
-    skill_type: EnumData = Field(description="type of skill from fixed list of values")
-    skill_category: list[EnumData] = Field(max_items=7, description="category of skill from fixed list of items")
-    skill_name: str = Field(max_length=20, description="name of skill from fixed list of values")
-    status: EnumData = Field(description="status of skill from fixed list of values")
+class CreateSkillDataResponse(BaseModel):
+    skill_id: int | None = Field(description="id of skill")
+    skill_type: ResponseEnumData | None = Field(description="type of skill from fixed list of values")
+    skill_category: list[ResponseEnumData] | None = Field(max_items=7,
+                                                          description="category of skill from fixed list of items")
+    skill_name: str | None = Field(max_length=20, description="name of skill from fixed list of values")
+    status: ResponseEnumData | None = Field(description="status of skill from fixed list of values")
+    experience_year: int | None = Field(le=45, description="experience of the indicated skill")
+    number_of_projects: int | None = Field(le=80, description="number of projects on that skill")
+    level: int | None = Field(le=10, ge=1, description="level of proficiency on the skill")
+    training_duration: int | None = Field(le=100, description="training duration in months")
+    achievements: str | None = Field(max_length=1, description='''marker for having the achievements
+
+    0 or 1''')
+    achievements_description: str | None = Field(max_length=255, description="description of the achievement")
+    certificate: str | None = Field(max_length=1, description='''marker for having the certificate
+
+    0 or 1''')
+
+    @validator("achievements", always=True)
+    def validate_achievements(cls, value: str) -> str | None:
+        try:
+            ascii_value = ord(value)
+        except TypeError as type_exec:
+            raise ValueError("not a valid value, not a valid number marker")
+        if ascii_value > 49 or ascii_value < 48:
+            """
+            Ascii_value of "0" is 48 and "1" is 49.
+            """
+            raise ValueError("not a valid value, out of ascii value range")
+        return value
+
+    @validator("certificate", always=True)
+    def validate_certificate(cls, value: str) -> str | None:
+        try:
+            ascii_value = ord(value)
+        except TypeError as type_exec:
+            raise ValueError("not a valid value, not a valid number marker")
+        if ascii_value > 49 or ascii_value < 48:
+            """
+            Ascii_value of "0" is 48 and "1" is 49.
+            """
+            raise ValueError("not a valid value, out of ascii value range")
+        return value
 
     class Config:
         schema_extra = {
@@ -169,11 +208,12 @@ class CreateSkillDataResponse(SkillExtraDataBase, SkillCreate):
         }
 
 
-class GetSkillDataResponse(SkillCreate):
-    # id: int = Field(description="Id of skill to add to skill list")
-    skill_type: EnumData = Field(description="type of skill from fixed list of values")
-    skill_category: list[EnumData] = Field(max_items=7, description="category of skill from fixed list of items")
-    skill_name: str = Field(max_length=20, description="name of skill from fixed list of values")
+class GetSkillDataResponse(BaseModel):
+    skill_id: int | None = Field(description="id of skill")
+    skill_type: ResponseEnumData | None = Field(description="type of skill from fixed list of values")
+    skill_category: list[ResponseEnumData] | None = Field(max_items=7,
+                                                          description="category of skill from fixed list of items")
+    skill_name: str | None = Field(max_length=20, description="name of skill from fixed list of values")
 
     class Config:
         schema_extra = {
@@ -203,7 +243,7 @@ class GetSkillDataResponse(SkillCreate):
 
 
 class GetSkillDataResponseList(BaseModel):
-    skills: list[GetSkillDataResponse]
+    skills: list[GetSkillDataResponse]|None
 
     class Config:
         schema_extra = {
@@ -253,10 +293,11 @@ class GetSkillDataResponseList(BaseModel):
         }
 
 
-class ProfileSkillDataResponse(SkillCreate):
-    experience_year: int = Field(le=45, description="experience of the indicated skill")
-    level: int = Field(le=1, ge=10, description="level of proficiency on the skill")
-    skill_name: str = Field(max_length=20, description="name of skill from fixed list of values")
+class ProfileSkillDataResponse(BaseModel):
+    skill_id: int | None = Field(description="id of skill")
+    experience_year: int | None = Field(le=45, description="experience of the indicated skill")
+    level: int | None = Field(le=1, ge=10, description="level of proficiency on the skill")
+    skill_name: str | None = Field(max_length=20, description="name of skill from fixed list of values")
 
     class Config:
         schema_extra = {
@@ -269,5 +310,48 @@ class ProfileSkillDataResponse(SkillCreate):
         }
 
 
-class ProfileSkillResponse(CreateSkillDataResponse):
-    _filename_url: str = Field(max_length=255, description="file response api url of user profile picture")
+class ProfileSkillResponse(BaseModel):
+    skill_id: int | None = Field(description="id of skill")
+    skill_type: ResponseEnumData | None = Field(description="type of skill from fixed list of values")
+    skill_category: list[ResponseEnumData] | None = Field(max_items=7,
+                                                          description="category of skill from fixed list of items")
+    skill_name: str | None = Field(max_length=20, description="name of skill from fixed list of values")
+    status: ResponseEnumData | None = Field(description="status of skill from fixed list of values")
+    _filename_url: str | None = Field(max_length=255, description="file response api url of user profile picture")
+    experience_year: int | None = Field(le=45, description="experience of the indicated skill")
+    number_of_projects: int | None = Field(le=80, description="number of projects on that skill")
+    level: int | None = Field(le=10, ge=1, description="level of proficiency on the skill")
+    training_duration: int | None = Field(le=100, description="training duration in months")
+    achievements: str | None = Field(max_length=1, description='''marker for having the achievements
+
+    0 or 1''')
+    achievements_description: str | None = Field(max_length=255, description="description of the achievement")
+    certificate: str | None = Field(max_length=1, description='''marker for having the certificate
+
+    0 or 1''')
+
+    @validator("achievements", always=True)
+    def validate_achievements(cls, value: str) -> str | None:
+        try:
+            ascii_value = ord(value)
+        except TypeError as type_exec:
+            raise ValueError("not a valid value, not a valid number marker")
+        if ascii_value > 49 or ascii_value < 48:
+            """
+            Ascii_value of "0" is 48 and "1" is 49.
+            """
+            raise ValueError("not a valid value, out of ascii value range")
+        return value
+
+    @validator("certificate", always=True)
+    def validate_certificate(cls, value: str) -> str | None:
+        try:
+            ascii_value = ord(value)
+        except TypeError as type_exec:
+            raise ValueError("not a valid value, not a valid number marker")
+        if ascii_value > 49 or ascii_value < 48:
+            """
+            Ascii_value of "0" is 48 and "1" is 49.
+            """
+            raise ValueError("not a valid value, out of ascii value range")
+        return value

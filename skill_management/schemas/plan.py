@@ -4,7 +4,7 @@ from typing import Optional, Any
 from pydantic import BaseModel, Field, validator, UUID4, root_validator
 
 from skill_management.enums import PlanEnum, StatusEnum, UserStatusEnum
-from skill_management.schemas.base import EnumData
+from skill_management.schemas.base import ResponseEnumData
 
 
 class TaskBase(BaseModel):
@@ -13,7 +13,9 @@ class TaskBase(BaseModel):
 
 class TaskCreate(TaskBase):
     task_id: int | None = Field(None, description="id of task for plan creation ")
-    status: UserStatusEnum | None = Field(None, description="status of task")
+    status: UserStatusEnum | None = Field(None, description="""status of task
+    
+    1: active, 3: delete""")
 
     @validator("status", always=True)
     def validate_status(cls, value: str) -> str | None:
@@ -22,9 +24,10 @@ class TaskCreate(TaskBase):
         return value
 
 
-class TaskResponse(TaskBase):
-    id: int = Field(gt=0, description="autoincrement id of task")
-    status: EnumData = Field(description="status of skill from fixed list of values")
+class TaskResponse(BaseModel):
+    description: str | None = Field(max_length=255, description="description of task")
+    id: int | None = Field(gt=0, description="autoincrement id of task")
+    status: ResponseEnumData | None = Field(description="status of skill from fixed list of values")
 
 
 class PlanBase(BaseModel):
@@ -93,14 +96,14 @@ class PlanCreateRequest(PlanBase):
 
 
 class PlanCreateResponse(BaseModel):
-    id: UUID4 = Field(description="id of plan of type UUID")
-    plan_type: EnumData = Field(description="Fixed plan type")
-    notes: Optional[str] = Field(max_length=255, description="notes for plan")
-    skill_id: int = Field(gt=0, description="skill_id is related to skill collection")
-    profile_id: int = Field(gt=0, description="profile_id is related to profile collection")
-    task: list[TaskResponse] = Field([], description="task list for plan")
-    start_date: datetime = Field(description="start date of plan")
-    end_date: datetime = Field(description="end date of plan, must be none or greater than start_date")
+    id: UUID4 | None = Field(description="id of plan of type UUID")
+    plan_type: ResponseEnumData | None = Field(description="Fixed plan type")
+    notes: str | None = Field(max_length=255, description="notes for plan")
+    skill_id: int | None = Field(gt=0, description="skill_id is related to skill collection")
+    profile_id: int | None = Field(gt=0, description="profile_id is related to profile collection")
+    task: list[TaskResponse] | None = Field([], description="task list for plan")
+    start_date: datetime | None = Field(description="start date of plan")
+    end_date: datetime | None = Field(description="end date of plan, must be none or greater than start_date")
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> Optional[datetime]:

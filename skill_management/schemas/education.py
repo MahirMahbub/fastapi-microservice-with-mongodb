@@ -7,10 +7,10 @@ from skill_management.enums import UserStatusEnum
 
 
 class EducationBase(BaseModel):
-    degree_name: str = Field(max_length=30, description="degree name of the user education")
-    school_name: str = Field(max_length=30, description="school name of the user education")
-    passing_year: str = Field(max_length=4, description="passing year of the user education")
-    grade: float = Field(ge=2.5, le=5.0)
+    degree_name: str | None = Field(max_length=30, description="degree name of the user education")
+    school_name: str | None = Field(max_length=30, description="school name of the user education")
+    passing_year: str | None = Field(max_length=4, description="passing year of the user education")
+    grade: float | None = Field(ge=2.5, le=5.0)
 
     @validator("passing_year", always=True)
     def validate_passing_year(cls, value: str) -> str:
@@ -71,7 +71,7 @@ class EducationCreateRequest(BaseModel):
 
 
 class ProfileEducationResponse(EducationBase):
-    education_id: int = Field(gt=0, description="id of the user education")
+    education_id: int | None = Field(gt=0, description="id of the user education")
 
 
 class EducationCreateResponse(ProfileEducationResponse):

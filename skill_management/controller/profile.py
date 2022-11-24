@@ -4,7 +4,6 @@ from fastapi import Query, Depends, APIRouter, Path
 from fastapi.responses import ORJSONResponse
 from starlette.requests import Request
 
-from skill_management.enums import StatusEnum
 from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.profile import ProfileResponse, PaginatedProfileResponse
 from skill_management.utils.auth_manager import JWTBearerAdmin
@@ -58,10 +57,10 @@ async def get_user_profiles_for_admin(request: Request,  # type: ignore
                         },
                     }
                     )
-async def get_user_profile_by_email_for_admin(request: Request,  # type: ignore
-                                              profile_id: UUID = Path(...,
-                                                                      description="input profile id of the user",
-                                                                      alias="profile-id"),
-                                              profile_status: int | None = Query(ge=1, le=2, alias="profile-status"),
-                                              admin_user_id: str = Depends(JWTBearerAdmin())):
+async def get_user_profile_by_id_for_admin(request: Request,  # type: ignore
+                                           profile_id: UUID = Path(...,
+                                                                   description="input profile id of the user",
+                                                                   alias="profile-id"),
+                                           profile_status: int | None = Query(..., ge=1, le=2, alias="profile-status"),
+                                           admin_user_id: str = Depends(JWTBearerAdmin())):
     pass

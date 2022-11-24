@@ -4,7 +4,7 @@ from typing import Any
 from pydantic import BaseModel, Field, validator
 
 from skill_management.enums import UserStatusEnum
-from skill_management.schemas.base import EnumData
+from skill_management.schemas.base import EnumData, ResponseEnumData
 
 
 class DesignationBase(BaseModel):
@@ -18,7 +18,7 @@ class DesignationDataResponse(DesignationBase):
 class ProfileDesignationResponse(DesignationDataResponse):
     start_date: datetime | None = Field(description="start date of designated job")
     end_date: datetime | None = Field(description="end date of designated job")
-    designation_status: EnumData | None = Field(description="designation status of designated job")
+    designation_status: ResponseEnumData | None = Field(description="designation status of designated job")
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:

@@ -29,6 +29,6 @@ async def create_plan(request: Request,  # type: ignore
                       user_id: str = Depends(JWTBearer())):
     """
     **Create:** must provide skill_id, start_date, end_date, plan_type for creating a plan
-    **Update:** must plan_id. Others are optional
+    **Update:** must provide plan_id. Others are optional
     """
     pass

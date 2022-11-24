@@ -4,22 +4,23 @@ from typing import Any
 from pydantic import BaseModel, Field, validator, root_validator
 
 from skill_management.enums import StatusEnum, UserStatusEnum
-from skill_management.schemas.base import EnumData
+from skill_management.schemas.base import EnumData, ResponseEnumData
 
 
 class ProfileExperienceDesignationResponse(BaseModel):
-    designation_id: int = Field(description="designation id for profile experience")
-    designation: str = Field(description="designation for profile experience")
+    designation_id: int | None = Field(description="designation id for profile experience")
+    designation: str | None = Field(description="designation for profile experience")
 
 
 class ProfileExperienceResponse(BaseModel):
-    experience_id: int = Field(gt=0, description="autoincrement experience id for this profile")
-    company_name: str = Field(max_length=30, description="name of company that user worked on")
-    job_responsibility: str = Field(max_length=255, description="responsibility for job on the company")
-    designation: ProfileExperienceDesignationResponse = Field(description="designation for this profile experience")
-    start_date: datetime = Field(description="start date of experience")
-    end_date: datetime = Field(description="end date of experience")
-    status: EnumData = Field(description="designation status of experience")
+    experience_id: int | None = Field(gt=0, description="autoincrement experience id for this profile")
+    company_name: str | None = Field(max_length=30, description="name of company that user worked on")
+    job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
+    designation: ProfileExperienceDesignationResponse | None = Field(
+        description="designation for this profile experience")
+    start_date: datetime | None = Field(description="start date of experience")
+    end_date: datetime | None = Field(description="end date of experience")
+    status: ResponseEnumData | None = Field(description="designation status of experience")
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
