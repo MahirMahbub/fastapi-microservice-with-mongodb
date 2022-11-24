@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Request, Body, Depends, UploadFile, File, Path, Query
 from fastapi.responses import ORJSONResponse
 
+from skill_management.enums import SkillCategoryEnum
 from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.file import SkillCertificateResponse
 from skill_management.schemas.skill import CreateSkillDataResponse, CreateSkillDataRequest, GetSkillDataResponse, \
@@ -29,7 +30,6 @@ async def create_skill(request: Request,  # type: ignore
                        skill: CreateSkillDataRequest = Body(..., description="provide all required attributes to "
                                                                              "create a new skill"),
                        user_id: str = Depends(JWTBearer())):
-
     """
     **Create:** Must provide all the data for creating a new skill.
 
@@ -93,8 +93,11 @@ async def get_skill(request: Request,  # type: ignore
                   }
                   )
 async def get_skill_list(request: Request,  # type: ignore
-                         skill_category: str | None = Query(default=None, description="input skill category as string",
-                                                            alias="skill-category"),
+                         skill_category: SkillCategoryEnum | None = Query(default=None,
+                                                                          alias="skill-category",
+                                                                          description="""input skill category as string
+                                                                          
+    frontend: 1, backend: 2, devops: 3, qa: 4, database: 5, network: 6, fullstack: 7"""),
                          skill_name: str | None = Query(default=None, description="input skill name as string",
                                                         alias="skill-name"),
                          user_id: str = Depends(JWTBearer())):

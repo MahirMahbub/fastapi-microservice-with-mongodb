@@ -296,7 +296,7 @@ class GetSkillDataResponseList(BaseModel):
 class ProfileSkillDataResponse(BaseModel):
     skill_id: int | None = Field(description="id of skill")
     experience_year: int | None = Field(le=45, description="experience of the indicated skill")
-    level: int | None = Field(le=1, ge=10, description="level of proficiency on the skill")
+    level: int | None = Field(le=10, ge=1, description="level of proficiency on the skill")
     skill_name: str | None = Field(max_length=20, description="name of skill from fixed list of values")
 
     class Config:

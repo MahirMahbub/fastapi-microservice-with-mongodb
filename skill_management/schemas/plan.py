@@ -13,7 +13,7 @@ class TaskBase(BaseModel):
 
 class TaskCreate(TaskBase):
     task_id: int | None = Field(None, description="id of task for plan creation ")
-    status: UserStatusEnum | None = Field(None, description="""status of task
+    status: PlanEnum | None = Field(None, description="""status of task
     
     1: active, 3: delete""")
 
