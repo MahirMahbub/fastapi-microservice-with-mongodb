@@ -73,28 +73,6 @@ class PlanCreateRequest(PlanBase):
             raise ValueError("status must be valid")
         return value
 
-    class Config:
-        # validate_assignment = True
-        schema_extra = {
-            "example":
-                {
-                    "plan_type": "course",
-                    "notes": "It is a note for the planning",
-                    "skill_id": 1,
-                    "profile_id": 1,
-                    "start_date": datetime.now(timezone.utc),
-                    "end_date": datetime.now(timezone.utc) + timedelta(days=1),
-                    "task":
-                        [
-                            {
-                                "description": "It is a task for the planning",
-                                "status": "active"
-                            }
-                        ]
-                }
-        }
-
-
 class PlanCreateResponse(BaseModel):
     id: UUID4 | None = Field(description="id of plan of type UUID")
     plan_type: ResponseEnumData | None = Field(description="Fixed plan type")

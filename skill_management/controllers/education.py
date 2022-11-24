@@ -15,22 +15,55 @@ logger = get_logger()
                        response_model=EducationCreateResponse,
                        status_code=201,
                        responses={
-                            400: {
-                                "model": ErrorMessage,
-                                "description": "The education is not created"
-                            },
-                            201: {
-                                "description": "The education is successfully created",
-                            },
-                        },
+                           400: {
+                               "model": ErrorMessage,
+                               "description": "The education is not created"
+                           },
+                           201: {
+                               "description": "The education is successfully created",
+                           },
+                       },
                        )
 async def create_education(request: Request,  # type: ignore
-                           education: EducationCreateRequest = Body(..., description="input education data"),
+                           education: EducationCreateRequest = Body(
+                               examples={
+                                   "CREATE": {
+                                       "summary": "Create Body",
+                                       "description": "a example of body for create operation",
+                                       "value":
+                                           {
+                                               "degree_name": "B.Sc in Computer Science",
+                                               "school_name": "University of Dhaka",
+                                               "passing_year": "2019",
+                                               "grade": 3.80
+                                           }
+                                   },
+
+                                   "UPDATE":
+                                       {
+                                           "summary": "Update Body",
+                                           "description": "a example of body for update operation",
+                                           "value":
+                                               {
+                                                   "education_id": 1,
+                                                   "degree_name": "B.Sc in Computer Science",
+                                                   "school_name": "University of Dhaka",
+                                                   "passing_year": "2019",
+                                                   "grade": 3.80,
+                                                   "status": 1
+                                               },
+                                       }
+
+                               },
+
+                               description="input education data"),
                            user_id: str = Depends(JWTBearer())):
     """
     **Create:** Must provide all the data except education id [status is optional]
-
-
+    
+    
     **Update:** Must provide education id. Other attributes are optional.
     """
-    pass
+
+
+pass

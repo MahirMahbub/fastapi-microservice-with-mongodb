@@ -120,7 +120,7 @@ class CreateSkillDataRequest(SkillCreate):
                     "achievements": "1",
                     "achievements_description": "It is the achievement's description",
                     "certificate": "1",
-                    "status": "active"
+                    "status": 1
                 }
         }
 

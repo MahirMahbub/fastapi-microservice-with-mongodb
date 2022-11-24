@@ -25,7 +25,36 @@ logger = get_logger()
                         },
                         )
 async def create_experience(request: Request,  # type: ignore
-                            experience: ExperienceCreateRequest = Body(..., description="input experience data"),
+                            experience: ExperienceCreateRequest = Body(..., examples={
+                                "CREATE": {
+                                    "summary": "Create Body",
+                                    "description": "a example of body for create operation",
+                                    "value": {
+                                        "company_name": "X Software",
+                                        "job_responsibility": "Backend Development",
+                                        "designation_id": 2,
+                                        "start_date": "2021-07-12T11:55:30.858969+00:00",
+                                        "end_date": "2022-05-08T11:55:30.858980+00:00",
+                                    },
+                                },
+
+                                "UPDATE":
+                                    {
+                                        "summary": "Update Body",
+                                        "description": "a example of body for update operation",
+                                        "value":
+                                            {
+                                                "experience_id": 1,
+                                                "company_name": "X Software",
+                                                "job_responsibility": "Backend Development",
+                                                "designation_id": 2,
+                                                "start_date": "2021-07-12T11:55:30.858969+00:00",
+                                                "end_date": "2022-05-08T11:55:30.858980+00:00",
+                                                "status": 2
+                                            },
+                                    }
+
+                            }, description="input experience data"),
                             user_id: str = Depends(JWTBearer())):
     """
     **Create:** Must provide all the data except experience id [status is optional]

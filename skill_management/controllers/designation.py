@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, Path, Query
+from fastapi import APIRouter, Request, Depends, Path, Query, Body
 from fastapi.responses import ORJSONResponse
 
 from skill_management.schemas.base import ErrorMessage
@@ -68,7 +68,32 @@ async def get_designation_list(request: Request,  # type: ignore
                          }
                          )
 async def create_designation(request: Request,  # type: ignore
-                             designation: DesignationCreateRequest,
+                             designation: DesignationCreateRequest = Body(..., examples={
+                                 "CREATE": {
+                                     "summary": "Create Body",
+                                     "description": "a example of body for create operation",
+                                     "value":
+                                         {
+                                             "designation_id": 1,
+                                             "start_date": "2019-08-24T14:15:22Z",
+                                             "end_date": "2020-08-24T14:15:22Z",
+                                         },
+                                 },
+
+                                 "UPDATE":
+                                     {
+                                         "summary": "Update Body",
+                                         "description": "a example of body for update operation",
+                                         "value":
+                                             {
+                                                 "designation_id": 1,
+                                                 "start_date": "2019-08-24T14:15:22Z",
+                                                 "end_date": "2020-12-24T14:15:22Z",
+                                                 "status": 2
+                                             },
+                                     }
+
+                             }, ),
                              user_id: str = Depends(JWTBearer())):
     """
     **Create:** Must provide all the data for creating a new designation.

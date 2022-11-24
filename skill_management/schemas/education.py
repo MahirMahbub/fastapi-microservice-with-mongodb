@@ -58,16 +58,27 @@ class EducationCreateRequest(BaseModel):
             raise ValueError("Not a valid year, must be between 1970 and this year")
         return value
 
-    class Config:
-        schema_extra = {
-            "example":
-                {
-                    "degree_name": "B.Sc in Computer Science",
-                    "school_name": "University of Dhaka",
-                    "passing_year": "2019",
-                    "grade": 3.80
-                }
-        }
+    # class Config:
+    #     schema_extra = {
+    #         "examples":
+    #             {
+    #                 "normal":
+    #                     {
+    #                         "degree_name": "B.Sc in Computer Science",
+    #                         "school_name": "University of Dhaka",
+    #                         "passing_year": "2019",
+    #                         "grade": 3.80
+    #                     },
+    #                 "converted":
+    #                     {
+    #                         "degree_name": "B.Sc in Computer Science",
+    #                         "school_name": "University of Dhaka",
+    #                         "passing_year": "2019",
+    #                         "grade": 3.80,
+    #                         "status": 2
+    #                     },
+    #             }
+    #     }
 
 
 class ProfileEducationResponse(EducationBase):
@@ -79,7 +90,7 @@ class EducationCreateResponse(ProfileEducationResponse):
         schema_extra = {
             "example":
                 {
-                    "education_id": 2,
+                    "education_id": 1,
                     "degree_name": "B.Sc in Computer Science",
                     "school_name": "University of Dhaka",
                     "passing_year": "2019",

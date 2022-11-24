@@ -25,10 +25,52 @@ logger = get_logger()
                   },
                   )
 async def create_plan(request: Request,  # type: ignore
-                      plan: PlanCreateRequest = Body(...),
+                      plan: PlanCreateRequest = Body(..., examples={
+                          "CREATE": {
+                              "summary": "Create Body",
+                              "description": "a example of body for create operation",
+                              "value": {
+                                  "plan_type": "course",
+                                  "notes": "It is a note for the planning",
+                                  "skill_id": 1,
+                                  "start_date": "2022-11-24T11:59:28.549417+00:00",
+                                  "end_date": "2022-11-25T11:59:28.549421+00:00",
+                                  "task": [
+                                      {
+                                          "description": "It is a task for the planning",
+                                          "status": 1
+                                      }
+                                  ]
+                              },
+                          },
+
+                          "UPDATE":
+                              {
+                                  "summary": "Update Body",
+                                  "description": "a example of body for update operation",
+                                  "value":
+                                      {
+                                          "plan_id": "954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0",
+                                          "plan_type": "course",
+                                          "notes": "It is a note for the planning",
+                                          "skill_id": 1,
+                                          "start_date": "2022-11-24T11:59:28.549417+00:00",
+                                          "end_date": "2022-11-25T11:59:28.549421+00:00",
+                                      },
+                                  "task": [
+                                      {
+                                          "task_id": 1,
+                                          "description": "It is a task for the planning",
+                                          "status": 2
+                                      }
+                                  ]
+                              }
+
+                      }, ),
                       user_id: str = Depends(JWTBearer())):
     """
     **Create:** must provide skill_id, start_date, end_date, plan_type for creating a plan
-    **Update:** must provide plan_id. Others are optional
+    
+    **Update:** must provide plan_id for plan update and task_id for task update. Others are optional
     """
     pass
