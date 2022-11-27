@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, validator
 
 from skill_management.enums import FileTypeEnum, StatusEnum
-from skill_management.schemas.base import EnumData
+from skill_management.schemas.base import EnumData, ResponseEnumData
 
 
 class ProfileCVFileUpload(BaseModel):
@@ -14,7 +14,7 @@ class FileUploadResponse(BaseModel):
     file_name: str = Field(description="name of the file to be uploaded")
     file_type: EnumData = Field(description="type of file to be uploaded")
     file_size: int = Field(le=2040, description="file size in KB")
-    status: str = Field(description="status")
+    status: ResponseEnumData = Field(description="status")
 
     @validator("file_type", always=True)
     def validate_file_type(cls, value: str) -> str | None:
@@ -22,11 +22,11 @@ class FileUploadResponse(BaseModel):
             raise ValueError("file type must be valid")
         return value
 
-    @validator("status", always=True)
-    def validate_status(cls, value: str) -> str | None:
-        if value not in [data.name for data in StatusEnum]:
-            raise ValueError("status must be valid")
-        return value
+    # @validator("status", always=True)
+    # def validate_status(cls, value: str) -> str | None:
+    #     if value not in [data.name for data in StatusEnum]:
+    #         raise ValueError("status must be valid")
+    #     return value
 
 
 class ResumeUploadResponse(FileUploadResponse):

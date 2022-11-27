@@ -1,4 +1,6 @@
-from beanie import Document
+from beanie import Document, Link
+
+from skill_management.models.skill import Skill
 
 
 # class Plan(Document):

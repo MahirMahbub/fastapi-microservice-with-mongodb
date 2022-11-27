@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, validator, root_validator
 
-from skill_management.enums import UserStatusEnum
+from skill_management.enums import UserStatusEnum, StatusEnum
 
 
 class EducationBase(BaseModel):
@@ -21,6 +21,18 @@ class EducationBase(BaseModel):
         if not 1971 <= passing_year <= date.today().year:
             raise ValueError("Not a valid year, must be between 1970 and this year")
         return value
+
+
+class ProfileEducation(BaseModel):
+    education_id: int = Field(ge=1, description="id of user's education")
+    degree_name: str | None = Field(None, max_length=30, description="degree name of the user's education")
+    school_name: str | None = Field(None, max_length=30, description="school name of the user's education")
+    passing_year: str | None = Field(None, max_length=4, description="passing year of the user's education")
+    grade: float | None = Field(None, ge=2.5, le=5.0, description="grade of the user's education'")
+    status: StatusEnum = Field(StatusEnum.active,
+                               description="""education data validity status
+
+    1: active, 3: delete""")
 
 
 class EducationCreateRequest(BaseModel):
@@ -57,28 +69,6 @@ class EducationCreateRequest(BaseModel):
         if not 1971 <= passing_year <= date.today().year:
             raise ValueError("Not a valid year, must be between 1970 and this year")
         return value
-
-    # class Config:
-    #     schema_extra = {
-    #         "examples":
-    #             {
-    #                 "normal":
-    #                     {
-    #                         "degree_name": "B.Sc in Computer Science",
-    #                         "school_name": "University of Dhaka",
-    #                         "passing_year": "2019",
-    #                         "grade": 3.80
-    #                     },
-    #                 "converted":
-    #                     {
-    #                         "degree_name": "B.Sc in Computer Science",
-    #                         "school_name": "University of Dhaka",
-    #                         "passing_year": "2019",
-    #                         "grade": 3.80,
-    #                         "status": 2
-    #                     },
-    #             }
-    #     }
 
 
 class ProfileEducationResponse(EducationBase):

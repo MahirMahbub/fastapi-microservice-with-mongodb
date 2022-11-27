@@ -1,9 +1,11 @@
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
+from beanie import Link
 from pydantic import BaseModel, Field, validator, root_validator
 
 from skill_management.enums import StatusEnum, UserStatusEnum
+from skill_management.models.designation import Designation
 from skill_management.schemas.base import EnumData, ResponseEnumData
 
 
@@ -13,7 +15,7 @@ class ProfileExperienceDesignationResponse(BaseModel):
 
 
 class ProfileExperienceResponse(BaseModel):
-    experience_id: int | None = Field(gt=0, description="autoincrement experience id for this profile")
+    experience_id: int | None = Field(ge=1, description="autoincrement experience id for this profile")
     company_name: str | None = Field(max_length=30, description="name of company that user worked on")
     job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
     designation: ProfileExperienceDesignationResponse | None = Field(
@@ -21,6 +23,25 @@ class ProfileExperienceResponse(BaseModel):
     start_date: datetime | None = Field(description="start date of experience")
     end_date: datetime | None = Field(description="end date of experience")
     status: ResponseEnumData | None = Field(description="designation status of experience")
+
+    @validator("end_date", always=True)
+    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+        if values["start_date"] is None:
+            return None
+        if values["start_date"] > value:
+            raise ValueError("end_date must be greater than start_date")
+        return value
+
+
+class ProfileExperience(BaseModel):
+    experience_id: int = Field(ge=1, description="autoincrement experience id for this profile")
+    company_name: str = Field(max_length=30, description="name of company that user worked on")
+    job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
+    designation: Link[Designation] = Field(
+        description="designation for this profile experience")
+    start_date: datetime | None = Field(description="start date of experience")
+    end_date: datetime | None = Field(description="end date of experience")
+    status: StatusEnum = Field(default=StatusEnum.active, description="designation status of experience")
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:

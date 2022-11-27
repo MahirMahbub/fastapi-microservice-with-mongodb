@@ -68,10 +68,9 @@ class ProfilePersonalDetails(BaseModel):
     date_of_birth: date = Field(description="date of birth of the user")
     gender: int = Field(description="gender of the user")
     mobile: str = Field(description="mobile number of the user")
-    address: str = Field(max_length=255, description="address of the user")
-    about: str = Field(max_length=500, description="about of the user")
-    _picture_url: str = Field(max_length=255, description="image response api url of user profile picture")
-    experience_year: int = Field(description="experience year of the user")
+    address: str | None = Field(max_length=255, description="address of the user")
+    about: str | None = Field(max_length=500, description="about of the user")
+    experience_year: int | None = Field(description="experience year of the user")
 
 
 class ProfilePersonalDetailsResponse(BaseModel):

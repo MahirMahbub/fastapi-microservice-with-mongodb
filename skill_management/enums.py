@@ -48,3 +48,10 @@ class FileTypeEnum(enum.IntEnum):
     resume: int = 2
     letter: int = 3
     certificate: int = 4
+
+
+class ProfileStatusEnum(enum.IntEnum):
+    full_time: int = 1
+    part_time: int = 2
+    delete: int = 3
+    inactive: int = 4
