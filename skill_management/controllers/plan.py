@@ -56,14 +56,15 @@ async def create_plan(request: Request,  # type: ignore
                                           "skill_id": 1,
                                           "start_date": "2022-11-24T11:59:28.549417+00:00",
                                           "end_date": "2022-11-25T11:59:28.549421+00:00",
-                                      },
-                                  "task": [
-                                      {
-                                          "task_id": 1,
-                                          "description": "It is a task for the planning",
-                                          "status": 2
+
+                                          "task": [
+                                              {
+                                                  "task_id": 1,
+                                                  "description": "It is a task for the planning",
+                                                  "status": 2
+                                              }
+                                          ]
                                       }
-                                  ]
                               }
 
                       }, ),
