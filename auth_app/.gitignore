@@ -2,3 +2,4 @@
 /.idea/
 /.mypy_cache/
 /logs/
+/auth-mongodb.env
