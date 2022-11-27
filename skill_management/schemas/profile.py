@@ -321,7 +321,10 @@ class ProfileBasicForAdminRequest(BaseModel):
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
-    profile_status: ProfileStatusEnum | None = Field(default=ProfileStatusEnum.inactive)
+    profile_status: ProfileStatusEnum | None = Field(default=ProfileStatusEnum.inactive, description="""profile status of the user
+    
+    full_time: 1, part_time: 2, delete: 3, inactive: 4
+    """)
 
     @validator("date_of_birth", always=True)
     def validate_date_of_birth(cls, value: datetime) -> datetime:

@@ -11,7 +11,6 @@ class EnumType(BaseModel):
     name: str
 
 
-
 class PlanType(EnumType, Document):
     pass
 

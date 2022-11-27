@@ -409,7 +409,7 @@ paths:
         **Create:** Must provide *"email"*, *"name"*, *"designation_id"* except *"profile_id"*. Other attributes are optional.
 
 
-        **Update:** Must provide *"profile_id"*. , Should not provide *"email"*, *"name"*, *"designation_id"*. Other attributes are optional.
+        **Update:** Must provide *"profile_id"*. Should not provide *"email"*, *"name"*, *"designation_id"*. Other attributes are optional.
       operationId: create_user_profile_by_user_api_v1_user_profiles__post
       requestBody:
         content:
@@ -430,7 +430,7 @@ paths:
                 description: a example of body for update operation
                 summary: Update Body
                 value:
-                  profile_id: ef385f37-1ea7-4463-9610-ffef3ddb6562
+                  profile_id: 22a82835-afff-40a1-b08f-d26e6eb9eabf
                   date_of_birth: 1995-07-12
                   gender: 2
                   mobile: +01611123456
@@ -471,7 +471,7 @@ paths:
         **Create:** Must provide *"email"*, *"name"*, *"designation_id"* except *"profile_id"*. Other attributes are optional.
 
 
-        **Update:** Must provide *"profile_id"*. , Should not provide *"email"*. Other attributes are optional.
+        **Update:** Must provide *"profile_id"*. Should not provide *"email"*. Other attributes are optional.
       operationId: create_user_profile_by_admin_api_v1_admin_user_profiles__post
       requestBody:
         content:
@@ -493,7 +493,7 @@ paths:
                 description: a example of body for update operation
                 summary: Update Body
                 value:
-                  profile_id: 4e56c5c0-790b-4baf-8651-549564a09280
+                  profile_id: cd0e7e19-42fb-4d85-8d1f-0711570bdfcf
                   name: Chelsey Adams
                   date_of_birth: 1995-07-12
                   gender: 2
@@ -1218,8 +1218,8 @@ components:
         company_name: X Software
         job_responsibility: Backend Development
         designation_id: 2
-        start_date: 2021-07-15T15:05:27.501644+00:00
-        end_date: 2022-05-11T15:05:27.501654+00:00
+        start_date: 2021-07-15T15:14:51.577959+00:00
+        end_date: 2022-05-11T15:14:51.577986+00:00
         status: 1
       properties:
         experience_id:
@@ -1266,8 +1266,8 @@ components:
         designation:
           designation_id: 2
           designation: Software Developer
-        start_date: 2021-07-15T15:05:27.508644+00:00
-        end_date: 2022-05-11T15:05:27.508655+00:00
+        start_date: 2021-07-15T15:14:51.588877+00:00
+        end_date: 2022-05-11T15:14:51.588891+00:00
         status:
           id: 1
           name: active
@@ -1510,8 +1510,8 @@ components:
         notes: It is a note for the planning
         skill_id: 1
         profile_id: 1
-        start_date: 2022-11-27T15:05:27.860818+00:00
-        end_date: 2022-11-28T15:05:27.860825+00:00
+        start_date: 2022-11-27T15:14:52.047801+00:00
+        end_date: 2022-11-28T15:14:52.047807+00:00
         task:
         - id: 1
           description: It is a task for the planning
@@ -1612,6 +1612,8 @@ components:
         profile_status:
           allOf:
           - $ref: '#/components/schemas/ProfileStatusEnum'
+          description: "profile status of the user\n    \n    full_time = 1, part_time:\
+            \ int = 2, delete: int = 3, inactive: int = 4\n    "
       title: ProfileBasicForAdminRequest
       type: object
     ProfileBasicRequest:
@@ -1916,8 +1918,8 @@ components:
         designation:
           designation: Software Engineer
           designation_id: 1
-          start_date: 2022-11-27T15:05:27.713683+00:00
-          end_date: 2022-11-28T15:05:27.713695+00:00
+          start_date: 2022-11-27T15:14:51.863384+00:00
+          end_date: 2022-11-28T15:14:51.863389+00:00
           designation_status:
             id: 1
             name: active
@@ -1960,8 +1962,8 @@ components:
           designation:
             designation_id: 1
             designation: Software Developer
-          start_date: 2020-03-02T15:05:27.714100+00:00
-          end_date: 2021-07-15T15:05:27.714115+00:00
+          start_date: 2020-03-02T15:14:51.863411+00:00
+          end_date: 2021-07-15T15:14:51.863414+00:00
           status:
             id: 1
             name: active
@@ -1971,8 +1973,8 @@ components:
           designation:
             designation_id: 1
             designation: Software Engineer
-          start_date: 2021-07-15T15:05:27.714188+00:00
-          end_date: 2022-05-11T15:05:27.714207+00:00
+          start_date: 2021-07-15T15:14:51.863418+00:00
+          end_date: 2022-05-11T15:14:51.863421+00:00
           status:
             id: 1
             name: active
