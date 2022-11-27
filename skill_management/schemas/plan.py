@@ -17,17 +17,23 @@ class TaskCreate(TaskBase):
     
     1: active, 3: delete""")
 
-    @validator("status", always=True)
-    def validate_status(cls, value: str) -> str | None:
-        if value not in [data.name for data in StatusEnum]:
-            raise ValueError("status must be valid")
-        return value
+    # @validator("status", always=True)
+    # def validate_status(cls, value: str) -> str | None:
+    #     if value not in [data.name for data in StatusEnum]:
+    #         raise ValueError("status must be valid")
+    #     return value
 
 
 class TaskResponse(BaseModel):
     description: str | None = Field(max_length=255, description="description of task")
-    id: int | None = Field(gt=0, description="autoincrement id of task")
+    id: int | None = Field(ge=1, description="autoincrement id of task")
     status: ResponseEnumData | None = Field(description="status of skill from fixed list of values")
+
+
+class Task(BaseModel):
+    id: int = Field(ge=1, description="autoincrement id of task")
+    description: str | None = Field(max_length=255, description="description of task")
+    status: StatusEnum = Field(StatusEnum.active, description="status of skill from fixed list of values")
 
 
 class PlanBase(BaseModel):
@@ -72,6 +78,7 @@ class PlanCreateRequest(PlanBase):
         if value not in [data.name for data in PlanTypeEnum]:
             raise ValueError("status must be valid")
         return value
+
 
 class PlanCreateResponse(BaseModel):
     id: UUID4 | None = Field(description="id of plan of type UUID")

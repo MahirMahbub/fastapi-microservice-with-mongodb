@@ -10,12 +10,17 @@ from skill_management.schemas.profile import ProfilePersonalDetails
 from skill_management.schemas.skill import ProfileSkill
 
 
-class Profile(Document):
+class Profiles(Document):
     user_id: PydanticObjectId
     personal_detail: ProfilePersonalDetails
     profile_status: ProfileStatusEnum = ProfileStatusEnum.inactive
     designation: list[ProfileDesignation]
     skills: list[ProfileSkill]
     experiences: list[ProfileExperience]
-    education:list[ProfileEducation]
+    education: list[ProfileEducation]
     cv_files: list[Link[Files]]
+
+    class Settings:
+        use_revision = True
+        use_state_management = True
+        validate_on_save = True

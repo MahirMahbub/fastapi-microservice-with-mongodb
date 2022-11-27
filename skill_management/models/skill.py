@@ -5,8 +5,13 @@ from beanie import Document
 from skill_management.enums import SkillTypeEnum, SkillCategoryEnum
 
 
-class Skill(Document):
+class Skills(Document):
     id: int
     skill_name: str
     skill_type: SkillTypeEnum
     skill_categories: List[SkillCategoryEnum]
+
+    class Settings:
+        use_revision = True
+        use_state_management = True
+        validate_on_save = True

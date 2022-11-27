@@ -11,3 +11,8 @@ class Files(Document):
     file_type: EnumData = Field(description="type of file to be uploaded")
     file_size: int = Field(le=2040, description="file size in KB")
     status: StatusEnum = Field(description="status of the file")
+
+    class Settings:
+        use_revision = True
+        use_state_management = True
+        validate_on_save = True
