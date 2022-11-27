@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, validator
 
-from skill_management.enums import UserStatusEnum
+from skill_management.enums import UserStatusEnum, DesignationStatusEnum
 from skill_management.schemas.base import EnumData, ResponseEnumData
 
 
@@ -35,8 +35,8 @@ class DesignationCreateRequest(BaseModel):
     end_date: datetime | None = Field(description='''end date of designated job
     
     > start_date''')
-    status: UserStatusEnum | None = Field(UserStatusEnum.active,
-                                          description="""designation data validity status
+    status: DesignationStatusEnum | None = Field(DesignationStatusEnum.active,
+                                                 description="""designation data validity status
                                            
     1: active, 3: delete""")
 

@@ -5,15 +5,15 @@ from beanie import Document, Link
 from pydantic import Field, validator
 
 from skill_management.enums import PlanTypeEnum
-from skill_management.models.profile import Profile
-from skill_management.models.skill import Skill
+from skill_management.models.profile import Profiles
+from skill_management.models.skill import Skills
 from skill_management.schemas.plan import Task
 
 
 class Plans(Document):
-    skill: Link[Skill]
-    profile_id: Link[Profile]
-    plan_type: Link[PlanTypeEnum]
+    skill: Link[Skills]
+    profile_id: Link[Profiles]
+    plan_type: PlanTypeEnum
     notes: str = Field(max_length=255, description="notes on the plan")
     start_date: datetime | None = Field(description="start date of plan")
     end_date: datetime | None = Field(description="end date of plan")

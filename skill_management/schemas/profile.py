@@ -1,9 +1,11 @@
 import re
 from datetime import datetime, date, timezone, timedelta
+from typing import Any
 
-from pydantic import Field, BaseModel, EmailStr, UUID4, validator
+from pydantic import Field, BaseModel, EmailStr, UUID4, validator, ValidationError, root_validator
 
-from skill_management.schemas.base import EnumData, PaginatedResponse, ResponseEnumData
+from skill_management.enums import GenderEnum, ProfileStatusEnum
+from skill_management.schemas.base import PaginatedResponse, ResponseEnumData
 from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignationResponse
 from skill_management.schemas.education import ProfileEducationResponse
 from skill_management.schemas.experience import ProfileExperienceResponse
@@ -12,7 +14,6 @@ from skill_management.schemas.skill import ProfileSkillDataResponse, ProfileSkil
 
 class ProfileBase(BaseModel):
     name: str | None = Field(max_length=20, min_length=2, description="name of the user")
-    # email: EmailStr = Field(description="email address of the user")
 
 
 class ProfileBasicResponse(ProfileBase):
@@ -65,23 +66,37 @@ class ProfileBasicResponse(ProfileBase):
 
 class ProfilePersonalDetails(BaseModel):
     name: str = Field(max_length=20, min_length=2, description="name of the user")
-    date_of_birth: date = Field(description="date of birth of the user")
-    gender: int = Field(description="gender of the user")
+    date_of_birth: date = Field(description="""date of birth of the user
+    > 15 years or 5844 days
+    """)
+    gender: GenderEnum = Field(description="gender of the user")
     mobile: str = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     about: str | None = Field(max_length=500, description="about of the user")
     experience_year: int | None = Field(description="experience year of the user")
 
+    @validator("date_of_birth", always=True)
+    def validate_date_of_birth(cls, value: datetime) -> datetime:
+        if abs((datetime.now() - value).days) < 5844:
+            raise ValidationError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
+        return value
+
 
 class ProfilePersonalDetailsResponse(BaseModel):
     name: str | None = Field(max_length=20, min_length=2, description="name of the user")
     date_of_birth: date | None = Field(description="date of birth of the user")
-    gender: int | None = Field(description="gender of the user")
+    gender: ResponseEnumData | None = Field(description="gender of the user")
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     about: str | None = Field(max_length=500, description="about of the user")
     _picture_url: str | None = Field(max_length=255, description="image response api url of user profile picture")
     experience_year: int | None = Field(description="experience year of the user")
+
+    @validator("date_of_birth", always=True)
+    def validate_date_of_birth(cls, value: datetime) -> datetime:
+        if abs((datetime.now() - value).days) < 5844:
+            raise ValidationError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
+        return value
 
 
 class ProfileResponse(BaseModel):
@@ -115,7 +130,11 @@ class ProfileResponse(BaseModel):
                         {
                             "name": "Chelsey Adams",
                             "date_of_birth": datetime.now(timezone.utc).date() - timedelta(days=10000),
-                            "gender": 1,
+                            "gender":
+                                {
+                                    "id": 1,
+                                    "name": "female"
+                                },
                             "mobile": "+01611123456",
                             "address": "House: X, State:Y, Z, Country",
                             "about": "Personal Information",
@@ -252,3 +271,80 @@ class PaginatedProfileResponse(PaginatedResponse):
                     "pages": 10
                 }
         }
+
+
+class ProfileBasicRequest(BaseModel):
+    profile_id: UUID4 | None = Field(description="profile id of the user for update")
+    email: EmailStr | None = Field(description="Email address of the user")
+    name: str | None = Field(max_length=20, min_length=2, description="name of the user")
+    date_of_birth: date | None = Field(description="date of birth of the user")
+    gender: GenderEnum | None = Field(description="gender of the user")
+    mobile: str | None = Field(description="mobile number of the user")
+    address: str | None = Field(max_length=255, description="address of the user")
+    designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
+
+    @validator("date_of_birth", always=True)
+    def validate_date_of_birth(cls, value: datetime) -> datetime:
+        if abs(datetime.now() - value).days < 5844:
+            raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
+        return value
+
+    @root_validator
+    def any_of(cls, v: dict[str, Any]) -> dict[str, Any]:
+        profile_id = v.pop('profile_id')
+        if profile_id is None:
+            email = v.pop('email')
+            name = v.pop('name')
+            designation_id = v.pop('designation_id')
+            if email is None or name is None or designation_id is None:
+                raise ValueError('You must provide email, name and designation for creating a profile')
+            v["email"] = email
+            v["name"] = name
+            v["designation_id"] = designation_id
+        else:
+            email = v.pop('email')
+            name = v.pop('name')
+            designation_id = v.pop('designation_id')
+            if email is not None or name is not None or designation_id is not None:
+                raise ValueError('You should not provide email, name and designation for updating a profile')
+        v["profile_id"] = profile_id
+
+        return v
+
+
+class ProfileBasicForAdminRequest(BaseModel):
+    profile_id: UUID4 | None = Field(description="profile id of the user for update")
+    email: EmailStr | None = Field(description="Email address of the user")
+    name: str | None = Field(max_length=20, min_length=2, description="name of the user")
+    date_of_birth: date | None = Field(description="date of birth of the user")
+    gender: GenderEnum | None = Field(description="gender of the user")
+    mobile: str | None = Field(description="mobile number of the user")
+    address: str | None = Field(max_length=255, description="address of the user")
+    designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
+    profile_status: ProfileStatusEnum | None = Field(default=ProfileStatusEnum.inactive)
+
+    @validator("date_of_birth", always=True)
+    def validate_date_of_birth(cls, value: datetime) -> datetime:
+        if abs(datetime.now() - value).days < 5844:
+            raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
+        return value
+
+    @root_validator
+    def any_of(cls, v: dict[str, Any]) -> dict[str, Any]:
+        profile_id = v.pop('profile_id')
+        if profile_id is None:
+            email = v.pop('email')
+            name = v.pop('name')
+            designation_id = v.pop('designation_id')
+            if email is None or name is None or designation_id is None:
+                raise ValueError('You must provide email, name and designation for creating a profile')
+            v["email"] = email
+            v["name"] = name
+            v["designation_id"] = designation_id
+        else:
+            email = v.pop('email')
+            if email is not None:
+                raise ValueError('You should not provide email for updating a profile')
+        v["profile_id"] = profile_id
+
+        return v

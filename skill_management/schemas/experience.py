@@ -5,8 +5,8 @@ from beanie import Link
 from pydantic import BaseModel, Field, validator, root_validator
 
 from skill_management.enums import StatusEnum, UserStatusEnum
-from skill_management.models.designation import Designation
-from skill_management.schemas.base import EnumData, ResponseEnumData
+from skill_management.models.designation import Designations
+from skill_management.schemas.base import ResponseEnumData
 
 
 class ProfileExperienceDesignationResponse(BaseModel):
@@ -37,7 +37,7 @@ class ProfileExperience(BaseModel):
     experience_id: int = Field(ge=1, description="autoincrement experience id for this profile")
     company_name: str = Field(max_length=30, description="name of company that user worked on")
     job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
-    designation: Link[Designation] = Field(
+    designation: Link[Designations] = Field(
         description="designation for this profile experience")
     start_date: datetime | None = Field(description="start date of experience")
     end_date: datetime | None = Field(description="end date of experience")
