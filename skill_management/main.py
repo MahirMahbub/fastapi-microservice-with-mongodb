@@ -1,7 +1,9 @@
+import json
 import os
 
 from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
+from fastapi.openapi.utils import get_openapi
 
 from skill_management.config.config import initiate_database
 from skill_management.controllers.router import api_router
@@ -39,6 +41,16 @@ async def start_database() -> None:
     logger.info("Initiating database........")
     await initiate_database()
     logger.info("Initiating database completed........")
+    with open('openapi/skill_management/openapi.json', 'w') as f:
+        json.dump(get_openapi(
+            title=skill_app.title,
+            version=skill_app.version,
+            openapi_version=skill_app.openapi_version,
+            description=skill_app.description,
+            routes=skill_app.routes,
+        ), f)
+
+    logger.info("OpenAPI specification created.........")
 
 #
 # PORT = 8000

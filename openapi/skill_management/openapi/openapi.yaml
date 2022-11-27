@@ -1,0 +1,2077 @@
+openapi: 3.0.2
+info:
+  description: Skill Management Application
+  title: SkillManagementApp
+  version: 1.0.0
+servers:
+- url: /
+paths:
+  /api/v1/hello/{name}:
+    get:
+      operationId: say_hello_api_v1_hello__name__get
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Say Hello
+  /api/v1/profile/plans:
+    post:
+      description: |-
+        **Create:** must provide *"skill_id"*, *"start_date"*, *"end_date"*, *"plan_type"* for creating a plan.
+
+        **Update:** must provide *"plan_id"* for plan update and *"task_id"* for task update. Others are optional.
+      operationId: create_plan_api_v1_profile_plans_post
+      requestBody:
+        content:
+          application/json:
+            examples:
+              CREATE:
+                description: a example of body for create operation
+                summary: Create Body
+                value:
+                  plan_type: course
+                  notes: It is a note for the planning
+                  skill_id: 1
+                  start_date: 2022-11-24T11:59:28.549417+00:00
+                  end_date: 2022-11-25T11:59:28.549421+00:00
+                  task:
+                  - description: It is a task for the planning
+                    status: 1
+              UPDATE:
+                description: a example of body for update operation
+                summary: Update Body
+                value:
+                  plan_id: 954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0
+                  plan_type: course
+                  notes: It is a note for the planning
+                  skill_id: 1
+                  start_date: 2022-11-24T11:59:28.549417+00:00
+                  end_date: 2022-11-25T11:59:28.549421+00:00
+                  task:
+                  - task_id: 1
+                    description: It is a task for the planning
+                    status: 2
+            schema:
+              $ref: '#/components/schemas/PlanCreateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlanCreateResponse'
+          description: The plan is successfully created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The plan is not created
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Create Plan
+      tags:
+      - plan
+  /api/v1/profile/skills:
+    post:
+      description: |-
+        **Create:** Must provide all the data necessary including *"skill_id"* for creating a new skill. *"status"* is optional.
+
+
+        **Update:** For update purposes provide *"skill_id"*. Other attributes are optional.
+      operationId: create_skill_api_v1_profile_skills_post
+      requestBody:
+        content:
+          application/json:
+            examples:
+              CREATE:
+                description: a example of body for create operation
+                summary: Create Body
+                value:
+                  skill_id: 1
+                  experience_year: 4
+                  number_of_projects: 4
+                  level: 5
+                  training_duration: 2
+                  achievements: "1"
+                  achievements_description: It is the achievement's description
+                  certificate: "1"
+              UPDATE:
+                description: a example of body for update operation
+                summary: Update Body
+                value:
+                  skill_id: 1
+                  experience_year: 4
+                  number_of_projects: 4
+                  level: 5
+                  training_duration: 2
+                  achievements: "1"
+                  achievements_description: It is the achievement's description
+                  certificate: "1"
+                  status: 2
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/CreateSkillDataRequest'
+              description: provide all required attributes to create a new skill
+              title: Skill
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateSkillDataResponse'
+          description: The skill is successfully created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The skill is not created
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Create Skill
+      tags:
+      - skill
+  /api/v1/profile/skills/upload-certificate:
+    post:
+      operationId: upload_certificate_api_v1_profile_skills_upload_certificate_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_certificate_api_v1_profile_skills_upload_certificate_post'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SkillCertificateResponse'
+          description: The certificates are successfully uploaded
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The certificates are not uploaded
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Upload Certificate
+      tags:
+      - skill
+  /api/v1/skills/{skill-id}:
+    get:
+      operationId: get_skill_api_v1_skills__skill_id__get
+      parameters:
+      - description: provide skill id to get skill information
+        explode: false
+        in: path
+        name: skill-id
+        required: true
+        schema:
+          description: provide skill id to get skill information
+          title: Skill-Id
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSkillDataResponse'
+          description: The skill requested by id
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The skill details is not available
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Get Skill
+      tags:
+      - skill
+  /api/v1/skills:
+    get:
+      operationId: get_skill_list_api_v1_skills_get
+      parameters:
+      - description: "input skill category as string\n                           \
+          \                                               \n    frontend: 1, backend:\
+          \ 2, devops: 3, qa: 4, database: 5, network: 6, fullstack: 7"
+        explode: true
+        in: query
+        name: skill-category
+        required: false
+        schema:
+          allOf:
+          - $ref: '#/components/schemas/SkillCategoryEnum'
+          description: "input skill category as string\n                         \
+            \                                                 \n    frontend: 1, backend:\
+            \ 2, devops: 3, qa: 4, database: 5, network: 6, fullstack: 7"
+        style: form
+      - description: input skill name as string
+        explode: true
+        in: query
+        name: skill-name
+        required: false
+        schema:
+          description: input skill name as string
+          title: Skill-Name
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GetSkillDataResponseList'
+          description: The skill list requested
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The skill list is not available
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Get Skill List
+      tags:
+      - skill
+  /api/v1/admin/user-profiles:
+    get:
+      operationId: get_user_profiles_for_admin_api_v1_admin_user_profiles_get
+      parameters:
+      - description: input skill category as string
+        explode: true
+        in: query
+        name: skill-category
+        required: false
+        schema:
+          description: input skill category as string
+          title: Skill-Category
+          type: string
+        style: form
+      - description: input skill name as string
+        explode: true
+        in: query
+        name: skill-name
+        required: false
+        schema:
+          description: input skill name as string
+          title: Skill-Name
+          type: string
+        style: form
+      - description: page number of pagination
+        explode: true
+        in: query
+        name: page-number
+        required: false
+        schema:
+          default: 1
+          description: page number of pagination
+          title: Page-Number
+          type: integer
+        style: form
+      - description: number of element in page
+        explode: true
+        in: query
+        name: page-size
+        required: false
+        schema:
+          default: 10
+          description: number of element in page
+          title: Page-Size
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedProfileResponse'
+          description: The profile basic details is requested
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The profile basic details is not available
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearerAdmin: []
+      summary: Get User Profiles For Admin
+      tags:
+      - profile
+  /api/v1/admin/user-profiles/{profile-id}:
+    get:
+      operationId: get_user_profile_by_id_for_admin_api_v1_admin_user_profiles__profile_id__get
+      parameters:
+      - description: input profile id of the user
+        explode: false
+        in: path
+        name: profile-id
+        required: true
+        schema:
+          description: input profile id of the user
+          format: uuid
+          title: Profile-Id
+          type: string
+        style: simple
+      - explode: true
+        in: query
+        name: profile-status
+        required: true
+        schema:
+          maximum: 2.0
+          minimum: 1.0
+          title: Profile-Status
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileResponse'
+          description: The profile details is requested
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The profile details is not available
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearerAdmin: []
+      summary: Get User Profile By Id For Admin
+      tags:
+      - profile
+  /api/v1/profile/experiences:
+    post:
+      description: |-
+        **Create:** Must provide all the data except *"experience_id"*. *"status"* is optional.
+
+
+        **Update:** Must provide *"experience_id"*. Other attributes are optional.
+      operationId: create_experience_api_v1_profile_experiences_post
+      requestBody:
+        content:
+          application/json:
+            examples:
+              CREATE:
+                description: a example of body for create operation
+                summary: Create Body
+                value:
+                  company_name: X Software
+                  job_responsibility: Backend Development
+                  designation_id: 2
+                  start_date: 2021-07-12T11:55:30.858969+00:00
+                  end_date: 2022-05-08T11:55:30.858980+00:00
+              UPDATE:
+                description: a example of body for update operation
+                summary: Update Body
+                value:
+                  experience_id: 1
+                  company_name: X Software
+                  job_responsibility: Backend Development
+                  designation_id: 2
+                  start_date: 2021-07-12T11:55:30.858969+00:00
+                  end_date: 2022-05-08T11:55:30.858980+00:00
+                  status: 2
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/ExperienceCreateRequest'
+              description: input experience data
+              title: Experience
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExperienceCreateResponse'
+          description: The experience is successfully created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The experience is not created
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Create Experience
+      tags:
+      - experience
+  /api/v1/profile/educations:
+    post:
+      description: |-
+        **Create:** Must provide all the data except *"education_id"*. *"status"* is optional.
+
+
+        **Update:** Must provide *"education_id"*. Other attributes are optional.
+      operationId: create_education_api_v1_profile_educations_post
+      requestBody:
+        content:
+          application/json:
+            examples:
+              CREATE:
+                description: a example of body for create operation
+                summary: Create Body
+                value:
+                  degree_name: B.Sc in Computer Science
+                  school_name: University of Dhaka
+                  passing_year: "2019"
+                  grade: 3.8
+              UPDATE:
+                description: a example of body for update operation
+                summary: Update Body
+                value:
+                  education_id: 1
+                  degree_name: B.Sc in Computer Science
+                  school_name: University of Dhaka
+                  passing_year: "2019"
+                  grade: 3.8
+                  status: 1
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/EducationCreateRequest'
+              description: input education data
+              title: Education
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EducationCreateResponse'
+          description: The education is successfully created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The education is not created
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Create Education
+      tags:
+      - education
+  /api/v1/profile/skills/upload-resume:
+    post:
+      operationId: upload_resume_api_v1_profile_skills_upload_resume_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_resume_api_v1_profile_skills_upload_resume_post'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResumeUploadResponse'
+          description: The resume is successfully uploaded
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The resume is not uploaded
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Upload Resume
+      tags:
+      - file
+  /api/v1/profile/skills/upload-profile-picture:
+    post:
+      operationId: upload_profile_picture_api_v1_profile_skills_upload_profile_picture_post
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Body_upload_profile_picture_api_v1_profile_skills_upload_profile_picture_post'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfilePictureUploadResponse'
+          description: The profile picture  is successfully uploaded
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The profile picture is not uploaded
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Upload Profile Picture
+      tags:
+      - file
+  /api/v1/file/{file-id}:
+    get:
+      operationId: response_file_api_v1_file__file_id__get
+      parameters:
+      - description: input file id for file response
+        explode: false
+        in: path
+        name: file-id
+        required: true
+        schema:
+          description: input file id for file response
+          title: File-Id
+          type: integer
+        style: simple
+      responses:
+        "200":
+          description: The profile picture is rendered
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The profile picture is not available
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Response File
+      tags:
+      - file
+  /api/v1/designations/{designation-id}:
+    get:
+      operationId: get_designation_api_v1_designations__designation_id__get
+      parameters:
+      - description: provide skill id to get skill information
+        explode: false
+        in: path
+        name: designation-id
+        required: true
+        schema:
+          description: provide skill id to get skill information
+          title: Designation-Id
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DesignationDataResponse'
+          description: The designation requested by id
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The designation details is not available
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Get Designation
+      tags:
+      - designation
+  /api/v1/designations:
+    get:
+      operationId: get_designation_list_api_v1_designations_get
+      parameters:
+      - description: input designation name as string
+        explode: true
+        in: query
+        name: designation-name
+        required: false
+        schema:
+          description: input designation name as string
+          title: Designation-Name
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/DesignationDataResponse'
+                title: Response Get Designation List Api V1 Designations Get
+                type: array
+          description: The designation list requested
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The designation list is not available
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Get Designation List
+      tags:
+      - designation
+  /api/v1profile/designations:
+    post:
+      description: |-
+        **Create:** Must provide all the data including *"designation_id"* for creating a new designation.
+
+
+        **Update:** For update purposes provide *"designation_id"*. Other attributes are optional.
+      operationId: create_designation_api_v1profile_designations_post
+      requestBody:
+        content:
+          application/json:
+            examples:
+              CREATE:
+                description: a example of body for create operation
+                summary: Create Body
+                value:
+                  designation_id: 1
+                  start_date: 2019-08-24T14:15:22Z
+                  end_date: 2020-08-24T14:15:22Z
+              UPDATE:
+                description: a example of body for update operation
+                summary: Update Body
+                value:
+                  designation_id: 1
+                  start_date: 2019-08-24T14:15:22Z
+                  end_date: 2020-12-24T14:15:22Z
+                  status: 2
+            schema:
+              $ref: '#/components/schemas/DesignationCreateRequest'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProfileDesignationResponse'
+          description: The designation is created successfully
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+          description: The designation is not created
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - JWTBearer: []
+      summary: Create Designation
+      tags:
+      - designation
+components:
+  schemas:
+    Body_upload_certificate_api_v1_profile_skills_upload_certificate_post:
+      properties:
+        files:
+          description: select certificate files to upload
+          items:
+            format: binary
+            type: string
+          title: Files
+          type: array
+      title: Body_upload_certificate_api_v1_profile_skills_upload_certificate_post
+      type: object
+    Body_upload_profile_picture_api_v1_profile_skills_upload_profile_picture_post:
+      properties:
+        file:
+          description: select certificate files to upload
+          format: binary
+          title: File
+          type: string
+      required:
+      - file
+      title: Body_upload_profile_picture_api_v1_profile_skills_upload_profile_picture_post
+      type: object
+    Body_upload_resume_api_v1_profile_skills_upload_resume_post:
+      properties:
+        file:
+          description: select certificate files to upload
+          format: binary
+          title: File
+          type: string
+      required:
+      - file
+      title: Body_upload_resume_api_v1_profile_skills_upload_resume_post
+      type: object
+    CreateSkillDataRequest:
+      example:
+        skill_id: 1
+        experience_year: 4
+        number_of_projects: 4
+        level: 5
+        training_duration: 2
+        achievements: "1"
+        achievements_description: It is the achievement's description
+        certificate: "1"
+        status: 1
+      properties:
+        skill_id:
+          description: id of skill
+          title: Skill Id
+          type: integer
+        experience_year:
+          description: experience of the indicated skill
+          maximum: 45.0
+          title: Experience Year
+          type: integer
+        number_of_projects:
+          description: number of projects on that skill
+          maximum: 80.0
+          title: Number Of Projects
+          type: integer
+        level:
+          description: level of proficiency on the skill
+          maximum: 10.0
+          minimum: 1.0
+          title: Level
+          type: integer
+        training_duration:
+          description: training duration in months
+          maximum: 100.0
+          title: Training Duration
+          type: integer
+        achievements:
+          description: |-
+            marker for having the achievements
+
+                0 or 1
+          maxLength: 1
+          title: Achievements
+          type: string
+        achievements_description:
+          description: description of the achievement
+          maxLength: 255
+          title: Achievements Description
+          type: string
+        certificate:
+          description: |-
+            marker for having the certificate
+
+                0 or 1
+          maxLength: 1
+          title: Certificate
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/UserStatusEnum'
+          description: "skill data validity status \n\n    1: active, 3: delete"
+      required:
+      - skill_id
+      title: CreateSkillDataRequest
+      type: object
+    CreateSkillDataResponse:
+      example:
+        skill_id: 1
+        skill_name: react
+        skill_type:
+          id: 1
+          name: core_skill
+        skill_category:
+        - id: 1
+          name: frontend
+        - id: 2
+          name: backend
+        experience_year: 4
+        number_of_projects: 4
+        level: 5
+        training_duration: 2
+        achievements: "1"
+        achievements_description: It is the achievement's description
+        certificate: "1"
+        status:
+          id: 1
+          name: active
+      properties:
+        skill_id:
+          description: id of skill
+          title: Skill Id
+          type: integer
+        skill_type:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: type of skill from fixed list of values
+          title: Skill Type
+        skill_category:
+          description: category of skill from fixed list of items
+          items:
+            $ref: '#/components/schemas/ResponseEnumData'
+          maxItems: 7
+          title: Skill Category
+          type: array
+        skill_name:
+          description: name of skill from fixed list of values
+          maxLength: 20
+          title: Skill Name
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: status of skill from fixed list of values
+          title: Status
+        experience_year:
+          description: experience of the indicated skill
+          maximum: 45.0
+          title: Experience Year
+          type: integer
+        number_of_projects:
+          description: number of projects on that skill
+          maximum: 80.0
+          title: Number Of Projects
+          type: integer
+        level:
+          description: level of proficiency on the skill
+          maximum: 10.0
+          minimum: 1.0
+          title: Level
+          type: integer
+        training_duration:
+          description: training duration in months
+          maximum: 100.0
+          title: Training Duration
+          type: integer
+        achievements:
+          description: |-
+            marker for having the achievements
+
+                0 or 1
+          maxLength: 1
+          title: Achievements
+          type: string
+        achievements_description:
+          description: description of the achievement
+          maxLength: 255
+          title: Achievements Description
+          type: string
+        certificate:
+          description: |-
+            marker for having the certificate
+
+                0 or 1
+          maxLength: 1
+          title: Certificate
+          type: string
+      title: CreateSkillDataResponse
+      type: object
+    DesignationCreateRequest:
+      example:
+        end_date: 2000-01-23T04:56:07.000+00:00
+        designation_id: 1
+        start_date: 2000-01-23T04:56:07.000+00:00
+        status: ""
+      properties:
+        designation_id:
+          description: autoincrement id of designation
+          minimum: 1.0
+          title: Designation Id
+          type: integer
+        start_date:
+          description: start date of designated job
+          format: date-time
+          title: Start Date
+          type: string
+        end_date:
+          description: "end date of designated job\n    \n    > start_date"
+          format: date-time
+          title: End Date
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/UserStatusEnum'
+          description: "designation data validity status\n                       \
+            \                    \n    1: active, 3: delete"
+      required:
+      - designation_id
+      title: DesignationCreateRequest
+      type: object
+    DesignationDataResponse:
+      example:
+        designation_id: 1
+        designation: designation
+      properties:
+        designation:
+          description: designation of the user
+          minLength: 2
+          title: Designation
+          type: string
+        designation_id:
+          description: id of designation
+          minimum: 1.0
+          title: Designation Id
+          type: integer
+      title: DesignationDataResponse
+      type: object
+    EducationCreateRequest:
+      description: Must provide education id or other information[status is optional]
+      properties:
+        education_id:
+          description: id of user's education
+          minimum: 1.0
+          title: Education Id
+          type: integer
+        degree_name:
+          description: degree name of the user's education
+          maxLength: 30
+          title: Degree Name
+          type: string
+        school_name:
+          description: school name of the user's education
+          maxLength: 30
+          title: School Name
+          type: string
+        passing_year:
+          description: passing year of the user's education
+          maxLength: 4
+          title: Passing Year
+          type: string
+        grade:
+          description: grade of the user's education'
+          maximum: 5.0
+          minimum: 2.5
+          title: Grade
+          type: number
+        status:
+          allOf:
+          - $ref: '#/components/schemas/UserStatusEnum'
+          description: "education data validity status\n                         \
+            \          \n    1: active, 3: delete"
+      title: EducationCreateRequest
+      type: object
+    EducationCreateResponse:
+      example:
+        education_id: 1
+        degree_name: B.Sc in Computer Science
+        school_name: University of Dhaka
+        passing_year: "2019"
+        grade: 3.8
+      properties:
+        degree_name:
+          description: degree name of the user education
+          maxLength: 30
+          title: Degree Name
+          type: string
+        school_name:
+          description: school name of the user education
+          maxLength: 30
+          title: School Name
+          type: string
+        passing_year:
+          description: passing year of the user education
+          maxLength: 4
+          title: Passing Year
+          type: string
+        grade:
+          maximum: 5.0
+          minimum: 2.5
+          title: Grade
+          type: number
+        education_id:
+          description: id of the user education
+          title: Education Id
+          type: integer
+      title: EducationCreateResponse
+      type: object
+    EnumData:
+      properties:
+        id:
+          description: id is enum value
+          title: Id
+          type: integer
+        name:
+          description: name is enum key
+          title: Name
+          type: string
+      required:
+      - id
+      - name
+      title: EnumData
+      type: object
+    ErrorMessage:
+      properties:
+        message:
+          default: An error message
+          title: Message
+          type: string
+      title: ErrorMessage
+      type: object
+    ExperienceCreateRequest:
+      example:
+        company_name: X Software
+        job_responsibility: Backend Development
+        designation_id: 2
+        start_date: 2021-07-15T09:28:38.422669+00:00
+        end_date: 2022-05-11T09:28:38.422679+00:00
+        status: 1
+      properties:
+        experience_id:
+          description: id of experiment for user
+          minimum: 1.0
+          title: Experience Id
+          type: integer
+        company_name:
+          description: name of company that user worked on
+          maxLength: 30
+          title: Company Name
+          type: string
+        job_responsibility:
+          description: responsibility for job on the company
+          maxLength: 255
+          title: Job Responsibility
+          type: string
+        designation_id:
+          description: designation id for profile experience
+          title: Designation Id
+          type: integer
+        start_date:
+          description: start date of experience
+          format: date-time
+          title: Start Date
+          type: string
+        end_date:
+          description: "end date of experience\n    \n    > start_date"
+          format: date-time
+          title: End Date
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/UserStatusEnum'
+          description: "experience data validity status\n                        \
+            \           \n    1: active, 3: delete"
+      title: ExperienceCreateRequest
+      type: object
+    ExperienceCreateResponse:
+      example:
+        experience_id: 1
+        company_name: X Software
+        job_responsibility: Backend Development
+        designation:
+          designation_id: 2
+          designation: Software Developer
+        start_date: 2021-07-15T09:28:38.431355+00:00
+        end_date: 2022-05-11T09:28:38.431373+00:00
+        status:
+          id: 1
+          name: active
+      properties:
+        experience_id:
+          description: autoincrement experience id for this profile
+          title: Experience Id
+          type: integer
+        company_name:
+          description: name of company that user worked on
+          maxLength: 30
+          title: Company Name
+          type: string
+        job_responsibility:
+          description: responsibility for job on the company
+          maxLength: 255
+          title: Job Responsibility
+          type: string
+        designation:
+          allOf:
+          - $ref: '#/components/schemas/ProfileExperienceDesignationResponse'
+          description: designation for this profile experience
+          title: Designation
+        start_date:
+          description: start date of experience
+          format: date-time
+          title: Start Date
+          type: string
+        end_date:
+          description: end date of experience
+          format: date-time
+          title: End Date
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: designation status of experience
+          title: Status
+      title: ExperienceCreateResponse
+      type: object
+    GetSkillDataResponse:
+      example:
+        id: 1
+        skill_name: react
+        skill_type:
+          id: 1
+          name: core_skill
+        skill_category:
+        - id: 1
+          name: frontend
+        - id: 2
+          name: backend
+      properties:
+        skill_id:
+          description: id of skill
+          title: Skill Id
+          type: integer
+        skill_type:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: type of skill from fixed list of values
+          title: Skill Type
+        skill_category:
+          description: category of skill from fixed list of items
+          items:
+            $ref: '#/components/schemas/ResponseEnumData'
+          maxItems: 7
+          title: Skill Category
+          type: array
+        skill_name:
+          description: name of skill from fixed list of values
+          maxLength: 20
+          title: Skill Name
+          type: string
+      title: GetSkillDataResponse
+      type: object
+    GetSkillDataResponseList:
+      example:
+        skills:
+        - id: 1
+          skill_name: react
+          skill_type:
+            id: 1
+            name: core_skill
+          skill_category:
+          - id: 1
+            name: frontend
+          - id: 2
+            name: backend
+        - id: 2
+          skill_name: django
+          skill_type:
+            id: 1
+            name: core_skill
+          skill_category:
+          - id: 2
+            name: backend
+      properties:
+        skills:
+          items:
+            $ref: '#/components/schemas/GetSkillDataResponse'
+          title: Skills
+          type: array
+      title: GetSkillDataResponseList
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    PaginatedProfileResponse:
+      example:
+        items:
+        - id: 954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0
+          _url: /admin/user-profiles/954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0
+          email: developer.ixorasolution@gmail.com
+          name: Chelsey Adams
+          mobile: +01611123456
+          designation:
+            designation_id: 1
+            designation: Software Engineer
+          skills:
+          - experience_year: 4
+            level: 4
+            skill_name: react
+            skill_id: 1
+          - experience_year: 4
+            level: 7
+            skill_name: django
+            skill_id: 2
+        previous_page: 0
+        next_page: 2
+        has_previous: false
+        has_next: true
+        total_items: 100
+        pages: 10
+      properties:
+        previous_page:
+          description: previous page of current pagination page
+          title: Previous Page
+          type: integer
+        next_page:
+          description: next page of current pagination page
+          title: Next Page
+          type: integer
+        has_previous:
+          description: bool indicator whether current page has previous page
+          title: Has Previous
+          type: boolean
+        has_next:
+          description: bool indicator whether current page has next page
+          title: Has Next
+          type: boolean
+        total_items:
+          description: total number of items
+          title: Total Items
+          type: integer
+        pages:
+          description: total number of pages
+          title: Pages
+          type: integer
+        items:
+          items:
+            $ref: '#/components/schemas/ProfileBasicResponse'
+          title: Items
+          type: array
+      title: PaginatedProfileResponse
+      type: object
+    PlanCreateRequest:
+      example:
+        end_date: 2000-01-23T04:56:07.000+00:00
+        plan_type: ""
+        notes: notes
+        task:
+        - description: description
+          task_id: 6
+          status: ""
+        - description: description
+          task_id: 6
+          status: ""
+        skill_id: 0
+        plan_id: plan_id
+        start_date: 2000-01-23T04:56:07.000+00:00
+      properties:
+        plan_type:
+          allOf:
+          - $ref: '#/components/schemas/PlanTypeEnum'
+          description: "the type of the plan\n    \n    1: course, 2: exam"
+        notes:
+          description: notes for plan
+          maxLength: 255
+          title: Notes
+          type: string
+        plan_id:
+          description: id for plan
+          format: uuid4
+          title: Plan Id
+          type: string
+        skill_id:
+          description: skill_id is related to skill collection
+          title: Skill Id
+          type: integer
+        task:
+          default: []
+          items:
+            $ref: '#/components/schemas/TaskCreate'
+          title: Task
+          type: array
+        start_date:
+          description: start date of plan
+          format: date-time
+          title: Start Date
+          type: string
+        end_date:
+          description: "end date of plan\n    \n    > start_date"
+          format: date-time
+          title: End Date
+          type: string
+      title: PlanCreateRequest
+      type: object
+    PlanCreateResponse:
+      example:
+        id: 954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0
+        plan_type:
+          id: 1
+          name: course
+        notes: It is a note for the planning
+        skill_id: 1
+        profile_id: 1
+        start_date: 2022-11-27T09:28:37.939568+00:00
+        end_date: 2022-11-28T09:28:37.939572+00:00
+        task:
+        - id: 1
+          description: It is a task for the planning
+          status:
+            id: 1
+            name: active
+      properties:
+        id:
+          description: id of plan of type UUID
+          format: uuid4
+          title: Id
+          type: string
+        plan_type:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: Fixed plan type
+          title: Plan Type
+        notes:
+          description: notes for plan
+          maxLength: 255
+          title: Notes
+          type: string
+        skill_id:
+          description: skill_id is related to skill collection
+          title: Skill Id
+          type: integer
+        profile_id:
+          description: profile_id is related to profile collection
+          title: Profile Id
+          type: integer
+        task:
+          default: []
+          description: task list for plan
+          items:
+            $ref: '#/components/schemas/TaskResponse'
+          title: Task
+          type: array
+        start_date:
+          description: start date of plan
+          format: date-time
+          title: Start Date
+          type: string
+        end_date:
+          description: end date of plan, must be none or greater than start_date
+          format: date-time
+          title: End Date
+          type: string
+      title: PlanCreateResponse
+      type: object
+    PlanTypeEnum:
+      description: An enumeration.
+      enum:
+      - 1
+      - 2
+      title: PlanTypeEnum
+      type: integer
+    ProfileBasicResponse:
+      example:
+        id: 954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0
+        _url: /admin/user-profiles/954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0
+        email: developer.ixorasolution@gmail.com
+        name: Chelsey Adams
+        mobile: +01611123456
+        designation:
+          designation_id: 1
+          designation: Software Engineer
+        skills:
+        - experience_year: 4
+          level: 4
+          skill_name: react
+          skill_id: 1
+        - experience_year: 4
+          level: 7
+          skill_name: django
+          skill_id: 2
+      properties:
+        name:
+          description: name of the user
+          maxLength: 20
+          minLength: 2
+          title: Name
+          type: string
+        id:
+          description: id of the user profile
+          format: uuid4
+          title: Id
+          type: string
+        url:
+          description: api endpoint for profile details by id
+          title: Url
+          type: string
+        email:
+          description: email address of the user
+          format: email
+          title: Email
+          type: string
+        mobile:
+          description: mobile number of the user
+          title: Mobile
+          type: string
+        designation:
+          allOf:
+          - $ref: '#/components/schemas/DesignationDataResponse'
+          description: designation basic details of the profile user
+          title: Designation
+        skills:
+          items:
+            $ref: '#/components/schemas/ProfileSkillDataResponse'
+          title: Skills
+          type: array
+      title: ProfileBasicResponse
+      type: object
+    ProfileDesignationResponse:
+      example:
+        end_date: 2000-01-23T04:56:07.000+00:00
+        designation_status: ""
+        designation_id: 1
+        designation: designation
+        start_date: 2000-01-23T04:56:07.000+00:00
+      properties:
+        designation:
+          description: designation of the user
+          minLength: 2
+          title: Designation
+          type: string
+        designation_id:
+          description: id of designation
+          minimum: 1.0
+          title: Designation Id
+          type: integer
+        start_date:
+          description: start date of designated job
+          format: date-time
+          title: Start Date
+          type: string
+        end_date:
+          description: end date of designated job
+          format: date-time
+          title: End Date
+          type: string
+        designation_status:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: designation status of designated job
+          title: Designation Status
+      title: ProfileDesignationResponse
+      type: object
+    ProfileEducationResponse:
+      properties:
+        degree_name:
+          description: degree name of the user education
+          maxLength: 30
+          title: Degree Name
+          type: string
+        school_name:
+          description: school name of the user education
+          maxLength: 30
+          title: School Name
+          type: string
+        passing_year:
+          description: passing year of the user education
+          maxLength: 4
+          title: Passing Year
+          type: string
+        grade:
+          maximum: 5.0
+          minimum: 2.5
+          title: Grade
+          type: number
+        education_id:
+          description: id of the user education
+          title: Education Id
+          type: integer
+      title: ProfileEducationResponse
+      type: object
+    ProfileExperienceDesignationResponse:
+      properties:
+        designation_id:
+          description: designation id for profile experience
+          title: Designation Id
+          type: integer
+        designation:
+          description: designation for profile experience
+          title: Designation
+          type: string
+      title: ProfileExperienceDesignationResponse
+      type: object
+    ProfileExperienceResponse:
+      properties:
+        experience_id:
+          description: autoincrement experience id for this profile
+          title: Experience Id
+          type: integer
+        company_name:
+          description: name of company that user worked on
+          maxLength: 30
+          title: Company Name
+          type: string
+        job_responsibility:
+          description: responsibility for job on the company
+          maxLength: 255
+          title: Job Responsibility
+          type: string
+        designation:
+          allOf:
+          - $ref: '#/components/schemas/ProfileExperienceDesignationResponse'
+          description: designation for this profile experience
+          title: Designation
+        start_date:
+          description: start date of experience
+          format: date-time
+          title: Start Date
+          type: string
+        end_date:
+          description: end date of experience
+          format: date-time
+          title: End Date
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: designation status of experience
+          title: Status
+      title: ProfileExperienceResponse
+      type: object
+    ProfilePersonalDetailsResponse:
+      properties:
+        name:
+          description: name of the user
+          maxLength: 20
+          minLength: 2
+          title: Name
+          type: string
+        date_of_birth:
+          description: date of birth of the user
+          format: date
+          title: Date Of Birth
+          type: string
+        gender:
+          description: gender of the user
+          title: Gender
+          type: integer
+        mobile:
+          description: mobile number of the user
+          title: Mobile
+          type: string
+        address:
+          description: address of the user
+          maxLength: 255
+          title: Address
+          type: string
+        about:
+          description: about of the user
+          maxLength: 500
+          title: About
+          type: string
+        experience_year:
+          description: experience year of the user
+          title: Experience Year
+          type: integer
+      title: ProfilePersonalDetailsResponse
+      type: object
+    ProfilePictureUploadResponse:
+      example:
+        file_id: 2
+        file_name: profile_picture_x.jpg
+        file_type:
+          id: 1
+          name: picture
+        file_size: 1024
+        status:
+          id: 1
+          name: active
+        _file_response_url: /file/2
+      properties:
+        file_id:
+          description: autoincrement id of the file
+          title: File Id
+          type: integer
+        file_name:
+          description: name of the file to be uploaded
+          title: File Name
+          type: string
+        file_type:
+          allOf:
+          - $ref: '#/components/schemas/EnumData'
+          description: type of file to be uploaded
+          title: File Type
+        file_size:
+          description: file size in KB
+          maximum: 2040.0
+          title: File Size
+          type: integer
+        status:
+          description: status
+          title: Status
+          type: string
+      required:
+      - file_id
+      - file_name
+      - file_size
+      - file_type
+      - status
+      title: ProfilePictureUploadResponse
+      type: object
+    ProfileResponse:
+      example:
+        id: 954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0
+        email: developer.ixorasolution@gmail.com
+        designation:
+          designation: Software Engineer
+          designation_id: 1
+          start_date: 2022-11-27T09:28:38.460916+00:00
+          end_date: 2022-11-28T09:28:38.460921+00:00
+          designation_status:
+            id: 1
+            name: active
+        personal_details:
+          name: Chelsey Adams
+          date_of_birth: 1995-07-12
+          gender: 1
+          mobile: +01611123456
+          address: 'House: X, State:Y, Z, Country'
+          about: Personal Information
+          experience_year: 4
+          _picture_url: /files/2
+        skills:
+        - skill_id: 1
+          skill_name: react
+          skill_type:
+            id: 1
+            name: core_skill
+          skill_category:
+          - id: 1
+            name: frontend
+          - id: 2
+            name: backend
+          experience_year: 4
+          number_of_projects: 4
+          level: 5
+          training_duration: 2
+          achievements: "1"
+          achievements_description: It is the achievement's description
+          certificate: "1"
+          status:
+            id: 1
+            name: active
+        experience:
+        - experience_id: 1
+          company_name: X Software
+          job_responsibility: Backend Development
+          designation:
+            designation_id: 1
+            designation: Software Developer
+          start_date: 2020-03-02T09:28:38.460938+00:00
+          end_date: 2021-07-15T09:28:38.460940+00:00
+          status:
+            id: 1
+            name: active
+        - experience_id: 2
+          company_name: Y Software
+          job_responsibility: Backend Development
+          designation:
+            designation_id: 1
+            designation: Software Engineer
+          start_date: 2021-07-15T09:28:38.460943+00:00
+          end_date: 2022-05-11T09:28:38.460945+00:00
+          status:
+            id: 1
+            name: active
+        education:
+        - education_id: 2
+          degree_name: B.Sc in Computer Science
+          school_name: University of Dhaka
+          passing_year: "2019"
+          grade: 4.0
+        - education_id: 1
+          degree_name: HSC
+          school_name: Dhaka Secondary and Higher Secondary Education Board
+          passing_year: "2015"
+          grade: 5.0
+        profile_status:
+          id: 1
+          name: full_time
+        _latest_cv_url: /file/1
+      properties:
+        id:
+          description: id of the user profile
+          format: uuid4
+          title: Id
+          type: string
+        email:
+          description: email address of the user
+          format: email
+          title: Email
+          type: string
+        designation:
+          allOf:
+          - $ref: '#/components/schemas/ProfileDesignationResponse'
+          description: designation details of the profile user
+          title: Designation
+        skills:
+          items:
+            $ref: '#/components/schemas/ProfileSkillResponse'
+          title: Skills
+          type: array
+        experience:
+          items:
+            $ref: '#/components/schemas/ProfileExperienceResponse'
+          title: Experience
+          type: array
+        education:
+          items:
+            $ref: '#/components/schemas/ProfileEducationResponse'
+          title: Education
+          type: array
+        personal_details:
+          $ref: '#/components/schemas/ProfilePersonalDetailsResponse'
+        profile_status:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: profile status/ job type of the user
+          title: Profile Status
+      title: ProfileResponse
+      type: object
+    ProfileSkillDataResponse:
+      example:
+        experience_year: 4
+        level: 6
+        skill_name: react
+        skill_id: 1
+      properties:
+        skill_id:
+          description: id of skill
+          title: Skill Id
+          type: integer
+        experience_year:
+          description: experience of the indicated skill
+          maximum: 45.0
+          title: Experience Year
+          type: integer
+        level:
+          description: level of proficiency on the skill
+          maximum: 10.0
+          minimum: 1.0
+          title: Level
+          type: integer
+        skill_name:
+          description: name of skill from fixed list of values
+          maxLength: 20
+          title: Skill Name
+          type: string
+      title: ProfileSkillDataResponse
+      type: object
+    ProfileSkillResponse:
+      properties:
+        skill_id:
+          description: id of skill
+          title: Skill Id
+          type: integer
+        skill_type:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: type of skill from fixed list of values
+          title: Skill Type
+        skill_category:
+          description: category of skill from fixed list of items
+          items:
+            $ref: '#/components/schemas/ResponseEnumData'
+          maxItems: 7
+          title: Skill Category
+          type: array
+        skill_name:
+          description: name of skill from fixed list of values
+          maxLength: 20
+          title: Skill Name
+          type: string
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: status of skill from fixed list of values
+          title: Status
+        experience_year:
+          description: experience of the indicated skill
+          maximum: 45.0
+          title: Experience Year
+          type: integer
+        number_of_projects:
+          description: number of projects on that skill
+          maximum: 80.0
+          title: Number Of Projects
+          type: integer
+        level:
+          description: level of proficiency on the skill
+          maximum: 10.0
+          minimum: 1.0
+          title: Level
+          type: integer
+        training_duration:
+          description: training duration in months
+          maximum: 100.0
+          title: Training Duration
+          type: integer
+        achievements:
+          description: |-
+            marker for having the achievements
+
+                0 or 1
+          maxLength: 1
+          title: Achievements
+          type: string
+        achievements_description:
+          description: description of the achievement
+          maxLength: 255
+          title: Achievements Description
+          type: string
+        certificate:
+          description: |-
+            marker for having the certificate
+
+                0 or 1
+          maxLength: 1
+          title: Certificate
+          type: string
+      title: ProfileSkillResponse
+      type: object
+    ResponseEnumData:
+      properties:
+        id:
+          description: id is enum value
+          title: Id
+          type: integer
+        name:
+          description: name is enum key
+          title: Name
+          type: string
+      title: ResponseEnumData
+      type: object
+    ResumeUploadResponse:
+      example:
+        file_id: 1
+        file_name: cv_x.pdf
+        file_type:
+          id: 2
+          name: resume
+        file_size: 1024
+        status:
+          id: 1
+          name: active
+        _file_response_url: /file/1
+      properties:
+        file_id:
+          description: autoincrement id of the file
+          title: File Id
+          type: integer
+        file_name:
+          description: name of the file to be uploaded
+          title: File Name
+          type: string
+        file_type:
+          allOf:
+          - $ref: '#/components/schemas/EnumData'
+          description: type of file to be uploaded
+          title: File Type
+        file_size:
+          description: file size in KB
+          maximum: 2040.0
+          title: File Size
+          type: integer
+        status:
+          description: status
+          title: Status
+          type: string
+      required:
+      - file_id
+      - file_name
+      - file_size
+      - file_type
+      - status
+      title: ResumeUploadResponse
+      type: object
+    SkillCategoryEnum:
+      description: An enumeration.
+      enum:
+      - 1
+      - 2
+      - 3
+      - 4
+      - 5
+      - 6
+      - 7
+      title: SkillCategoryEnum
+      type: integer
+    SkillCertificateResponse:
+      example:
+        succeed_upload_list:
+        - succeed_upload_list
+        - succeed_upload_list
+        failed_upload_list:
+        - failed_upload_list
+        - failed_upload_list
+      properties:
+        succeed_upload_list:
+          default: []
+          items:
+            type: string
+          title: Succeed Upload List
+          type: array
+        failed_upload_list:
+          default: []
+          items:
+            type: string
+          title: Failed Upload List
+          type: array
+      title: SkillCertificateResponse
+      type: object
+    TaskCreate:
+      example:
+        description: description
+        task_id: 6
+        status: ""
+      properties:
+        description:
+          description: description of task
+          maxLength: 255
+          title: Description
+          type: string
+        task_id:
+          description: 'id of task for plan creation '
+          title: Task Id
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/PlanTypeEnum'
+          description: "status of task\n    \n    1: active, 3: delete"
+      required:
+      - description
+      title: TaskCreate
+      type: object
+    TaskResponse:
+      properties:
+        description:
+          description: description of task
+          maxLength: 255
+          title: Description
+          type: string
+        id:
+          description: autoincrement id of task
+          title: Id
+          type: integer
+        status:
+          allOf:
+          - $ref: '#/components/schemas/ResponseEnumData'
+          description: status of skill from fixed list of values
+          title: Status
+      title: TaskResponse
+      type: object
+    UserStatusEnum:
+      description: An enumeration.
+      enum:
+      - 1
+      - 3
+      title: UserStatusEnum
+      type: integer
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+  securitySchemes:
+    JWTBearer:
+      scheme: bearer
+      type: http
+    JWTBearerAdmin:
+      scheme: bearer
+      type: http
