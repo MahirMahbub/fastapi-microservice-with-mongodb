@@ -50,7 +50,9 @@ async def start_database() -> None:
         ), f)
 
     logger.info("OpenAPI specification created.........")
+    logger.info("Connecting to redis.........")
     skill_app.state.redis_connection = await initiate_redis_pool()
+    logger.info("Redis Connected.........")
 
 # @app.on_event("shutdown")
 # async def shutdown_event():

@@ -36,7 +36,9 @@ async def start_database() -> None:
     await initiate_database()
     logger.info("Initiating database completed........")
     logger.info("OpenAPI specification created.........")
+    logger.info("Connecting to redis.........")
     auth_app.state.redis_connection = await initiate_redis_pool()
+    logger.info("Redis Connected.........")
 
 #
 # PORT = 8000
