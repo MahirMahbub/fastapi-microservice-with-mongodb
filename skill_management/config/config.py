@@ -1,5 +1,7 @@
 import os
 
+import aioredis
+from aioredis import Redis
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
@@ -26,11 +28,13 @@ async def initiate_database() -> None:
     # Profiles, Skills
     await initialize_database()
 
-# async def init_redis_pool() -> redis.Redis:
-#     redis_c = await redis.from_url(
-#         global_settings.redis_url,
-#         encoding="utf-8",
-#         db=global_settings.redis_db,
-#         decode_responses=True,
-#     )
-#     return redis_c
+
+async def initiate_redis_pool() -> Redis:
+    redis_connection = await aioredis.from_url(
+        os.getenv("REDIS_AUTH_URL"),
+        password=os.getenv("REDIS_PASSWORD"),
+        encoding="utf-8",
+        db=os.getenv("REDIS_USER_DB"),
+        decode_responses=True,
+    )
+    return redis_connection

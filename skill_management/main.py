@@ -5,7 +5,7 @@ from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.utils import get_openapi
 
-from skill_management.config.config import initiate_database
+from skill_management.config.config import initiate_database, initiate_redis_pool
 from skill_management.controllers.router import api_router
 from skill_management.utils.logger import get_logger
 
@@ -34,7 +34,6 @@ else:
 skill_app.add_middleware(GZipMiddleware)
 skill_app.include_router(api_router, prefix='/api/v1')
 
-
 @skill_app.on_event("startup")
 async def start_database() -> None:
     logger = get_logger()
@@ -51,8 +50,12 @@ async def start_database() -> None:
         ), f)
 
     logger.info("OpenAPI specification created.........")
+    skill_app.state.redis_connection = await initiate_redis_pool()
 
-
+# @app.on_event("shutdown")
+# async def shutdown_event():
+#     logger.info("Closing Redis...")
+#     await app.state.redis_connection.close()
 
 #
 # PORT = 8000

@@ -1,7 +1,7 @@
 import os
 
 from fastapi import FastAPI
-from auth_management.config.config import initiate_database
+from auth_management.config.config import initiate_database, initiate_redis_pool
 from auth_management.controllers.router import api_router
 from auth_management.utils.logger import get_logger
 
@@ -35,6 +35,8 @@ async def start_database() -> None:
     logger.info("Initiating database........")
     await initiate_database()
     logger.info("Initiating database completed........")
+    logger.info("OpenAPI specification created.........")
+    auth_app.state.redis_connection = await initiate_redis_pool()
 
 #
 # PORT = 8000

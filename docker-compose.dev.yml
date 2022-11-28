@@ -33,6 +33,7 @@ services:
       - auth-redis.env
     networks:
       - auth_network
+      - skill_management_network
     ports:
       - "6379:6379"
     restart: on-failure
@@ -43,6 +44,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - auth_rabbitmq
+
   auth_mongodb:
     container_name: auth_mongodb
     image: bitnami/mongodb:latest
@@ -82,6 +84,7 @@ services:
     restart: always
     depends_on:
       - skill_management_mongodb
+      - auth_redis
   auth_management:
     build:
       context: ./auth_management
