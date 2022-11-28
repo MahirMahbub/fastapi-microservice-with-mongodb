@@ -1,5 +1,5 @@
 anyio==3.6.2
-beanie==1.15.3
+beanie==1.12
 cryptography==38.0.3
 fastapi==0.86.0
 passlib==1.7.4

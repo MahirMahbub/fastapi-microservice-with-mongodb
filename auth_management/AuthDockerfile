@@ -1,8 +1,8 @@
 FROM python:3.10.1
 ENV PYTHONUNBUFFERED 1
 RUN mkdir /auth_management
-WORKDIR /auth_app
-COPY . /auth_app
+WORKDIR /auth_management
+COPY . /auth_management
 #COPY requirements.txt /app
 RUN pip install --upgrade pip
 # RUN #apk install python3-dotenv
