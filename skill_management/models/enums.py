@@ -41,3 +41,7 @@ class Gender(EnumType, Document):
 
 class FileType(EnumType, Document):
     pass
+
+
+class ProfileStatus(EnumType, Document):
+    pass

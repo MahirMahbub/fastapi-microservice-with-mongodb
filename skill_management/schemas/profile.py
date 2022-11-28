@@ -2,9 +2,10 @@ import re
 from datetime import datetime, date, timezone, timedelta
 from typing import Any
 
+from beanie import PydanticObjectId
 from pydantic import Field, BaseModel, EmailStr, UUID4, validator, ValidationError, root_validator
 
-from skill_management.enums import GenderEnum, ProfileStatusEnum
+from skill_management.enums import GenderEnum, ProfileStatusEnum, DesignationStatusEnum
 from skill_management.schemas.base import PaginatedResponse, ResponseEnumData
 from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignationResponse
 from skill_management.schemas.education import ProfileEducationResponse
@@ -65,20 +66,22 @@ class ProfileBasicResponse(ProfileBase):
 
 
 class ProfilePersonalDetails(BaseModel):
-    name: str = Field(max_length=20, min_length=2, description="name of the user")
-    date_of_birth: date = Field(description="""date of birth of the user
+    name: str | None = Field(max_length=20, min_length=2, description="name of the user")
+    date_of_birth: date | None = Field(description="""date of birth of the user
     > 15 years or 5844 days
     """)
-    gender: GenderEnum = Field(description="gender of the user")
-    mobile: str = Field(description="mobile number of the user")
+    gender: GenderEnum | None = Field(description="gender of the user")
+    mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     about: str | None = Field(max_length=500, description="about of the user")
     experience_year: int | None = Field(description="experience year of the user")
 
     @validator("date_of_birth", always=True)
-    def validate_date_of_birth(cls, value: datetime) -> datetime:
-        if abs((datetime.now() - value).days) < 5844:
-            raise ValidationError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
+    def validate_date_of_birth(cls, value: date | None) -> date | None:
+        if value is None:
+            return value
+        if abs((datetime.now().date() - value).days) < 5844:
+            raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
         return value
 
 
@@ -93,22 +96,31 @@ class ProfilePersonalDetailsResponse(BaseModel):
     experience_year: int | None = Field(description="experience year of the user")
 
     @validator("date_of_birth", always=True)
-    def validate_date_of_birth(cls, value: datetime) -> datetime:
-        if abs((datetime.now() - value).days) < 5844:
-            raise ValidationError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
+    def validate_date_of_birth(cls, value: date | None) -> date | None:
+        if value is None:
+            return value
+        if abs((datetime.now().date() - value).days) < 5844:
+            raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
         return value
 
 
 class ProfileResponse(BaseModel):
-    id: UUID4 | None = Field(description="id of the user profile")
+    id: PydanticObjectId | None = Field(description="id of the user profile")
     email: EmailStr | None = Field(description="email address of the user")
-    designation: ProfileDesignationResponse | None = Field(description="designation details of the profile user")
-    skills: list[ProfileSkillResponse] | None
-    experience: list[ProfileExperienceResponse] | None
-    education: list[ProfileEducationResponse] | None
+    designation: list[ProfileDesignationResponse] | None = Field(description="designation details of the profile user")
+    skills: list[ProfileSkillResponse]
+    experience: list[ProfileExperienceResponse]
+    education: list[ProfileEducationResponse]
     personal_details: ProfilePersonalDetailsResponse | None
     profile_status: ResponseEnumData | None = Field(description="profile status/ job type of the user")
     _latest_cv_url: str | None = Field(description="latest CV file response api url")
+
+    def set_latest_cv_url(self, file_id: str | None = None) -> str | None:
+        if file_id is not None:
+            self._latest_cv_url = "/files/" + str(file_id)
+        else:
+            self._latest_cv_url = None
+        return self._latest_cv_url
 
     class Config:
         schema_extra = {
@@ -321,14 +333,20 @@ class ProfileBasicForAdminRequest(BaseModel):
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
-    profile_status: ProfileStatusEnum | None = Field(default=ProfileStatusEnum.inactive, description="""profile status of the user
+    profile_status: ProfileStatusEnum = Field(default=ProfileStatusEnum.inactive, description="""profile status of the user
     
     full_time: 1, part_time: 2, delete: 3, inactive: 4
     """)
+    designation_status: DesignationStatusEnum = Field(default=DesignationStatusEnum.active,
+                                                      description="""designation status of user
+    active: 1, inactive: 2
+    """)
 
     @validator("date_of_birth", always=True)
-    def validate_date_of_birth(cls, value: datetime) -> datetime:
-        if abs(datetime.now() - value).days < 5844:
+    def validate_date_of_birth(cls, value: date | None) -> date | None:
+        if value is None:
+            return value
+        if abs(datetime.today().date() - value).days < 5844:
             raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
         return value
 

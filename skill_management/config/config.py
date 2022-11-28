@@ -7,7 +7,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from skill_management.models.designation import Designations
 from skill_management.models.enums import (PlanType, Status, UserStatus, FileType, SkillCategory, SkillType, \
-                                           DesignationStatus, Gender, EnumInitializer)
+                                           DesignationStatus, Gender, EnumInitializer, ProfileStatus)
 from skill_management.models.file import Files
 from skill_management.models.plan import Plans
 from skill_management.models.profile import Profiles
@@ -23,7 +23,7 @@ async def initiate_database() -> None:
     await init_beanie(database=client.get_default_database(),
                       document_models=[EnumInitializer, PlanType, Status, UserStatus, FileType, SkillCategory,
                                        SkillType, DesignationStatus, Gender, Designations, Files, Profiles, Plans,
-                                       Skills])  # type: ignore
+                                       ProfileStatus, Skills])  # type: ignore
     # , Files, Plans,
     # Profiles, Skills
     await initialize_database()

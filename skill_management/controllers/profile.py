@@ -9,6 +9,7 @@ from starlette.requests import Request
 from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.profile import ProfileResponse, PaginatedProfileResponse, ProfileBasicRequest, \
     ProfileBasicForAdminRequest
+from skill_management.services.profile import ProfileService
 from skill_management.utils.auth_manager import JWTBearerAdmin, JWTBearer
 from skill_management.utils.logger import get_logger
 
@@ -152,7 +153,7 @@ async def create_user_profile_by_admin(request: Request,  # type: ignore
                                                "CREATE":
                                                    {
                                                        "summary": "Create Body",
-                                                       "description": "a example of body for create operation",
+                                                       "description": "An example of body for create operation",
                                                        "value":
                                                            {
                                                                "email": "developer.ixorasolution@gmail.com",
@@ -163,14 +164,15 @@ async def create_user_profile_by_admin(request: Request,  # type: ignore
                                                                "mobile": "+01611123456",
                                                                "address": "House: X, State:Y, Z, Country",
                                                                "designation_id": 1,
-                                                               "profile_status": 1
+                                                               "profile_status": 1,
+                                                               "designation_status": 1
                                                            }
                                                    },
 
                                                "UPDATE":
                                                    {
                                                        "summary": "Update Body",
-                                                       "description": "a example of body for update operation",
+                                                       "description": "An example of body for update operation",
                                                        "value":
                                                            {
                                                                "profile_id": uuid.uuid4(),
@@ -181,18 +183,22 @@ async def create_user_profile_by_admin(request: Request,  # type: ignore
                                                                "mobile": "+01611123456",
                                                                "address": "House: X, State:Y, Z, Country",
                                                                "designation_id": 1,
-                                                               "profile_status": 1
+                                                               "profile_status": 1,
+                                                               "designation_status": 1
                                                            }
                                                    }
 
                                            },
 
                                            description="input profile data"),
-                                       admin_user_id: str = Depends(JWTBearerAdmin())):
+                                       service: ProfileService = Depends(),
+                                       # admin_user_id: str = Depends(JWTBearerAdmin())
+                                       ):
     """
     **Create:** Must provide *"email"*, *"name"*, *"designation_id"* except *"profile_id"*. Other attributes are optional.
 
 
     **Update:** Must provide *"profile_id"*. Should not provide *"email"*. Other attributes are optional.
     """
-    pass
+    return await service.create_user_profile_by_admin(profile)
+    # pass

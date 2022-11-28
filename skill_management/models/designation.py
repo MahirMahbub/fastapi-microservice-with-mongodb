@@ -7,6 +7,4 @@ class Designations(Document):
     designation: str = Field(min_length=2, description="designation of the user")
 
     class Settings:
-        use_revision = True
-        use_state_management = True
-        validate_on_save = True
+        use_revision = False

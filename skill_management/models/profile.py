@@ -1,3 +1,5 @@
+from datetime import date
+
 from beanie import Document, Link
 from pydantic import EmailStr, Field
 
@@ -24,3 +26,6 @@ class Profiles(Document):
         use_revision = True
         use_state_management = True
         validate_on_save = True
+        bson_encoders = {
+          date: str
+        }
