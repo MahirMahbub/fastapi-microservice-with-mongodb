@@ -1,4 +1,5 @@
 from fastapi import HTTPException, status
+from pymongo.errors import DuplicateKeyError
 
 from skill_management.models.designation import Designations
 from skill_management.models.enums import ProfileStatus, DesignationStatus, Gender
@@ -61,7 +62,13 @@ class ProfileService:
                                   education=[],
                                   cv_files=[]
                                   )
-            await db_profile.insert()
+            try:
+                await db_profile.insert()
+            except DuplicateKeyError as duplicate_key_exec:
+                duplicate_values = duplicate_key_exec.details["keyValue"].values()
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                    detail="Duplicate Value is not allowed. " + ", ".join(
+                                        duplicate_values) + " already exists")
             # return db_profile
             personal_detail_response = ProfilePersonalDetailsResponse(name=profile.name,
                                                                       date_of_birth=profile.date_of_birth,

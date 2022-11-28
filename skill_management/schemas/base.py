@@ -32,7 +32,7 @@ class DateMixin(BaseModel):
 
 
 class ErrorMessage(BaseModel):
-    message: str = "An error message"
+    detail: str = "An error message"
 
 
 class PaginatedResponse(BaseModel):

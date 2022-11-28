@@ -1,6 +1,6 @@
 from datetime import date
 
-from beanie import Document, Link
+from beanie import Document, Link, Indexed
 from pydantic import EmailStr, Field
 
 from skill_management.enums import ProfileStatusEnum
@@ -13,7 +13,7 @@ from skill_management.schemas.skill import ProfileSkill
 
 
 class Profiles(Document):
-    user_id: EmailStr
+    user_id: Indexed(EmailStr, unique=True)
     personal_detail: ProfilePersonalDetails
     profile_status: ProfileStatusEnum = Field(default=ProfileStatusEnum.inactive)
     designation: list[ProfileDesignation]
@@ -21,6 +21,8 @@ class Profiles(Document):
     experiences: list[ProfileExperience]
     education: list[ProfileEducation]
     cv_files: list[Link[Files]]
+
+    # @validator("user_id", )
 
     class Settings:
         use_revision = True

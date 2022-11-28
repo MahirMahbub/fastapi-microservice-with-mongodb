@@ -142,6 +142,10 @@ async def create_user_profile_by_user(request: Request,  # type: ignore
                              "model": ErrorMessage,
                              "description": "The profile details is not available"
                          },
+                         400: {
+                             "model": ErrorMessage,
+                             "description": "The profile details is not available"
+                         },
                          200: {
                              "description": "The profile details is requested",
                          },
