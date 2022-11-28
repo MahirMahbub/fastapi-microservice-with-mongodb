@@ -13,7 +13,7 @@ from skill_management.schemas.skill import ProfileSkill
 
 
 class Profiles(Document):
-    user_id: Indexed(EmailStr, unique=True)
+    user_id: Indexed(EmailStr, unique=True)  # type: ignore
     personal_detail: ProfilePersonalDetails
     profile_status: ProfileStatusEnum = Field(default=ProfileStatusEnum.inactive)
     designation: list[ProfileDesignation]

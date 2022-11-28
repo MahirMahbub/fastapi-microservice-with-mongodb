@@ -4,9 +4,10 @@ from typing import Any
 from beanie import Link
 from pydantic import BaseModel, Field, validator, root_validator
 
-from skill_management.enums import StatusEnum, UserStatusEnum
+from skill_management.enums import StatusEnum, UserStatusEnum, DesignationStatusEnum
 from skill_management.models.designation import Designations
 from skill_management.schemas.base import ResponseEnumData
+from skill_management.schemas.designation import DesignationBase, DesignationDataResponse
 
 
 class ProfileExperienceDesignationResponse(BaseModel):
@@ -33,15 +34,19 @@ class ProfileExperienceResponse(BaseModel):
         return value
 
 
+class ExperienceDesignation(DesignationDataResponse):
+    pass
+
+
 class ProfileExperience(BaseModel):
     experience_id: int = Field(ge=1, description="autoincrement experience id for this profile")
     company_name: str = Field(max_length=30, description="name of company that user worked on")
     job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
-    designation: Link[Designations] = Field(
+    designation: ExperienceDesignation = Field(
         description="designation for this profile experience")
     start_date: datetime | None = Field(description="start date of experience")
     end_date: datetime | None = Field(description="end date of experience")
-    status: StatusEnum = Field(default=StatusEnum.active, description="designation status of experience")
+    status: DesignationStatusEnum = Field(default=StatusEnum.active, description="designation status of experience")
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:

@@ -6,14 +6,17 @@ from skill_management.models.enums import ProfileStatus, DesignationStatus, Gend
 from skill_management.models.profile import Profiles
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.designation import ProfileDesignation, ProfileDesignationResponse
+from skill_management.schemas.experience import ProfileExperience, ExperienceDesignation, ProfileExperienceResponse, \
+    ProfileExperienceDesignationResponse
 from skill_management.schemas.profile import ProfileBasicForAdminRequest, ProfilePersonalDetails, ProfileResponse, \
     ProfilePersonalDetailsResponse
 
 
 class ProfileService:
     # pass
-    async def create_user_profile_by_admin(self, profile: ProfileBasicForAdminRequest):
-
+    @staticmethod
+    async def create_user_profile_by_admin(profile: ProfileBasicForAdminRequest) -> ProfileResponse:
+        response: ProfileResponse
         if profile.profile_id is None:
             """ 
             It is  a create operation. 
@@ -47,6 +50,8 @@ class ProfileService:
                                                      address=None,
                                                      experience_year=None
                                                      )
+            designation_status_object: DesignationStatus = await DesignationStatus.get(
+                profile.designation_status.value)  # type: ignore
 
             db_profile = Profiles(user_id=profile.email,
                                   personal_detail=personal_detail,
@@ -58,39 +63,60 @@ class ProfileService:
                                       designation_status=profile.designation_status,
                                   )],
                                   skills=[],
-                                  experiences=[],
+                                  experiences=[ProfileExperience(
+                                      experience_id=1,
+                                      company_name="iXora Solution Ltd.",
+                                      designation=ExperienceDesignation(designation=designation.designation,
+                                                                        designation_id=1),
+                                      start_date=None,
+                                      end_date=None,
+                                      job_responsibility=None,
+                                      status=profile.designation_status
+                                  )],
                                   education=[],
                                   cv_files=[]
                                   )
             try:
                 await db_profile.insert()
             except DuplicateKeyError as duplicate_key_exec:
-                duplicate_values = duplicate_key_exec.details["keyValue"].values()
+                duplicate_values = duplicate_key_exec.details["keyValue"].values()  # type: ignore
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                     detail="Duplicate Value is not allowed. " + ", ".join(
                                         duplicate_values) + " already exists")
             # return db_profile
-            personal_detail_response = ProfilePersonalDetailsResponse(name=profile.name,
-                                                                      date_of_birth=profile.date_of_birth,
-                                                                      gender=ResponseEnumData(id=gender_data.id,
-                                                                                              name=gender_data.name),
-                                                                      mobile=profile.mobile,
-                                                                      about=None,
-                                                                      address=None,
-                                                                      experience_year=None)
+            personal_detail_response: ProfilePersonalDetailsResponse = ProfilePersonalDetailsResponse(name=profile.name,
+                                                                                                      date_of_birth=profile.date_of_birth,
+                                                                                                      gender=ResponseEnumData(
+                                                                                                          id=gender_data.id,
+                                                                                                          name=gender_data.name),
+                                                                                                      mobile=profile.mobile,
+                                                                                                      about=None,
+                                                                                                      address=None,
+                                                                                                      experience_year=None)
             response = ProfileResponse(id=db_profile.id,
                                        email=db_profile.user_id,
                                        designation=[ProfileDesignationResponse(
                                            designation_id=designation.id,
                                            designation=designation.designation,
                                            start_date=None, end_date=None,
-                                           designation_status=ResponseEnumData(id=designation.id,
-                                                                               name=designation.designation),
+                                           designation_status=ResponseEnumData(id=designation_status_object.id,
+                                                                               name=designation_status_object.name),
                                        )],
                                        skills=[],
-                                       experience=[],
+                                       experience=[ProfileExperienceResponse(
+                                           experience_id=1,
+                                           company_name="iXora Solution Ltd.",
+                                           designation=ProfileExperienceDesignationResponse(
+                                               designation=designation.designation,
+                                               designation_id=1),
+                                           start_date=None,
+                                           end_date=None,
+                                           job_responsibility=None,
+                                           status=ResponseEnumData(id=designation.id,
+                                                                   name=designation.designation)
+                                       )],
                                        education=[],
                                        personal_details=personal_detail_response,
                                        profile_status=ResponseEnumData(id=profile_status_object.id,
                                                                        name=profile_status_object.name))
-            return response
+        return response
