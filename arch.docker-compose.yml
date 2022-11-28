@@ -37,14 +37,14 @@ services:
 
   auth:
     build:
-      context: ./auth_app
-      dockerfile: auth_app/AuthDockerfile
+      context: auth_management
+      dockerfile: auth_management/AuthDockerfile
     container_name: "auth"
     hostname: "auth"
-    command: bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003 --log-config=auth_app/logging.conf  --reload"
+    command: bash -c "uvicorn auth_management.main:auth_management --host 0.0.0.0 --port 7003 --log-config=auth_management/logging.conf  --reload"
     volumes:
-      - ./:/auth_app
-    env_file: auth_app/.env
+      - ./:/auth_management
+    env_file: auth_management/.env
     networks:
       - auth_network
     restart: always
@@ -74,12 +74,12 @@ services:
     hostname: "email_worker"
     container_name: "email_worker"
     build:
-      context: ./auth_app
-      dockerfile: auth_app/AuthDockerfile
-    command: "celery -A auth_app.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_app/logs/email_worker.log -Q send_verify_email,send_change_password_email"
+      context: auth_management
+      dockerfile: auth_management/AuthDockerfile
+    command: "celery -A auth_management.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_management/logs/email_worker.log -Q send_verify_email,send_change_password_email"
     env_file: email-worker.env
     volumes:
-      - './:/auth_app'
+      - './:/auth_management'
     links:
       - auth_rabbitmq
     depends_on:

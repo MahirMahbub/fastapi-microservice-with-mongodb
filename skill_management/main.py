@@ -52,6 +52,8 @@ async def start_database() -> None:
 
     logger.info("OpenAPI specification created.........")
 
+
+
 #
 # PORT = 8000
 # BIND = '127.0.0.1'
@@ -61,8 +63,8 @@ async def start_database() -> None:
 #     title="SkillMatrix",
 #     description="Skill Matrix Application",
 #     version="1.0.0")
-# # app.mount("/auth", auth_app)
+# # app.mount("/auth", auth_management)
 # if __name__ == "__main__":
 #     # install_packages()
 #     # uvicorn.run("hello:app", host=BIND, port=int(PORT), reload=RELOAD, debug=RELOAD, workers=int(WORKERS))
-#     uvicorn.run("auth_app.main:auth_app", host=BIND, port=int(PORT), reload=RELOAD, workers=int(WORKERS))
+#     uvicorn.run("auth_management.main:auth_management", host=BIND, port=int(PORT), reload=RELOAD, workers=int(WORKERS))

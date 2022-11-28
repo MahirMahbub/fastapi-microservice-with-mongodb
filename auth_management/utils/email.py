@@ -7,7 +7,7 @@ from typing import Any
 from jinja2 import Environment, select_autoescape, FileSystemLoader, Template
 
 
-# from auth_app.config.config import Settings
+# from auth_management.config.config import Settings
 
 
 class SingletonMeta(type):
@@ -58,7 +58,7 @@ class EmailGenerator(metaclass=SingletonMeta):
     @staticmethod
     def get_jinja_template(template_name: str)-> Template:
         env = Environment(
-            loader=FileSystemLoader(searchpath='auth_app/static/template/'),
+            loader=FileSystemLoader(searchpath='auth_management/static/template/'),
             autoescape=select_autoescape(['html', 'xml'])
         )
         template = env.get_template(template_name)

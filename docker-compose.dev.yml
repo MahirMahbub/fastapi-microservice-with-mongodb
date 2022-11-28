@@ -65,27 +65,6 @@ services:
     networks:
       - skill_management_network
 
-  auth:
-    build:
-      context: ./auth_app
-      dockerfile: AuthDockerfile
-    container_name: "auth"
-    hostname: "auth"
-    command: bash -c "uvicorn auth_app.main:auth_app --host 0.0.0.0 --port 7003  --reload"
-    volumes:
-      - ./:/auth_app
-    ports:
-      - "7003:7003"
-    env_file: auth_app/.env
-    networks:
-      - auth_network
-    restart: always
-    depends_on:
-      - email_worker
-      - auth_rabbitmq
-      - auth_redis
-      - auth_mongodb
-
   skill_management:
     build:
       context: ./skill_management
@@ -103,6 +82,26 @@ services:
     restart: always
     depends_on:
       - skill_management_mongodb
+  auth_management:
+    build:
+      context: ./auth_management
+      dockerfile: AuthDockerfile
+    container_name: "auth_management"
+    hostname: "auth_management"
+    command: bash -c "uvicorn auth_management.main:auth_app --host 0.0.0.0 --port 7003  --reload"
+    volumes:
+      - ./:/auth_management
+    ports:
+      - "7003:7003"
+    env_file: auth_management/.env
+    networks:
+      - auth_network
+    restart: always
+    depends_on:
+      - email_worker
+      - auth_rabbitmq
+      - auth_redis
+      - auth_mongodb
 
   auth_celery_flower:
     container_name: "auth_celery_flower"
@@ -125,12 +124,12 @@ services:
     hostname: "email_worker"
     container_name: "email_worker"
     build:
-      context: ./auth_app
-      dockerfile: auth_app/AuthDockerfile
-    command: "celery -A auth_app.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_app/logs/email_worker.log -Q send_verify_email,send_change_password_email"
+      context: ./auth_management
+      dockerfile: AuthDockerfile
+    command: "celery -A auth_management.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_management/logs/email_worker.log -Q send_verify_email,send_change_password_email"
     env_file: email-worker.env
     volumes:
-      - ./:/auth_app
+      - ./:/auth_management
     links:
       - auth_rabbitmq
     depends_on:

@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
-from auth_app.utils.logger import get_logger
-from auth_app.utils.tasks import send_account_verify_email
+from auth_management.utils.logger import get_logger
+from auth_management.utils.tasks import send_account_verify_email
 
 test_router: APIRouter = APIRouter()
 logger = get_logger()

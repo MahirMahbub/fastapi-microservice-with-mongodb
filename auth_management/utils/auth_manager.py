@@ -17,10 +17,10 @@ from fastapi_users.db import BeanieUserDatabase, ObjectIDIDMixin
 from fastapi_users.models import UserProtocol
 from password_strength import PasswordPolicy
 
-from auth_app.entities.user import User, get_user_db
-from auth_app.schemas.user import UserCreate
-from auth_app.utils.logger import get_logger
-from auth_app.utils.tasks import send_account_verify_email, send_account_reset_password_email
+from auth_management.entities.user import User, get_user_db
+from auth_management.schemas.user import UserCreate
+from auth_management.utils.logger import get_logger
+from auth_management.utils.tasks import send_account_verify_email, send_account_reset_password_email
 
 logger: Logger = get_logger()
 

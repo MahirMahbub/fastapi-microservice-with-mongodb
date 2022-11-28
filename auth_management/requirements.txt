@@ -41,3 +41,4 @@ redis==4.3.4
 flower==1.2.0
 mypy==0.991
 orjson==3.8.2
+aioredis==2.0.1

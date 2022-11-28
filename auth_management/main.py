@@ -1,9 +1,9 @@
 import os
 
 from fastapi import FastAPI
-from auth_app.config.config import initiate_database
-from auth_app.controllers.router import api_router
-from auth_app.utils.logger import get_logger
+from auth_management.config.config import initiate_database
+from auth_management.controllers.router import api_router
+from auth_management.utils.logger import get_logger
 
 # API Doc
 if os.getenv("ENVIRONMENT") == "local":
@@ -45,8 +45,8 @@ async def start_database() -> None:
 #     title="SkillMatrix",
 #     description="Skill Matrix Application",
 #     version="1.0.0")
-# # app.mount("/auth", auth_app)
+# # app.mount("/auth", auth_management)
 # if __name__ == "__main__":
 #     # install_packages()
 #     # uvicorn.run("hello:app", host=BIND, port=int(PORT), reload=RELOAD, debug=RELOAD, workers=int(WORKERS))
-#     uvicorn.run("auth_app.main:auth_app", host=BIND, port=int(PORT), reload=RELOAD, workers=int(WORKERS))
+#     uvicorn.run("auth_management.main:auth_management", host=BIND, port=int(PORT), reload=RELOAD, workers=int(WORKERS))

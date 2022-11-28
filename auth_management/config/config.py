@@ -3,7 +3,7 @@ import os
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from auth_app.entities.user import User
+from auth_management.entities.user import User
 
 
 # class Settings(BaseSettings):

@@ -3,7 +3,7 @@ import os
 from celery import Celery
 from pydantic import EmailStr
 
-from auth_app.utils.email import EmailGenerator
+from auth_management.utils.email import EmailGenerator
 
 celery_app: Celery = Celery(
     "email-worker",
@@ -11,8 +11,8 @@ celery_app: Celery = Celery(
     broker="amqp://user:Pass@123@auth_rabbitmq:5672//"
 )
 celery_app.conf.task_routes = {
-    "auth_app.utils.tasks.send_account_verify_email": "send_verify_email",
-    "auth_app.utils.tasks.send_account_reset_password_email": "send_change_password_email"}
+    "auth_management.utils.tasks.send_account_verify_email": "send_verify_email",
+    "auth_management.utils.tasks.send_account_reset_password_email": "send_change_password_email"}
 
 celery: Celery = celery_app
 

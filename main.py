@@ -1,8 +1,7 @@
 import uvicorn
 from fastapi import FastAPI
 
-# from auth_app.config.config import Settings
-from auth_app.main import auth_app
+# from auth_management.config.config import Settings
 
 # settings =Settings()
 
@@ -14,7 +13,7 @@ app = FastAPI(
     title="SkillMatrix",
     description="Skill Matrix Application",
     version="1.0.0")
-app.mount("/auth", auth_app)
+# app.mount("/auth", auth_app)
 if __name__ == "__main__":
     # install_packages()
     # uvicorn.run("hello:app", host=BIND, port=int(PORT), reload=RELOAD, debug=RELOAD, workers=int(WORKERS))
