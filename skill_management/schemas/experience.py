@@ -1,13 +1,11 @@
 from datetime import datetime, timezone, timedelta
 from typing import Any
 
-from beanie import Link
 from pydantic import BaseModel, Field, validator, root_validator
 
 from skill_management.enums import StatusEnum, UserStatusEnum, DesignationStatusEnum
-from skill_management.models.designation import Designations
 from skill_management.schemas.base import ResponseEnumData
-from skill_management.schemas.designation import DesignationBase, DesignationDataResponse
+from skill_management.schemas.designation import DesignationDataResponse
 
 
 class ProfileExperienceDesignationResponse(BaseModel):

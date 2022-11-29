@@ -3,7 +3,7 @@ from pydantic import Field
 
 
 class Designations(Document):
-    id: int = Field(ge=1, description='id of designation')
+    id: int = Field(ge=1, description='id of designation')  # type: ignore
     designation: str = Field(min_length=2, description="designation of the user")
 
     class Settings:

@@ -3,7 +3,7 @@ from datetime import datetime, date, timezone, timedelta
 from typing import Any
 
 from beanie import PydanticObjectId
-from pydantic import Field, BaseModel, EmailStr, UUID4, validator, ValidationError, root_validator
+from pydantic import Field, BaseModel, EmailStr, UUID4, validator, root_validator
 
 from skill_management.enums import GenderEnum, ProfileStatusEnum, DesignationStatusEnum
 from skill_management.schemas.base import PaginatedResponse, ResponseEnumData
@@ -333,7 +333,7 @@ class ProfileBasicRequest(BaseModel):
 
 
 class ProfileBasicForAdminRequest(BaseModel):
-    profile_id: PydanticObjectId|None = Field(description="profile id of the user for update")
+    profile_id: PydanticObjectId | None = Field(description="profile id of the user for update")
     email: EmailStr | None = Field(description="Email address of the user")
     name: str | None = Field(max_length=20, min_length=2, description="name of the user")
     date_of_birth: date | None = Field(description="date of birth of the user")
@@ -384,7 +384,7 @@ class ProfileBasicForAdminRequest(BaseModel):
 
 
 class ProfileUpdateByAdmin(BaseModel):
-    designation: list[DesignationDataCreate]|None = Field(default=None)
+    designation: list[DesignationDataCreate] | None = Field(default=None)
     name: str | None = Field(max_length=20, min_length=2, description="name of the user")
     date_of_birth: date | None = Field(description="date of birth of the user")
     gender: GenderEnum | None = Field(description="gender of the user")

@@ -22,8 +22,6 @@ class Profiles(Document):
     educations: list[ProfileEducation]
     cv_files: list[Link[Files]]
 
-    # @validator("user_id", )
-
     class Settings:
         use_revision = True
         use_state_management = True

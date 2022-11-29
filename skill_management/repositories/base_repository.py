@@ -10,13 +10,8 @@ from pymongo import DeleteMany
 from pymongo.results import DeleteResult
 
 
-# T = TypeVar('T', bound=Type[Document])
-
-
 class TableRepository:
     __slots__ = ["entity_collection"]
-
-    # entity: Generic[T] | None = None
 
     def __init__(self, entity_collection: Type[Document]):
         self.entity_collection: Type[Document] = entity_collection
@@ -49,8 +44,10 @@ class TableRepository:
             return None
         return await document_object.delete()
 
-    async def update(self, id_: PydanticObjectId | UUID4, item_dict: dict[str, Any], push_item: dict[str, Any] | None = None) -> \
-            Optional[Document]:
+    async def update(self,
+                     id_: PydanticObjectId | UUID4,
+                     item_dict: dict[str, Any],
+                     push_item: dict[str, Any] | None = None) -> Optional[Document]:
 
         document_object: Document | None = await self.entity_collection.get(PydanticObjectId(id_))  # type: ignore
         if document_object is None:

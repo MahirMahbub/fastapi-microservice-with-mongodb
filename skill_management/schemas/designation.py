@@ -3,8 +3,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field, validator
 
-from skill_management.enums import UserStatusEnum, DesignationStatusEnum
-from skill_management.schemas.base import EnumData, ResponseEnumData
+from skill_management.enums import DesignationStatusEnum
+from skill_management.schemas.base import ResponseEnumData
 
 
 class DesignationBase(BaseModel):
@@ -32,7 +32,8 @@ class ProfileDesignationResponse(DesignationDataResponse):
 class DesignationDataCreate(DesignationDataResponse):
     start_date: str | None = Field(description="start date of designated job")
     end_date: str | None = Field(description="end date of designated job")
-    designation_status: DesignationStatusEnum = Field(default=DesignationStatusEnum.active, description="designation status of designated job")
+    designation_status: DesignationStatusEnum = Field(default=DesignationStatusEnum.active,
+                                                      description="designation status of designated job")
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
@@ -41,7 +42,6 @@ class DesignationDataCreate(DesignationDataResponse):
         if values["start_date"] > value:
             raise ValueError("end_date must be greater than start_date")
         return value
-
 
 
 class DesignationCreateRequest(BaseModel):
