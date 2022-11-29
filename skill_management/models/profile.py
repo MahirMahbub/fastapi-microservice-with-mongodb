@@ -16,10 +16,10 @@ class Profiles(Document):
     user_id: Indexed(EmailStr, unique=True)  # type: ignore
     personal_detail: ProfilePersonalDetails
     profile_status: ProfileStatusEnum = Field(default=ProfileStatusEnum.inactive)
-    designation: list[ProfileDesignation]
+    designation: ProfileDesignation
     skills: list[ProfileSkill]
     experiences: list[ProfileExperience]
-    education: list[ProfileEducation]
+    educations: list[ProfileEducation]
     cv_files: list[Link[Files]]
 
     # @validator("user_id", )

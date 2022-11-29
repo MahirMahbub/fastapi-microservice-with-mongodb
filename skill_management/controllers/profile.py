@@ -151,58 +151,60 @@ async def create_user_profile_by_user(request: Request,  # type: ignore
                          },
                      }
                      )
-async def create_user_profile_by_admin(request: Request,  # type: ignore
-                                       profile: ProfileBasicForAdminRequest = Body(
-                                           examples={
-                                               "CREATE":
-                                                   {
-                                                       "summary": "Create Body",
-                                                       "description": "An example of body for create operation",
-                                                       "value":
-                                                           {
-                                                               "email": "developer.ixorasolution@gmail.com",
-                                                               "name": "Chelsey Adams",
-                                                               "date_of_birth": datetime.now(
-                                                                   timezone.utc).date() - timedelta(days=10000),
-                                                               "gender": 2,
-                                                               "mobile": "+01611123456",
-                                                               "address": "House: X, State:Y, Z, Country",
-                                                               "designation_id": 1,
-                                                               "profile_status": 1,
-                                                               "designation_status": 1
-                                                           }
-                                                   },
+async def create_or_update_user_profile_by_admin(request: Request,  # type: ignore
+                                                 profile: ProfileBasicForAdminRequest = Body(
+                                                     examples={
+                                                         "CREATE":
+                                                             {
+                                                                 "summary": "Create Body",
+                                                                 "description": "An example of body for create operation",
+                                                                 "value":
+                                                                     {
+                                                                         "email": "developer.ixorasolution@gmail.com",
+                                                                         "name": "Chelsey Adams",
+                                                                         "date_of_birth": datetime.now(
+                                                                             timezone.utc).date() - timedelta(
+                                                                             days=10000),
+                                                                         "gender": 2,
+                                                                         "mobile": "+01611123456",
+                                                                         "address": "House: X, State:Y, Z, Country",
+                                                                         "designation_id": 1,
+                                                                         "profile_status": 1,
+                                                                         "designation_status": 1
+                                                                     }
+                                                             },
 
-                                               "UPDATE":
-                                                   {
-                                                       "summary": "Update Body",
-                                                       "description": "An example of body for update operation",
-                                                       "value":
-                                                           {
-                                                               "profile_id": uuid.uuid4(),
-                                                               "name": "Chelsey Adams",
-                                                               "date_of_birth": datetime.now(
-                                                                   timezone.utc).date() - timedelta(days=10000),
-                                                               "gender": 2,
-                                                               "mobile": "+01611123456",
-                                                               "address": "House: X, State:Y, Z, Country",
-                                                               "designation_id": 1,
-                                                               "profile_status": 1,
-                                                               "designation_status": 1
-                                                           }
-                                                   }
+                                                         "UPDATE":
+                                                             {
+                                                                 "summary": "Update Body",
+                                                                 "description": "An example of body for update operation",
+                                                                 "value":
+                                                                     {
+                                                                         "profile_id": uuid.uuid4(),
+                                                                         "name": "Chelsey Adams",
+                                                                         "date_of_birth": datetime.now(
+                                                                             timezone.utc).date() - timedelta(
+                                                                             days=10000),
+                                                                         "gender": 2,
+                                                                         "mobile": "+01611123456",
+                                                                         "address": "House: X, State:Y, Z, Country",
+                                                                         "designation_id": 1,
+                                                                         "profile_status": 1,
+                                                                         "designation_status": 1
+                                                                     }
+                                                             }
 
-                                           },
+                                                     },
 
-                                           description="input profile data"),
-                                       service: ProfileService = Depends(),
-                                       # admin_user_id: str = Depends(JWTBearerAdmin())
-                                       ):
+                                                     description="input profile data"),
+                                                 service: ProfileService = Depends(),
+                                                 # admin_user_id: str = Depends(JWTBearerAdmin())
+                                                 ):
     """
     **Create:** Must provide *"email"*, *"name"*, *"designation_id"* except *"profile_id"*. Other attributes are optional.
 
 
     **Update:** Must provide *"profile_id"*. Should not provide *"email"*. Other attributes are optional.
     """
-    return await service.create_user_profile_by_admin(profile)
+    return await service.create_or_update_user_profile_by_admin(profile)
     # pass

@@ -10,6 +10,8 @@ class Files(Document):
     file_type: FileTypeEnum = Field(description="type of file to be uploaded")
     file_size: int = Field(le=2040, description="file size in KB")
     status: StatusEnum = Field(description="status of the file")
+    location: str = Field(description="location of the file")
+    owner: str = Field(description="owner of the file")
 
     class Settings:
         use_revision = True

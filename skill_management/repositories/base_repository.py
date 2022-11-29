@@ -1,10 +1,11 @@
 from typing import Optional, Type, Any, Sequence
 
 from beanie import PydanticObjectId, Document
+from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Set
 from beanie.odm.queries.delete import DeleteOne
 from beanie.odm.queries.update import UpdateMany
-from pydantic import BaseModel
+from pydantic import BaseModel, UUID4
 from pymongo import DeleteMany
 from pymongo.results import DeleteResult
 
@@ -25,7 +26,7 @@ class TableRepository:
         data_object = self.entity_collection(**item_dict)
         return await data_object.insert()
 
-    async def get(self, id_: str) -> Document | None:
+    async def get(self, id_: PydanticObjectId) -> Optional[Document]:
         return await self.entity_collection.get(PydanticObjectId(id_))
 
     async def gets(self) -> Sequence[Document | None]:
@@ -48,13 +49,17 @@ class TableRepository:
             return None
         return await document_object.delete()
 
-    async def update(self, id_: PydanticObjectId, item: BaseModel) -> Optional[Document]:
-        item_dict = item.dict(exclude_unset=True)
-        document_object: Document | None = await self.entity_collection.get(id_)
+    async def update(self, id_: PydanticObjectId | UUID4, item_dict: dict[str, Any], push_item: dict[str, Any] | None = None) -> \
+            Optional[Document]:
+
+        document_object: Document | None = await self.entity_collection.get(PydanticObjectId(id_))  # type: ignore
         if document_object is None:
             return None
-        await document_object.update(Set(item_dict))
-        return document_object
+        if push_item is not None:
+            await document_object.update(Set(item_dict), Push(push_item))
+        else:
+            await document_object.update(Set(item_dict))
+        return await self.entity_collection.get(PydanticObjectId(id_))  # type: ignore
 
     async def update_by_query(self, attr: str, value: Any, item: BaseModel) -> Optional[UpdateMany]:
         item_dict = item.dict(exclude_unset=True)

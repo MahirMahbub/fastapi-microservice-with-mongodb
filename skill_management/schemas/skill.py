@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field, FilePath, validator
 from skill_management.enums import StatusEnum, UserStatusEnum, SkillTypeEnum, SkillCategoryEnum
 from skill_management.models.file import Files
 from skill_management.schemas.base import ResponseEnumData
+from skill_management.schemas.file import FileResponse
 
 
 class SkillCreate(BaseModel):
@@ -302,7 +303,7 @@ class ProfileSkillResponse(BaseModel):
                                                           description="category of skill from fixed list of items")
     skill_name: str | None = Field(max_length=20, description="name of skill from fixed list of values")
     status: ResponseEnumData | None = Field(description="status of skill from fixed list of values")
-    _filename_url: list[str | None] = Field(max_length=255, description="file response api url of user profile picture")
+    certificate_files: list[FileResponse] = Field(description="file response api url of the certificate files")
     experience_year: int | None = Field(le=45, description="experience of the indicated skill")
     number_of_projects: int | None = Field(le=80, description="number of projects on that skill")
     level: int | None = Field(le=10, ge=1, description="level of proficiency on the skill")

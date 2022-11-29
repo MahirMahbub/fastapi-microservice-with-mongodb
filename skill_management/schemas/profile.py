@@ -7,7 +7,8 @@ from pydantic import Field, BaseModel, EmailStr, UUID4, validator, ValidationErr
 
 from skill_management.enums import GenderEnum, ProfileStatusEnum, DesignationStatusEnum
 from skill_management.schemas.base import PaginatedResponse, ResponseEnumData
-from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignationResponse
+from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignationResponse, \
+    DesignationDataCreate
 from skill_management.schemas.education import ProfileEducationResponse
 from skill_management.schemas.experience import ProfileExperienceResponse
 from skill_management.schemas.skill import ProfileSkillDataResponse, ProfileSkillResponse
@@ -107,10 +108,10 @@ class ProfilePersonalDetailsResponse(BaseModel):
 class ProfileResponse(BaseModel):
     id: PydanticObjectId | None = Field(description="id of the user profile")
     email: EmailStr | None = Field(description="email address of the user")
-    designation: list[ProfileDesignationResponse] | None = Field(description="designation details of the profile user")
+    designation: ProfileDesignationResponse = Field(description="designation details of the profile user")
     skills: list[ProfileSkillResponse]
-    experience: list[ProfileExperienceResponse]
-    education: list[ProfileEducationResponse]
+    experiences: list[ProfileExperienceResponse]
+    educations: list[ProfileEducationResponse]
     personal_details: ProfilePersonalDetailsResponse | None
     profile_status: ResponseEnumData | None = Field(description="profile status/ job type of the user")
     _latest_cv_url: str | None = Field(description="latest CV file response api url")
@@ -181,7 +182,14 @@ class ProfileResponse(BaseModel):
                             "status": {
                                 "id": 1,
                                 "name": "active"
-                            }
+                            },
+                            "certificate_files":
+                                [
+                                    {
+                                        "file_name": "certificate.pdf",
+                                        "url": "/files/1"
+                                    }
+                                ]
                         }
                     ],
                     "experience": [
@@ -325,7 +333,7 @@ class ProfileBasicRequest(BaseModel):
 
 
 class ProfileBasicForAdminRequest(BaseModel):
-    profile_id: UUID4 | None = Field(description="profile id of the user for update")
+    profile_id: PydanticObjectId|None = Field(description="profile id of the user for update")
     email: EmailStr | None = Field(description="Email address of the user")
     name: str | None = Field(max_length=20, min_length=2, description="name of the user")
     date_of_birth: date | None = Field(description="date of birth of the user")
@@ -341,6 +349,7 @@ class ProfileBasicForAdminRequest(BaseModel):
                                                       description="""designation status of user
     active: 1, inactive: 2
     """)
+    about: str | None = Field(max_length=256, description="description of the user")
 
     @validator("date_of_birth", always=True)
     def validate_date_of_birth(cls, value: date | None) -> date | None:
@@ -357,8 +366,10 @@ class ProfileBasicForAdminRequest(BaseModel):
             email = v.pop('email')
             name = v.pop('name')
             designation_id = v.pop('designation_id')
+            if v.get("about") is not None:
+                raise ValueError('You should not provide the "about" while creating a new profile')
             if email is None or name is None or designation_id is None:
-                raise ValueError('You must provide email, name and designation for creating a profile')
+                raise ValueError('You must provide email, name and designation for creating a new profile')
             v["email"] = email
             v["name"] = name
             v["designation_id"] = designation_id
@@ -366,6 +377,25 @@ class ProfileBasicForAdminRequest(BaseModel):
             email = v.pop('email')
             if email is not None:
                 raise ValueError('You should not provide email for updating a profile')
+            v["email"] = email
         v["profile_id"] = profile_id
 
         return v
+
+
+class ProfileUpdateByAdmin(BaseModel):
+    designation: list[DesignationDataCreate]|None = Field(default=None)
+    name: str | None = Field(max_length=20, min_length=2, description="name of the user")
+    date_of_birth: date | None = Field(description="date of birth of the user")
+    gender: GenderEnum | None = Field(description="gender of the user")
+    mobile: str | None = Field(description="mobile number of the user")
+    address: str | None = Field(max_length=255, description="address of the user")
+    designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
+    profile_status: ProfileStatusEnum | None = Field(description="""profile status of the user
+
+        full_time: 1, part_time: 2, delete: 3, inactive: 4
+        """)
+    designation_status: DesignationStatusEnum | None = Field(default=DesignationStatusEnum.active, description="""designation status of user
+        active: 1, inactive: 2
+        """)
+    about: str | None = Field(max_length=256, description="description of the user")

@@ -82,3 +82,8 @@ class ProfilePictureUploadResponse(FileUploadResponse):
 class SkillCertificateResponse(BaseModel):
     succeed_upload_list: list[str] = []
     failed_upload_list: list[str] = []
+
+
+class FileResponse(BaseModel):
+    file_name: str | None = Field(description="name of the file")
+    url: str = Field(description="api url of the file")
