@@ -408,7 +408,7 @@ paths:
                 value:
                   email: developer.ixorasolution@gmail.com
                   name: Chelsey Adams
-                  date_of_birth: 1995-07-13
+                  date_of_birth: 1995-07-14
                   gender: 2
                   mobile: +01611123456
                   address: 'House: X, State:Y, Z, Country'
@@ -417,8 +417,8 @@ paths:
                 summary: Update Body
                 description: a example of body for update operation
                 value:
-                  profile_id: 95a28720-777c-4f46-8f98-9c05ec6a57fc
-                  date_of_birth: 1995-07-13
+                  profile_id: dcdffd44-8576-467b-a3d2-ddbefc6751f7
+                  date_of_birth: 1995-07-14
                   gender: 2
                   mobile: +01611123456
                   address: 'House: X, State:Y, Z, Country'
@@ -448,13 +448,13 @@ paths:
     post:
       tags:
       - profile
-      summary: Create User Profile By Admin
+      summary: Create Or Update User Profile By Admin
       description: |-
         **Create:** Must provide *"email"*, *"name"*, *"designation_id"* except *"profile_id"*. Other attributes are optional.
 
 
         **Update:** Must provide *"profile_id"*. Should not provide *"email"*. Other attributes are optional.
-      operationId: create_user_profile_by_admin_api_v1_admin_user_profiles__post
+      operationId: create_or_update_user_profile_by_admin_api_v1_admin_user_profiles__post
       requestBody:
         content:
           application/json:
@@ -470,7 +470,7 @@ paths:
                 value:
                   email: developer.ixorasolution@gmail.com
                   name: Chelsey Adams
-                  date_of_birth: 1995-07-13
+                  date_of_birth: 1995-07-14
                   gender: 2
                   mobile: +01611123456
                   address: 'House: X, State:Y, Z, Country'
@@ -481,9 +481,9 @@ paths:
                 summary: Update Body
                 description: An example of body for update operation
                 value:
-                  profile_id: e411397b-2119-42c8-89c8-8d885c3f4af1
+                  profile_id: 779daf65-d342-4c3e-98de-dfced5666e67
                   name: Chelsey Adams
-                  date_of_birth: 1995-07-13
+                  date_of_birth: 1995-07-14
                   gender: 2
                   mobile: +01611123456
                   address: 'House: X, State:Y, Z, Country'
@@ -1255,8 +1255,8 @@ components:
         company_name: X Software
         job_responsibility: Backend Development
         designation_id: 2
-        start_date: 2021-07-16T11:25:21.363569+00:00
-        end_date: 2022-05-12T11:25:21.363592+00:00
+        start_date: 2021-07-17T10:44:17.402904+00:00
+        end_date: 2022-05-13T10:44:17.402917+00:00
         status: 1
     ExperienceCreateResponse:
       title: ExperienceCreateResponse
@@ -1305,11 +1305,25 @@ components:
         designation:
           designation_id: 2
           designation: Software Developer
-        start_date: 2021-07-16T11:25:21.369840+00:00
-        end_date: 2022-05-12T11:25:21.369846+00:00
+        start_date: 2021-07-17T10:44:17.408688+00:00
+        end_date: 2022-05-13T10:44:17.408697+00:00
         status:
           id: 1
           name: active
+    FileResponse:
+      title: FileResponse
+      required:
+      - url
+      type: object
+      properties:
+        file_name:
+          title: File Name
+          type: string
+          description: name of the file
+        url:
+          title: Url
+          type: string
+          description: api url of the file
     GenderEnum:
       title: GenderEnum
       type: integer
@@ -1547,8 +1561,8 @@ components:
         notes: It is a note for the planning
         skill_id: 1
         profile_id: 1
-        start_date: 2022-11-28T11:25:21.552337+00:00
-        end_date: 2022-11-29T11:25:21.552343+00:00
+        start_date: 2022-11-29T10:44:17.692686+00:00
+        end_date: 2022-11-30T10:44:17.692690+00:00
         task:
         - id: 1
           description: It is a task for the planning
@@ -1571,7 +1585,6 @@ components:
           title: Profile Id
           type: string
           description: profile id of the user for update
-          format: uuid4
         email:
           title: Email
           type: string
@@ -1619,6 +1632,11 @@ components:
           allOf:
           - $ref: '#/components/schemas/DesignationStatusEnum'
           default: "1"
+        about:
+          title: About
+          maxLength: 256
+          type: string
+          description: description of the user
     ProfileBasicRequest:
       title: ProfileBasicRequest
       type: object
@@ -1919,8 +1937,9 @@ components:
     ProfileResponse:
       title: ProfileResponse
       required:
-      - education
-      - experience
+      - designation
+      - educations
+      - experiences
       - skills
       type: object
       properties:
@@ -1935,22 +1954,21 @@ components:
           format: email
         designation:
           title: Designation
-          type: array
           description: designation details of the profile user
-          items:
-            $ref: '#/components/schemas/ProfileDesignationResponse'
+          allOf:
+          - $ref: '#/components/schemas/ProfileDesignationResponse'
         skills:
           title: Skills
           type: array
           items:
             $ref: '#/components/schemas/ProfileSkillResponse'
-        experience:
-          title: Experience
+        experiences:
+          title: Experiences
           type: array
           items:
             $ref: '#/components/schemas/ProfileExperienceResponse'
-        education:
-          title: Education
+        educations:
+          title: Educations
           type: array
           items:
             $ref: '#/components/schemas/ProfileEducationResponse'
@@ -1967,14 +1985,14 @@ components:
         designation:
           designation: Software Engineer
           designation_id: 1
-          start_date: 2022-11-28T11:25:21.474076+00:00
-          end_date: 2022-11-29T11:25:21.474094+00:00
+          start_date: 2022-11-29T10:44:17.592151+00:00
+          end_date: 2022-11-30T10:44:17.592160+00:00
           designation_status:
             id: 1
             name: active
         personal_details:
           name: Chelsey Adams
-          date_of_birth: 1995-07-13
+          date_of_birth: 1995-07-14
           gender:
             id: 1
             name: female
@@ -2004,15 +2022,18 @@ components:
           status:
             id: 1
             name: active
-        experience:
+          certificate_files:
+          - file_name: certificate.pdf
+            url: /files/1
+        experiences:
         - experience_id: 1
           company_name: X Software
           job_responsibility: Backend Development
           designation:
             designation_id: 1
             designation: Software Developer
-          start_date: 2020-03-03T11:25:21.474112+00:00
-          end_date: 2021-07-16T11:25:21.474114+00:00
+          start_date: 2020-03-04T10:44:17.592186+00:00
+          end_date: 2021-07-17T10:44:17.592189+00:00
           status:
             id: 1
             name: active
@@ -2022,12 +2043,12 @@ components:
           designation:
             designation_id: 1
             designation: Software Engineer
-          start_date: 2021-07-16T11:25:21.474117+00:00
-          end_date: 2022-05-12T11:25:21.474119+00:00
+          start_date: 2021-07-17T10:44:17.592193+00:00
+          end_date: 2022-05-13T10:44:17.592195+00:00
           status:
             id: 1
             name: active
-        education:
+        educations:
         - education_id: 2
           degree_name: B.Sc in Computer Science
           school_name: University of Dhaka
@@ -2076,6 +2097,8 @@ components:
         skill_id: 1
     ProfileSkillResponse:
       title: ProfileSkillResponse
+      required:
+      - certificate_files
       type: object
       properties:
         skill_id:
@@ -2105,6 +2128,12 @@ components:
           description: status of skill from fixed list of values
           allOf:
           - $ref: '#/components/schemas/ResponseEnumData'
+        certificate_files:
+          title: Certificate Files
+          type: array
+          description: file response api url of the certificate files
+          items:
+            $ref: '#/components/schemas/FileResponse'
         experience_year:
           title: Experience Year
           maximum: 45.0

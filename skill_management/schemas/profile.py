@@ -192,7 +192,7 @@ class ProfileResponse(BaseModel):
                                 ]
                         }
                     ],
-                    "experience": [
+                    "experiences": [
                         {
                             "experience_id": 1,
                             "company_name": "X Software",
@@ -224,7 +224,7 @@ class ProfileResponse(BaseModel):
                             }
                         }
                     ],
-                    "education": [
+                    "educations": [
                         {
                             "education_id": 2,
                             "degree_name": "B.Sc in Computer Science",
