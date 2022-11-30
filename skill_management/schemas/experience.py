@@ -44,7 +44,7 @@ class ProfileExperience(BaseModel):
         description="designation for this profile experience")
     start_date: datetime | None = Field(description="start date of experience")
     end_date: datetime | None = Field(description="end date of experience")
-    status: DesignationStatusEnum = Field(default=StatusEnum.active, description="designation status of experience")
+    status: StatusEnum = Field(default=StatusEnum.active, description="designation status of experience")
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:

@@ -302,6 +302,7 @@ class ProfileBasicRequest(BaseModel):
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
+    about: str | None = Field(max_length=256, description="description of the user")
 
     @validator("date_of_birth", always=True)
     def validate_date_of_birth(cls, value: datetime) -> datetime:
@@ -398,4 +399,14 @@ class ProfileUpdateByAdmin(BaseModel):
     designation_status: DesignationStatusEnum | None = Field(default=DesignationStatusEnum.active, description="""designation status of user
         active: 1, inactive: 2
         """)
+    about: str | None = Field(max_length=256, description="description of the user")
+
+class ProfileUpdateByUser(BaseModel):
+    designation: list[DesignationDataCreate] | None = Field(default=None)
+    name: str | None = Field(max_length=20, min_length=2, description="name of the user")
+    date_of_birth: date | None = Field(description="date of birth of the user")
+    gender: GenderEnum | None = Field(description="gender of the user")
+    mobile: str | None = Field(description="mobile number of the user")
+    address: str | None = Field(max_length=255, description="address of the user")
+    designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
     about: str | None = Field(max_length=256, description="description of the user")

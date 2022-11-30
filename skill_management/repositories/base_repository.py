@@ -21,6 +21,9 @@ class TableRepository:
         data_object = self.entity_collection(**item_dict)
         return await data_object.insert()
 
+    async def get_by_query(self, query: dict[str, Any]) -> Document|None:
+        return await self.entity_collection.find(query).first_or_none()
+
     async def get(self, id_: PydanticObjectId) -> Optional[Document]:
         return await self.entity_collection.get(PydanticObjectId(id_))
 
