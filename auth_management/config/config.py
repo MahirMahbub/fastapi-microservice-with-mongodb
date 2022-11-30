@@ -31,7 +31,7 @@ async def initiate_database() -> None:
         client = AsyncIOMotorClient(os.getenv("LOCAL_DATABASE_URL"))
     else:
         client = AsyncIOMotorClient(os.getenv("DATABASE_URL"))
-    await init_beanie(database=client.auth,
+    await init_beanie(database=client.get_default_database(),
                       document_models=[User])
 
 
@@ -43,4 +43,6 @@ async def initiate_redis_pool() -> Redis:
         db=os.getenv("REDIS_USER_DB"),
         decode_responses=True,
     )
+    await redis_connection.set("hello", "world")
+    print(await redis_connection.get("hello"))
     return redis_connection

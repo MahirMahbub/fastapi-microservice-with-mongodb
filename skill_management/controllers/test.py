@@ -12,7 +12,7 @@ logger = get_logger()
 
 
 # @test_router.get("/hello/{name}")
-# async def say_hello(request: Request, name: str):
+# async def say_hello(request: Request, name: str, user_id: str = Depends(JWTBearer())):
 #     # plan = Plan(skill_id=1)
 #     # await plan.insert()
 #     # logger.info("Testing Route")
@@ -24,7 +24,7 @@ logger = get_logger()
 #     #     db=os.getenv("REDIS_USER_DB"),
 #     #     decode_responses=True,
 #     # )
-#     await request.app.state.redis_connection.set("my-key", "value")
-#     val = await request.app.state.redis_connection.get("my-key")
+#     # await request.app.state.redis_connection.set("my-key", "value")
+#     val = await request.app.state.redis_connection.hgetall(user_id)
 #     print(val)
 #     return val

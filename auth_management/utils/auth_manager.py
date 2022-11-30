@@ -74,6 +74,17 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
         await to_thread.run_sync(send_account_verify_email.delay, user.email, token)
 
+    async def on_after_login(
+            self, user: models.UP, request: Optional[Request] = None
+    ) -> None:
+        await request.app.state.redis_connection.hset(name=str(user.id), mapping={  # type: ignore
+            "email": user.email,
+            "is_admin": 1 if user.is_superuser else 0,
+            "is_verified": 1 if user.is_verified else 0
+        })
+        await request.app.state.redis_connection.expire(name=str(user.id),  # type: ignore
+                                                        time=int(os.getenv("JWT_LIFETIME", default=3600)))
+
 
 async def get_user_manager(user_db: BeanieUserDatabase = Depends(get_user_db)) -> bool:  # type: ignore
     yield UserManager(user_db)
@@ -87,7 +98,8 @@ bearer_transport = BearerTransport(tokenUrl="auth/jwt/login")
 
 def get_jwt_strategy() -> JWTStrategy[UserProtocol[Any], None]:
     # print("get_jwt_strategy: ", config.Settings().VERIFY_TOKEN_SECRET_KEY)
-    return JWTStrategy(secret=str(os.getenv("VERIFY_TOKEN_SECRET_KEY")), lifetime_seconds=3600)
+    return JWTStrategy(secret=str(os.getenv("VERIFY_TOKEN_SECRET_KEY")),
+                       lifetime_seconds=int(os.getenv("JWT_LIFETIME", default=3600)))
 
 
 # def get_database_strategy(

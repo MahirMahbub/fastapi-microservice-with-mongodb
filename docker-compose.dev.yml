@@ -66,6 +66,7 @@ services:
       - ./volume/mongodb-persistence_skill:/mongodb
     networks:
       - skill_management_network
+      - auth_network
 
   skill_management:
     build:
