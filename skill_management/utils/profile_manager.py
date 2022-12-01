@@ -14,3 +14,12 @@ async def get_profile(request: Request, user_id: str) -> Document | None:
         profile_data = await ProfileRepository().get_by_query({"user_id": email})
         return profile_data
     return None
+
+
+async def get_profile_email(request: Request, user_id: str) -> str | None:
+    user_auth_data = await request.app.state.redis_connection.hgetall(user_id)
+
+    if user_auth_data:
+        email = user_auth_data['email']
+        return email
+    return None

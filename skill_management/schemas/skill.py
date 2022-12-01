@@ -1,5 +1,5 @@
 from beanie import Link
-from pydantic import BaseModel, Field, FilePath, validator
+from pydantic import BaseModel, Field, validator
 
 from skill_management.enums import StatusEnum, UserStatusEnum, SkillTypeEnum, SkillCategoryEnum
 from skill_management.models.file import Files
@@ -70,6 +70,8 @@ class CreateSkillDataRequest(SkillCreate):
 
     @validator("achievements", always=True)
     def validate_achievements(cls, value: str) -> str | None:
+        if value is None:
+            return None
         try:
             ascii_value = ord(value)
         except TypeError as type_exec:
@@ -83,6 +85,8 @@ class CreateSkillDataRequest(SkillCreate):
 
     @validator("certificate", always=True)
     def validate_certificate(cls, value: str) -> str | None:
+        if value is None:
+            return None
         try:
             ascii_value = ord(value)
         except TypeError as type_exec:
@@ -192,6 +196,10 @@ class CreateSkillDataResponse(BaseModel):
                         }
                 }
         }
+
+
+class CreateSkillListDataResponse(BaseModel):
+    skills: list[CreateSkillDataResponse]
 
 
 class GetSkillDataResponse(BaseModel):
@@ -346,8 +354,8 @@ class ProfileSkillResponse(BaseModel):
 class ProfileSkill(BaseModel):
     skill_id: int = Field(ge=1, description="id of skill")
     skill_type: SkillTypeEnum = Field(description="type of skill from fixed list of values")
-    skill_category: list[SkillCategoryEnum]= Field(max_items=7,
-                                                           description="category of skill from fixed list of items")
+    skill_category: list[SkillCategoryEnum] = Field(max_items=7,
+                                                    description="category of skill from fixed list of items")
     skill_name: str | None = Field(max_length=20, description="name of skill from fixed list of values")
     status: StatusEnum = Field(default=StatusEnum.active, description="status of skill from fixed list of values")
     certificate_files: list[Link[Files]] = Field(description="file response api url of user profile picture")

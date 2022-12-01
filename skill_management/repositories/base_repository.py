@@ -4,6 +4,7 @@ from beanie import PydanticObjectId, Document
 from beanie.odm.operators.update.array import Push
 from beanie.odm.operators.update.general import Set
 from beanie.odm.queries.delete import DeleteOne
+from beanie.odm.queries.find import FindQueryProjectionType, FindMany
 from beanie.odm.queries.update import UpdateMany
 from pydantic import BaseModel, UUID4
 from pymongo import DeleteMany
@@ -21,11 +22,18 @@ class TableRepository:
         data_object = self.entity_collection(**item_dict)
         return await data_object.insert()
 
-    async def get_by_query(self, query: dict[str, Any]) -> Document|None:
-        return await self.entity_collection.find(query).first_or_none()
+    async def get_by_query(self, query: dict[str, Any],
+                           projection_model: Type[FindQueryProjectionType] | None = None) -> Document | None:
+        query_object = self.entity_collection.find(query)
+        if projection_model is None:
+            return await query_object.first_or_none()
+        return await query_object.project(projection_model=projection_model).first_or_none()  # type: ignore
 
-    async def get(self, id_: PydanticObjectId) -> Optional[Document]:
+    async def get(self, id_: Any) -> Optional[Document]:
         return await self.entity_collection.get(PydanticObjectId(id_))
+
+    async def get_by_modified_id(self, id_: Any) -> Optional[Document]:
+        return await self.entity_collection.get(id_)
 
     async def gets(self) -> Sequence[Document | None]:
         return await self.entity_collection.find().to_list()
@@ -49,25 +57,37 @@ class TableRepository:
 
     async def update(self,
                      id_: PydanticObjectId | UUID4,
-                     item_dict: dict[str, Any],
+                     item_dict: dict[str, Any] | None = None,
                      push_item: dict[str, Any] | None = None) -> Optional[Document]:
 
         document_object: Document | None = await self.entity_collection.get(PydanticObjectId(id_))  # type: ignore
         if document_object is None:
             return None
-        if push_item is not None:
+        if push_item is not None and item_dict is not None:
             await document_object.update(Set(item_dict), Push(push_item))
+        elif item_dict is None and push_item is not None:
+            await document_object.update(Push(push_item))
         else:
             await document_object.update(Set(item_dict))
         return await self.entity_collection.get(PydanticObjectId(id_))  # type: ignore
 
-    async def update_by_query(self, attr: str, value: Any, item: BaseModel) -> Optional[UpdateMany]:
-        item_dict = item.dict(exclude_unset=True)
-        document_object = await self.entity_collection.find(  # type: ignore
-            getattr(self.entity_collection, attr) == value)
+    async def update_by_query(self,
+                              query: dict[str, Any],
+                              item_dict: dict[str, Any] | None = None,
+                              push_item: dict[str, Any] | None = None) -> Optional[Document]:
+
+        document_object: FindMany["DocType"] | FindMany["DocumentProjectionType"] = self.entity_collection.find(query)
+
         if document_object is None:
             return None
-        return await document_object.update(Set(item_dict))
+        id_ = (await document_object.to_list())[0].id
+        if push_item is not None and item_dict is not None:
+            await document_object.update(Set(item_dict), Push(push_item))
+        elif item_dict is None and push_item is not None:
+            await document_object.update(Push(push_item))
+        else:
+            await document_object.update(Set(item_dict))
+        return await self.entity_collection.get(PydanticObjectId(id_))  # type: ignore
 
     async def upsert(self, attr: str, value: Any, item: BaseModel) -> UpdateMany:
         item_dict = item.dict(exclude_unset=True)

@@ -20,29 +20,29 @@ from skill_management.schemas.skill import ProfileSkillResponse
 
 class ProfileService:
     # pass
-    async def create_or_update_user_profile_by_user(self, profile: ProfileBasicRequest,
+    async def create_or_update_user_profile_by_user(self, profile_request: ProfileBasicRequest,
                                                     profile_data: Profiles | None) -> ProfileResponse:
 
         if profile_data is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Can not find user profile that matches current user")
-        if profile.profile_id is not None:
+        if profile_request.profile_id is not None:
             """
             Checking if the user profile is the owner of the profile request to update or create the profile
             """
-            if not profile_data.id == profile.profile_id:
+            if not profile_data.id == profile_request.profile_id:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                     detail="You are not allowed to update the user profile")
-        if profile.profile_id is None:
+        if profile_request.profile_id is None:
             """ 
             It is  a create operation. 
             """
-            response = await self._create_user_profile_by_user(profile)
+            response = await self._create_user_profile_by_user(profile_request)
         else:
             """ 
             It is  a update operation. 
             """
-            response = await self._update_user_profile_by_user(profile)
+            response = await self._update_user_profile_by_user(profile_request)
 
         return response
 
@@ -61,9 +61,9 @@ class ProfileService:
         return response
 
     @staticmethod
-    async def _update_user_profile_by_admin(profile: ProfileBasicForAdminRequest) -> ProfileResponse:
+    async def _update_user_profile_by_admin(profile_request: ProfileBasicForAdminRequest) -> ProfileResponse:
         profile_crud_manager = ProfileRepository()
-        old_profile: Profiles = await profile_crud_manager.get(id_=profile.profile_id)  # type: ignore
+        old_profile: Profiles = await profile_crud_manager.get(id_=profile_request.profile_id)  # type: ignore
 
         if old_profile is None:
             """
@@ -73,29 +73,29 @@ class ProfileService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You should provide a existing profile id of the user"
             )
-        if profile.email is not None:
+        if profile_request.email is not None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email address can not be edited"
             )
         update_item = ProfileUpdateByAdmin(
-            name=profile.name,
-            date_of_birth=profile.date_of_birth,
-            gender=profile.gender,
-            mobile=profile.mobile,
-            address=profile.address,
-            designation_id=profile.designation_id,
-            profile_status=profile.designation_status,  # type: ignore
-            designation_status=profile.designation_status,
-            about=profile.about)
+            name=profile_request.name,
+            date_of_birth=profile_request.date_of_birth,
+            gender=profile_request.gender,
+            mobile=profile_request.mobile,
+            address=profile_request.address,
+            designation_id=profile_request.designation_id,
+            profile_status=profile_request.designation_status,  # type: ignore
+            designation_status=profile_request.designation_status,
+            about=profile_request.about)
         item_dict = update_item.dict(
             exclude_unset=True,
             exclude_none=True
         )
 
-        if profile.designation_id is None:
+        if profile_request.designation_id is None:
             db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
-                id_=profile.profile_id,  # type: ignore
+                id_=profile_request.profile_id,  # type: ignore
                 item_dict={
                     "personal_detail": item_dict
                 }
@@ -123,32 +123,30 @@ class ProfileService:
                 designation=ExperienceDesignation(
                     designation=(
                         await Designations.get(
-                            profile.designation_id  # type: ignore
+                            profile_request.designation_id  # type: ignore
                         )
                     ).designation,
 
-                    designation_id=profile.designation_id),
+                    designation_id=profile_request.designation_id),
                 start_date=None,
                 end_date=None,
                 job_responsibility=None,
-                status=profile.designation_status  # type: ignore
+                status=profile_request.designation_status  # type: ignore
             )
 
             """
             Update the profile in the database
             """
-            db_profile = Profiles(
-                await profile_crud_manager.update(
-                    id_=profile.profile_id,  # type: ignore
-                    item_dict={
-                        "personal_detail": item_dict
-                    },
-                    push_item={
-                        "experiences": new_experience.dict(
-                            exclude_unset=True, exclude_none=True
-                        )
-                    }
-                )
+            db_profile: Profiles | None = await profile_crud_manager.update(  # type: ignore
+                id_=profile_request.profile_id,  # type: ignore
+                item_dict={
+                    "personal_detail": item_dict
+                },
+                push_item={
+                    "experiences": new_experience.dict(
+                        exclude_unset=True, exclude_none=True
+                    )
+                }
             )
 
         """
@@ -282,9 +280,9 @@ class ProfileService:
         return response
 
     @staticmethod
-    async def _update_user_profile_by_user(profile: ProfileBasicRequest) -> ProfileResponse:
+    async def _update_user_profile_by_user(profile_request: ProfileBasicRequest) -> ProfileResponse:
         profile_crud_manager = ProfileRepository()
-        old_profile: Profiles = await profile_crud_manager.get(id_=profile.profile_id)  # type: ignore
+        old_profile: Profiles = await profile_crud_manager.get(id_=profile_request.profile_id)  # type: ignore
 
         if old_profile is None:
             """
@@ -294,28 +292,28 @@ class ProfileService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You should provide a existing profile id of the user"
             )
-        if profile.email is not None:
+        if profile_request.email is not None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email address can not be edited"
             )
         update_item = ProfileUpdateByUser(
-            name=profile.name,
-            date_of_birth=profile.date_of_birth,
-            gender=profile.gender,
-            mobile=profile.mobile,
-            address=profile.address,
-            designation_id=profile.designation_id,
-            about=profile.about)
+            name=profile_request.name,
+            date_of_birth=profile_request.date_of_birth,
+            gender=profile_request.gender,
+            mobile=profile_request.mobile,
+            address=profile_request.address,
+            designation_id=profile_request.designation_id,
+            about=profile_request.about)
 
         item_dict = update_item.dict(
             exclude_unset=True,
             exclude_none=True
         )
 
-        if profile.designation_id is None:
+        if profile_request.designation_id is None:
             db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
-                id_=profile.profile_id,  # type: ignore
+                id_=profile_request.profile_id,  # type: ignore
                 item_dict={
                     "personal_detail": item_dict
                 }
@@ -343,11 +341,11 @@ class ProfileService:
                 designation=ExperienceDesignation(
                     designation=(
                         await Designations.get(
-                            profile.designation_id  # type: ignore
+                            profile_request.designation_id  # type: ignore
                         )
                     ).designation,
 
-                    designation_id=profile.designation_id),
+                    designation_id=profile_request.designation_id),
                 start_date=None,
                 end_date=None,
                 job_responsibility=None,
@@ -357,9 +355,8 @@ class ProfileService:
             """
             Update the profile in the database
             """
-            db_profile = Profiles(
-                await profile_crud_manager.update(
-                    id_=profile.profile_id,  # type: ignore
+            db_profile: Profiles | None = await profile_crud_manager.update(  # type: ignore
+                id_=profile_request.profile_id,  # type: ignore
                     item_dict={
                         "personal_detail": item_dict
                     },
@@ -369,7 +366,6 @@ class ProfileService:
                         )
                     }
                 )
-            )
 
         """
         Create skill list for the response
@@ -502,52 +498,53 @@ class ProfileService:
         return response
 
     @staticmethod
-    async def _create_user_profile_by_admin(profile: ProfileBasicForAdminRequest) -> ProfileResponse:
-        if profile.email is None:
+    async def _create_user_profile_by_admin(profile_request: ProfileBasicForAdminRequest) -> ProfileResponse:
+        if profile_request.email is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Must provide email address"
             )
-        if profile.name is None:
+        if profile_request.name is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Must provide name of the profile"
             )
-        if profile.designation_id is None:
+        if profile_request.designation_id is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Must provide designation of the profile"
             )
 
-        designation: Designations = await Designations.get(profile.designation_id)  # type: ignore
-        profile_status_object: ProfileStatus = await ProfileStatus.get(profile.profile_status.value)  # type: ignore
+        designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
+        profile_status_object: ProfileStatus = await ProfileStatus.get(
+            profile_request.profile_status.value)  # type: ignore
         personal_detail = ProfilePersonalDetails(
-            name=profile.name,
-            date_of_birth=profile.date_of_birth,
-            gender=profile.gender,
-            mobile=profile.mobile,
+            name=profile_request.name,
+            date_of_birth=profile_request.date_of_birth,
+            gender=profile_request.gender,
+            mobile=profile_request.mobile,
             about=None,
             address=None,
             experience_year=None
         )
         designation_status_object: DesignationStatus = await DesignationStatus.get(
-            profile.designation_status.value  # type: ignore
+            profile_request.designation_status.value  # type: ignore
         )
 
-        gender_data: Gender = await Gender.get(profile.gender)  # type: ignore
+        gender_data: Gender = await Gender.get(profile_request.gender)  # type: ignore
 
         """
         Create profile object to insert into the database
         """
         db_profile = Profiles(
-            user_id=profile.email,
+            user_id=profile_request.email,
             personal_detail=personal_detail,
-            profile_status=profile.profile_status,
+            profile_status=profile_request.profile_status,
             designation=ProfileDesignation(
                 designation_id=designation.id,
                 designation=designation.designation,
                 start_date=None, end_date=None,
-                designation_status=profile.designation_status,
+                designation_status=profile_request.designation_status,
             ),
             skills=[],
             experiences=[
@@ -578,12 +575,12 @@ class ProfileService:
         Create personal detail for response
         """
         personal_detail_response: ProfilePersonalDetailsResponse = ProfilePersonalDetailsResponse(
-            name=profile.name,
-            date_of_birth=profile.date_of_birth,
+            name=profile_request.name,
+            date_of_birth=profile_request.date_of_birth,
             gender=ResponseEnumData(
                 id=gender_data.id,
                 name=gender_data.name),
-            mobile=profile.mobile,
+            mobile=profile_request.mobile,
             about=None,
             address=None,
             experience_year=None
@@ -632,45 +629,46 @@ class ProfileService:
         return response
 
     @staticmethod
-    async def _create_user_profile_by_user(profile: ProfileBasicRequest) -> ProfileResponse:
-        if profile.email is None:
+    async def _create_user_profile_by_user(profile_request: ProfileBasicRequest) -> ProfileResponse:
+        if profile_request.email is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Must provide email address"
             )
-        if profile.name is None:
+        if profile_request.name is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Must provide name of the profile"
             )
-        if profile.designation_id is None:
+        if profile_request.designation_id is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Must provide designation of the profile"
             )
 
-        designation: Designations = await Designations.get(profile.designation_id)  # type: ignore
-        profile_status_object: ProfileStatus = await ProfileStatus.get(profile.profile_status.value)  # type: ignore
+        designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
+        profile_status_object: ProfileStatus = await ProfileStatus.get(
+            profile_request.profile_status.value)  # type: ignore
         personal_detail = ProfilePersonalDetails(
-            name=profile.name,
-            date_of_birth=profile.date_of_birth,
-            gender=profile.gender,
-            mobile=profile.mobile,
+            name=profile_request.name,
+            date_of_birth=profile_request.date_of_birth,
+            gender=profile_request.gender,
+            mobile=profile_request.mobile,
             about=None,
             address=None,
             experience_year=None
         )
         designation_status_object: DesignationStatus = await DesignationStatus.get(
-            profile.designation_status.value  # type: ignore
+            profile_request.designation_status.value  # type: ignore
         )
 
-        gender_data: Gender = await Gender.get(profile.gender)  # type: ignore
+        gender_data: Gender = await Gender.get(profile_request.gender)  # type: ignore
 
         """
         Create profile object to insert into the database
         """
         db_profile = Profiles(
-            user_id=profile.email,
+            user_id=profile_request.email,
             personal_detail=personal_detail,
             designation=ProfileDesignation(
                 designation_id=designation.id,
@@ -708,12 +706,12 @@ class ProfileService:
         Create personal detail for response
         """
         personal_detail_response: ProfilePersonalDetailsResponse = ProfilePersonalDetailsResponse(
-            name=profile.name,
-            date_of_birth=profile.date_of_birth,
+            name=profile_request.name,
+            date_of_birth=profile_request.date_of_birth,
             gender=ResponseEnumData(
                 id=gender_data.id,
                 name=gender_data.name),
-            mobile=profile.mobile,
+            mobile=profile_request.mobile,
             about=None,
             address=None,
             experience_year=None

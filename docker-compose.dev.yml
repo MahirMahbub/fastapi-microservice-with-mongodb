@@ -45,22 +45,22 @@ services:
     depends_on:
       - auth_rabbitmq
 
-  auth_mongodb:
-    container_name: auth_mongodb
-    image: bitnami/mongodb:latest
-    ports:
-      - "27017:27017"
-    volumes:
-      - auth_mongodb_data:/mongodb
-      - ./volume/mongodb-persistence:/mongodb
-    networks:
-      - auth_network
+#  auth_mongodb:
+#    container_name: auth_mongodb
+#    image: bitnami/mongodb:latest
+#    ports:
+#      - "27017:27017"
+#    volumes:
+#      - auth_mongodb_data:/mongodb
+#      - ./volume/mongodb-persistence:/mongodb
+#    networks:
+#      - auth_network
 
   skill_management_mongodb:
     container_name: skill_management_mongodb
     image: bitnami/mongodb:latest
     ports:
-      - "27018:27017"
+      - "27017:27017"
     volumes:
       - skill_management_mongodb_data:/mongodb
       - ./volume/mongodb-persistence_skill:/mongodb
@@ -86,6 +86,7 @@ services:
     depends_on:
       - skill_management_mongodb
       - auth_redis
+
   auth_management:
     build:
       context: ./auth_management
@@ -105,7 +106,7 @@ services:
       - email_worker
       - auth_rabbitmq
       - auth_redis
-      - auth_mongodb
+#      - auth_mongodb
 
   auth_celery_flower:
     container_name: "auth_celery_flower"
@@ -147,9 +148,9 @@ volumes:
   auth_rabbitmq_data:
   auth_redis_data:
   auth_flower_data:
-  auth_mongodb_data:
   skill_management:
   skill_management_mongodb_data:
+  #  auth_mongodb_data:
 networks:
   auth_network:
     driver: bridge

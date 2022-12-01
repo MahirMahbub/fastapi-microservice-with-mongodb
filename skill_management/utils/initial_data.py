@@ -1,7 +1,11 @@
+import csv
+
+from skill_management.enums import PlanTypeEnum, SkillTypeEnum, StatusEnum, UserStatusEnum, SkillCategoryEnum, \
+    DesignationStatusEnum, GenderEnum, FileTypeEnum, ProfileStatusEnum
 from skill_management.models.designation import Designations
 from skill_management.models.enums import EnumInitializer, PlanType, Status, UserStatus, SkillCategory, SkillType, \
     DesignationStatus, Gender, FileType, ProfileStatus
-import csv
+from skill_management.models.skill import Skills
 
 
 async def initialize_database() -> None:
@@ -16,71 +20,70 @@ async def initialize_database() -> None:
     """
     Insert Plan_Type Data
     """
-    await PlanType.insert_many([PlanType(id=1, name="course"),
-                                PlanType(id=2, name="exam")])
+    await PlanType.insert_many([PlanType(id=data.value, name=data.name) for data in PlanTypeEnum])
+
     """
     Insert Status Data
     """
-    await Status.insert_many([Status(id=1, name="active"),
-                              Status(id=2, name="cancel"),
-                              Status(id=3, name="delete")])
+    await Status.insert_many([Status(id=data.value, name=data.name) for data in StatusEnum])
+
     """
     Insert UserStatus Data
     """
-    await UserStatus.insert_many([UserStatus(id=1, name="active"),
-                                  UserStatus(id=2, name="delete")])
+    await UserStatus.insert_many([UserStatus(id=data.value, name=data.name) for data in UserStatusEnum])
+
     """
     Insert SkillCategory Data
     """
-    await SkillCategory.insert_many([SkillCategory(id=1, name="frontend"),
-                                     SkillCategory(id=2, name="backend"),
-                                     SkillCategory(id=3, name="devops"),
-                                     SkillCategory(id=4, name="qa"),
-                                     SkillCategory(id=5, name="database"),
-                                     SkillCategory(id=6, name="network"),
-                                     SkillCategory(id=7, name="fullstack")])
+    await SkillCategory.insert_many([SkillCategory(id=data.value, name=data.name) for data in SkillCategoryEnum])
+
     """
     Insert SkillType Data
     """
-    await SkillType.insert_many([SkillType(id=1, name="core_skill"),
-                                 SkillType(id=2, name="soft_skill")])
+    await SkillType.insert_many([SkillType(id=data.value, name=data.name) for data in SkillTypeEnum])
 
     """
     Insert DesignationStatus Data
     """
-    await DesignationStatus.insert_many([DesignationStatus(id=1, name="active"),
-                                         DesignationStatus(id=2, name="inactive")])
+    await DesignationStatus.insert_many(
+        [DesignationStatus(id=data.value, name=data.name) for data in DesignationStatusEnum])
+
     """
     Insert Gender Data
     """
-    await Gender.insert_many([Gender(id=1, name="male"),
-                              Gender(id=2, name="female"),
-                              Gender(id=3, name="others")])
+    await Gender.insert_many([Gender(id=data.value, name=data.name) for data in GenderEnum])
+
     """
     Insert FileType Data
     """
-
-    await FileType.insert_many([FileType(id=1, name="picture"),
-                                FileType(id=2, name="resume"),
-                                FileType(id=3, name="letter"),
-                                FileType(id=4, name="certificate")])
+    await FileType.insert_many([FileType(id=data.value, name=data.name) for data in FileTypeEnum])
 
     """
     Insert ProfileStatus data
     """
-    await ProfileStatus.insert_many([ProfileStatus(id=1, name="full_time"),
-                                     ProfileStatus(id=2, name="part_time"),
-                                     ProfileStatus(id=3, name="delete"),
-                                     ProfileStatus(id=4, name="inactive")])
+    await ProfileStatus.insert_many([ProfileStatus(id=data.value, name=data.name) for data in ProfileStatusEnum])
+
     """
     Insert Designation
     """
     with open("skill_management/static/data/designations.csv", 'r') as file:
         csv_reader = csv.DictReader(file)
-        designation_data = []
+        skill_data = []
         for row in csv_reader:
-            designation_data.append(Designations.parse_obj(row))
-        await Designations.insert_many(designation_data)
+            skill_data.append(Designations.parse_obj(row))
+        await Designations.insert_many(skill_data)
+
+    """
+    Insert Designation
+    """
+    with open("skill_management/static/data/skills.csv", 'r') as file:
+        csv_reader = csv.DictReader(file)
+        skill_data = []
+        for row in csv_reader:
+            row['skill_categories'] = [int(data) for data in row['skill_categories'].split(",")]
+            skill_data.append(Skills.parse_obj(row))  # type: ignore
+        await Skills.insert_many(skill_data)  # type: ignore
+
     """
     Change Initiating Value
     """

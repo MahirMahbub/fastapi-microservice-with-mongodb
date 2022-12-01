@@ -5,9 +5,11 @@ from skill_management.enums import SkillCategoryEnum
 from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.file import SkillCertificateResponse
 from skill_management.schemas.skill import CreateSkillDataResponse, CreateSkillDataRequest, GetSkillDataResponse, \
-    GetSkillDataResponseList
+    GetSkillDataResponseList, CreateSkillListDataResponse
+from skill_management.services.skill import SkillService
 from skill_management.utils.auth_manager import JWTBearer
 from skill_management.utils.logger import get_logger
+from skill_management.utils.profile_manager import get_profile_email
 
 skill_router: APIRouter = APIRouter(tags=["skill"])
 logger = get_logger()
@@ -15,7 +17,7 @@ logger = get_logger()
 
 @skill_router.post("/profile/skills",
                    response_class=ORJSONResponse,
-                   response_model=CreateSkillDataResponse,
+                   response_model=CreateSkillListDataResponse,
                    status_code=201,
                    responses={
                        400: {
@@ -64,14 +66,16 @@ async def create_skill(request: Request,  # type: ignore
                        },
                                                             description="provide all required attributes to "
                                                                         "create a new skill"),
-                       user_id: str = Depends(JWTBearer())):
+                       user_id: str = Depends(JWTBearer()),
+                       service: SkillService = Depends()):
     """
     **Create:** Must provide all the data necessary including *"skill_id"* for creating a new skill. *"status"* is optional.
 
 
     **Update:** For update purposes provide *"skill_id"*. Other attributes are optional.
     """
-    pass
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.create_or_update_skill_by_user(skill_request=skill, email=email)
 
 
 @skill_router.post("/profile/skills/upload-certificate",

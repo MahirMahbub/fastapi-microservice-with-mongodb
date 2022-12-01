@@ -12,6 +12,5 @@ class Skills(Document):
     skill_categories: List[SkillCategoryEnum]
 
     class Settings:
-        use_revision = True
-        use_state_management = True
-        validate_on_save = True
+        use_revision = False
+
