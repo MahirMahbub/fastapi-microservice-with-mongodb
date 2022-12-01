@@ -92,12 +92,22 @@ class ProfileService:
             exclude_unset=True,
             exclude_none=True
         )
+        if item_dict.get("designation_status") is not None:
+            item_dict.pop("designation_status")
+        if item_dict.get("designation_id") is not None:
+            item_dict.pop("designation_id")
+
+        old_profile_details  = old_profile.personal_detail.dict()
+        for key, value in item_dict.items():
+            if key in old_profile_details:
+                old_profile_details[key] = value
+
 
         if profile_request.designation_id is None:
             db_profile = await profile_crud_manager.update(  # type: ignore
                 id_=profile_request.profile_id,  # type: ignore
                 item_dict={
-                    "personal_detail": item_dict
+                    "personal_detail": old_profile_details
                 }
             )
         elif profile_request.designation_id is not None:
@@ -142,7 +152,7 @@ class ProfileService:
                 db_profile = await profile_crud_manager.update(  # type: ignore
                     id_=profile_request.profile_id,  # type: ignore
                     item_dict={
-                        "personal_detail": item_dict,
+                        "personal_detail": old_profile_details,
                         "designation": {
                             'designation_id': designation.id,
                             'designation': designation.designation,
@@ -161,7 +171,7 @@ class ProfileService:
                 db_profile = await profile_crud_manager.update(  # type: ignore
                     id_=profile_request.profile_id,  # type: ignore
                     item_dict={
-                        "personal_detail": item_dict,
+                        "personal_detail": old_profile_details,
                         "designation": {
                             'designation_id': designation.id,
                             'designation': designation.designation,
@@ -335,12 +345,16 @@ class ProfileService:
             exclude_unset=True,
             exclude_none=True
         )
+        old_profile_details = old_profile.personal_detail.dict()
+        for key, value in item_dict.items():
+            if key in old_profile_details:
+                old_profile_details[key] = value
 
         # if profile_request.designation_id is None:
         db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
             id_=profile_request.profile_id,  # type: ignore
             item_dict={
-                "personal_detail": item_dict
+                "personal_detail": old_profile_details
             }
         )
 
