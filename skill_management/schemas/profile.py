@@ -71,7 +71,7 @@ class ProfilePersonalDetails(BaseModel):
     date_of_birth: date | None = Field(description="""date of birth of the user
     > 15 years or 5844 days
     """)
-    gender: GenderEnum | None = Field(description="gender of the user")
+    gender: GenderEnum = Field(default=GenderEnum.others, description="gender of the user")
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     about: str | None = Field(max_length=500, description="about of the user")
@@ -294,19 +294,21 @@ class PaginatedProfileResponse(PaginatedResponse):
 
 
 class ProfileBasicRequest(BaseModel):
-    profile_id: UUID4 | None = Field(description="profile id of the user for update")
+    profile_id: PydanticObjectId | None = Field(description="profile id of the user for update")
     email: EmailStr | None = Field(description="Email address of the user")
     name: str | None = Field(max_length=20, min_length=2, description="name of the user")
     date_of_birth: date | None = Field(description="date of birth of the user")
-    gender: GenderEnum | None = Field(description="gender of the user")
+    gender: GenderEnum = Field(default=GenderEnum.others, description="gender of the user")
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
     about: str | None = Field(max_length=256, description="description of the user")
 
     @validator("date_of_birth", always=True)
-    def validate_date_of_birth(cls, value: datetime) -> datetime:
-        if abs(datetime.now() - value).days < 5844:
+    def validate_date_of_birth(cls, value: date | None) -> date | None:
+        if value is None:
+            return value
+        if abs(datetime.today().date() - value).days < 5844:
             raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
         return value
 
@@ -346,7 +348,7 @@ class ProfileBasicForAdminRequest(BaseModel):
     
     full_time: 1, part_time: 2, delete: 3, inactive: 4
     """)
-    designation_status: DesignationStatusEnum = Field(default=DesignationStatusEnum.active,
+    designation_status: DesignationStatusEnum = Field(default=DesignationStatusEnum.inactive,
                                                       description="""designation status of user
     active: 1, inactive: 2
     """)
@@ -391,14 +393,14 @@ class ProfileUpdateByAdmin(BaseModel):
     gender: GenderEnum | None = Field(description="gender of the user")
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
-    designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
+    # designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
     profile_status: ProfileStatusEnum | None = Field(description="""profile status of the user
 
         full_time: 1, part_time: 2, delete: 3, inactive: 4
         """)
-    designation_status: DesignationStatusEnum | None = Field(default=DesignationStatusEnum.active, description="""designation status of user
-        active: 1, inactive: 2
-        """)
+    # designation_status: DesignationStatusEnum | None = Field(default=DesignationStatusEnum.active, description="""designation status of user
+    #     active: 1, inactive: 2
+    #     """)
     about: str | None = Field(max_length=256, description="description of the user")
 
 

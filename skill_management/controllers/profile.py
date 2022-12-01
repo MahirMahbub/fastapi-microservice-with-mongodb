@@ -12,7 +12,7 @@ from skill_management.schemas.profile import ProfileResponse, PaginatedProfileRe
 from skill_management.services.profile import ProfileService
 from skill_management.utils.auth_manager import JWTBearerAdmin, JWTBearer
 from skill_management.utils.logger import get_logger
-from skill_management.utils.profile_manager import get_profile
+from skill_management.utils.profile_manager import get_profile_email
 
 profile_router: APIRouter = APIRouter(tags=["profile"])
 logger = get_logger()
@@ -133,9 +133,9 @@ async def create_user_profile_by_user(request: Request,  # type: ignore
 
     **Update:** Must provide *"profile_id"*. Should not provide *"email"*, *"name"*, *"designation_id"*. Other attributes are optional.
     """
-    profile_data = await get_profile(request=request, user_id=user_id)
+    email = await get_profile_email(request=request, user_id=user_id)
 
-    return await service.create_or_update_user_profile_by_user(profile, profile_data)  # type: ignore
+    return await service.create_or_update_user_profile_by_user(profile, email)
 
 
 @profile_router.post("/admin/user-profiles/",

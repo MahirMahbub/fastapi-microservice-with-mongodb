@@ -1,7 +1,8 @@
 from fastapi import HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
-from skill_management.enums import FileTypeEnum, DesignationStatusEnum, StatusEnum
+from skill_management.enums import FileTypeEnum, DesignationStatusEnum, StatusEnum, GenderEnum, ProfileStatusEnum, \
+    SkillCategoryEnum, SkillTypeEnum
 from skill_management.models.designation import Designations
 from skill_management.models.enums import ProfileStatus, DesignationStatus, Gender, Status
 from skill_management.models.file import Files
@@ -21,23 +22,21 @@ from skill_management.schemas.skill import ProfileSkillResponse
 class ProfileService:
     # pass
     async def create_or_update_user_profile_by_user(self, profile_request: ProfileBasicRequest,
-                                                    profile_data: Profiles | None) -> ProfileResponse:
+                                                    email: str | None) -> ProfileResponse:
 
-        if profile_data is None:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
-                                detail="Can not find user profile that matches current user")
         if profile_request.profile_id is not None:
             """
             Checking if the user profile is the owner of the profile request to update or create the profile
             """
-            if not profile_data.id == profile_request.profile_id:
+            profile_data = await ProfileRepository().get_by_query({"user_id": email})
+            if not profile_data.id == profile_request.profile_id:  # type: ignore
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                     detail="You are not allowed to update the user profile")
         if profile_request.profile_id is None:
             """ 
             It is  a create operation. 
             """
-            response = await self._create_user_profile_by_user(profile_request)
+            response = await self._create_user_profile_by_user(profile_request, email)
         else:
             """ 
             It is  a update operation. 
@@ -64,6 +63,7 @@ class ProfileService:
     async def _update_user_profile_by_admin(profile_request: ProfileBasicForAdminRequest) -> ProfileResponse:
         profile_crud_manager = ProfileRepository()
         old_profile: Profiles = await profile_crud_manager.get(id_=profile_request.profile_id)  # type: ignore
+        db_profile: Profiles
 
         if old_profile is None:
             """
@@ -84,9 +84,9 @@ class ProfileService:
             gender=profile_request.gender,
             mobile=profile_request.mobile,
             address=profile_request.address,
-            designation_id=profile_request.designation_id,
+            # designation_id=profile_request.designation_id,
             profile_status=profile_request.designation_status,  # type: ignore
-            designation_status=profile_request.designation_status,
+            # designation_status=profile_request.designation_status,
             about=profile_request.about)
         item_dict = update_item.dict(
             exclude_unset=True,
@@ -94,60 +94,81 @@ class ProfileService:
         )
 
         if profile_request.designation_id is None:
-            db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
+            db_profile = await profile_crud_manager.update(  # type: ignore
                 id_=profile_request.profile_id,  # type: ignore
                 item_dict={
                     "personal_detail": item_dict
                 }
             )
-        else:
-            all_experience_id = [
-                experience.experience_id for experience in old_profile.experiences
-            ]
+        elif profile_request.designation_id is not None:
+            if profile_request.designation_status == DesignationStatusEnum.active:
+                all_experience_id = [
+                    experience.experience_id for experience in old_profile.experiences
+                ]
 
-            if not all_experience_id:
-                new_experience_id = 1
+                if not all_experience_id:
+                    new_experience_id = 1
 
-            else:
+                else:
+                    """
+                    Calculate new experience id
+                    """
+                    new_experience_id = max(all_experience_id) + 1
+
                 """
-                Calculate new experience id
+                Get Designation Data
                 """
-                new_experience_id = max(all_experience_id) + 1
+                designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
 
-            """
-            Create new experience from the designation id provided
-            """
-            new_experience = ProfileExperience(
-                experience_id=new_experience_id,
-                company_name="iXora Solution Ltd.",
-                designation=ExperienceDesignation(
-                    designation=(
-                        await Designations.get(
-                            profile_request.designation_id  # type: ignore
+                """
+                Create new experience from the designation id provided
+                """
+                new_experience = ProfileExperience(
+                    experience_id=new_experience_id,
+                    company_name="iXora Solution Ltd.",
+                    designation=ExperienceDesignation(
+                        designation=designation.designation,
+                        designation_id=profile_request.designation_id),
+                    start_date=None,
+                    end_date=None,
+                    job_responsibility=None,
+                    status=profile_request.designation_status  # type: ignore
+                )
+
+                """
+                Update the profile in the database
+                """
+
+                db_profile = await profile_crud_manager.update(  # type: ignore
+                    id_=profile_request.profile_id,  # type: ignore
+                    item_dict={
+                        "personal_detail": item_dict,
+                        "designation": {
+                            'designation_id': designation.id,
+                            'designation': designation.designation,
+                            'start_date': None, 'end_date': None,
+                            'designation_status': profile_request.designation_status,
+                        }
+                    },
+                    push_item={
+                        "experiences": new_experience.dict(
+                            exclude_unset=True, exclude_none=True
                         )
-                    ).designation,
-
-                    designation_id=profile_request.designation_id),
-                start_date=None,
-                end_date=None,
-                job_responsibility=None,
-                status=profile_request.designation_status  # type: ignore
-            )
-
-            """
-            Update the profile in the database
-            """
-            db_profile: Profiles | None = await profile_crud_manager.update(  # type: ignore
-                id_=profile_request.profile_id,  # type: ignore
-                item_dict={
-                    "personal_detail": item_dict
-                },
-                push_item={
-                    "experiences": new_experience.dict(
-                        exclude_unset=True, exclude_none=True
-                    )
-                }
-            )
+                    }
+                )
+            elif profile_request.designation_status == DesignationStatusEnum.inactive:
+                designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
+                db_profile = await profile_crud_manager.update(  # type: ignore
+                    id_=profile_request.profile_id,  # type: ignore
+                    item_dict={
+                        "personal_detail": item_dict,
+                        "designation": {
+                            'designation_id': designation.id,
+                            'designation': designation.designation,
+                            'designation_status': profile_request.designation_status,
+                        }
+                    }
+                )
 
         """
         Create skill list for the response
@@ -179,24 +200,21 @@ class ProfileService:
                     certificate_files=certificate_files,
                     status=ResponseEnumData(
                         id=skill_status_object.id,
-                        name=(
-                            await Status.get(
-                                skill_.status.value  # type: ignore
-                            )
-                        ).name
+                        name=StatusEnum(skill_status_object.id).name
                     ),
                     achievements_description=skill_.achievements_description,
                     skill_category=[
                         ResponseEnumData(
                             id=skill_category_id,
-                            name=(await Status.get(skill_category_id.value)).name  # type: ignore
+                            name=SkillCategoryEnum(skill_category_id).name
                         )
                         for skill_category_id in skill_.skill_category
                     ],
                     skill_type=ResponseEnumData(
                         id=skill_.skill_type,
-                        name=(await Status.get(skill_.skill_typ.value))).name)  # type: ignore
+                        name=SkillTypeEnum(skill_.skill_type).name)
 
+                )
             )
 
         """
@@ -207,11 +225,7 @@ class ProfileService:
             date_of_birth=db_profile.personal_detail.date_of_birth,
             gender=ResponseEnumData(
                 id=db_profile.personal_detail.gender,
-                name=(
-                    await Gender.get(
-                        db_profile.personal_detail.gender.value  # type: ignore
-                    )
-                ).name
+                name=GenderEnum(db_profile.personal_detail.gender.value).name
             ),
             mobile=db_profile.personal_detail.mobile,
             about=db_profile.personal_detail.about,
@@ -232,10 +246,8 @@ class ProfileService:
                 end_date=db_profile.designation.end_date,
                 designation_status=ResponseEnumData(
                     id=db_profile.designation.designation_status,
-                    name=(
-                        await DesignationStatus.get(
-                            db_profile.designation.designation_status.value  # type: ignore
-                        )
+                    name=DesignationStatusEnum(
+                        db_profile.designation.designation_status
                     ).name
                 ),
             ),
@@ -253,7 +265,7 @@ class ProfileService:
                     end_date=experience.end_date,
                     status=ResponseEnumData(
                         id=experience.status,
-                        name=(await Status.get(experience.status.value)).name  # type: ignore
+                        name=StatusEnum(experience.status).name
                     )
                 )
                 for experience in db_profile.experiences
@@ -270,11 +282,7 @@ class ProfileService:
             personal_details=personal_detail_response,
             profile_status=ResponseEnumData(
                 id=db_profile.profile_status,
-                name=(
-                    await ProfileStatus.get(
-                        db_profile.profile_status.value  # type: ignore
-                    )
-                ).name
+                name=ProfileStatusEnum(db_profile.profile_status).name
             )
         )
         return response
@@ -292,18 +300,35 @@ class ProfileService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="You should provide a existing profile id of the user"
             )
-        if profile_request.email is not None:
+        raise_http_exec = False
+        try:
+            email = profile_request.email
+            raise_http_exec = True
+        except AttributeError as attr_exec:
+            pass
+
+        if raise_http_exec:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Email address can not be edited"
             )
+        try:
+            profile_name = profile_request.name
+        except AttributeError as attr_exec:
+            profile_name = None
+
+        try:
+            designation_id = profile_request.designation_id
+        except AttributeError as attr_exec:
+            designation_id = None
+
         update_item = ProfileUpdateByUser(
-            name=profile_request.name,
+            name= profile_name,
             date_of_birth=profile_request.date_of_birth,
             gender=profile_request.gender,
             mobile=profile_request.mobile,
             address=profile_request.address,
-            designation_id=profile_request.designation_id,
+            designation_id=designation_id,
             about=profile_request.about)
 
         item_dict = update_item.dict(
@@ -311,61 +336,13 @@ class ProfileService:
             exclude_none=True
         )
 
-        if profile_request.designation_id is None:
-            db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
-                id_=profile_request.profile_id,  # type: ignore
-                item_dict={
-                    "personal_detail": item_dict
-                }
-            )
-        else:
-            all_experience_id = [
-                experience.experience_id for experience in old_profile.experiences
-            ]
-
-            if not all_experience_id:
-                new_experience_id = 1
-
-            else:
-                """
-                Calculate new experience id
-                """
-                new_experience_id = max(all_experience_id) + 1
-
-            """
-            Create new experience from the designation id provided
-            """
-            new_experience = ProfileExperience(
-                experience_id=new_experience_id,
-                company_name="iXora Solution Ltd.",
-                designation=ExperienceDesignation(
-                    designation=(
-                        await Designations.get(
-                            profile_request.designation_id  # type: ignore
-                        )
-                    ).designation,
-
-                    designation_id=profile_request.designation_id),
-                start_date=None,
-                end_date=None,
-                job_responsibility=None,
-                status=StatusEnum.active
-            )
-
-            """
-            Update the profile in the database
-            """
-            db_profile: Profiles | None = await profile_crud_manager.update(  # type: ignore
-                id_=profile_request.profile_id,  # type: ignore
-                    item_dict={
-                        "personal_detail": item_dict
-                    },
-                    push_item={
-                        "experiences": new_experience.dict(
-                            exclude_unset=True, exclude_none=True
-                        )
-                    }
-                )
+        # if profile_request.designation_id is None:
+        db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
+            id_=profile_request.profile_id,  # type: ignore
+            item_dict={
+                "personal_detail": item_dict
+            }
+        )
 
         """
         Create skill list for the response
@@ -383,7 +360,6 @@ class ProfileService:
                     }
                 )
             ]
-            skill_status_object: Status = await Status.get(skill_.status.value)  # type: ignore
             skill_list.append(
                 ProfileSkillResponse(
                     skill_id=skill_.skill_id,
@@ -396,40 +372,34 @@ class ProfileService:
                     certificate=skill_.certificate,
                     certificate_files=certificate_files,
                     status=ResponseEnumData(
-                        id=skill_status_object.id,
-                        name=(
-                            await Status.get(
-                                skill_.status.value  # type: ignore
-                            )
-                        ).name
+                        id=skill_.status,
+                        name=StatusEnum(skill_.status).name
                     ),
                     achievements_description=skill_.achievements_description,
                     skill_category=[
                         ResponseEnumData(
                             id=skill_category_id,
-                            name=(await Status.get(skill_category_id.value)).name  # type: ignore
+                            name=SkillCategoryEnum(skill_category_id.value).name
                         )
                         for skill_category_id in skill_.skill_category
                     ],
                     skill_type=ResponseEnumData(
                         id=skill_.skill_type,
-                        name=(await Status.get(skill_.skill_typ.value))).name)  # type: ignore
+                        name=SkillTypeEnum(skill_.skill_type.value).name
+                    )
 
+                )
             )
 
-        """
-        Create personal detail for response
-        """
+            """
+            Create personal detail for response
+            """
         personal_detail_response = ProfilePersonalDetailsResponse(
             name=db_profile.personal_detail.name,
             date_of_birth=db_profile.personal_detail.date_of_birth,
             gender=ResponseEnumData(
                 id=db_profile.personal_detail.gender,
-                name=(
-                    await Gender.get(
-                        db_profile.personal_detail.gender.value  # type: ignore
-                    )
-                ).name
+                name=GenderEnum(db_profile.personal_detail.gender.value).name
             ),
             mobile=db_profile.personal_detail.mobile,
             about=db_profile.personal_detail.about,
@@ -440,6 +410,7 @@ class ProfileService:
         """
         The final response for the profile update
         """
+
         response = ProfileResponse(
             id=db_profile.id,
             email=db_profile.user_id,
@@ -450,11 +421,7 @@ class ProfileService:
                 end_date=db_profile.designation.end_date,
                 designation_status=ResponseEnumData(
                     id=db_profile.designation.designation_status,
-                    name=(
-                        await DesignationStatus.get(
-                            db_profile.designation.designation_status.value  # type: ignore
-                        )
-                    ).name
+                    name=DesignationStatusEnum(db_profile.designation.designation_status.value).name
                 ),
             ),
             skills=skill_list,
@@ -471,7 +438,7 @@ class ProfileService:
                     end_date=experience.end_date,
                     status=ResponseEnumData(
                         id=experience.status,
-                        name=(await Status.get(experience.status.value)).name  # type: ignore
+                        name=StatusEnum(experience.status.value).name
                     )
                 )
                 for experience in db_profile.experiences
@@ -488,13 +455,10 @@ class ProfileService:
             personal_details=personal_detail_response,
             profile_status=ResponseEnumData(
                 id=db_profile.profile_status,
-                name=(
-                    await ProfileStatus.get(
-                        db_profile.profile_status.value  # type: ignore
-                    )
-                ).name
+                name=ProfileStatusEnum(db_profile.profile_status).name
             )
         )
+
         return response
 
     @staticmethod
@@ -534,8 +498,26 @@ class ProfileService:
         gender_data: Gender = await Gender.get(profile_request.gender)  # type: ignore
 
         """
+        Create profile experience based on the designation status
+        """
+
+        new_experience = []
+        if profile_request.designation_status == DesignationStatusEnum.active:
+            new_experience = [
+                ProfileExperience(
+                    experience_id=1,
+                    company_name="iXora Solution Ltd.",
+                    designation=ExperienceDesignation(designation=designation.designation,
+                                                      designation_id=1),
+                    start_date=None,
+                    end_date=None,
+                    job_responsibility=None
+                )
+            ]
+        """
         Create profile object to insert into the database
         """
+
         db_profile = Profiles(
             user_id=profile_request.email,
             personal_detail=personal_detail,
@@ -547,17 +529,7 @@ class ProfileService:
                 designation_status=profile_request.designation_status,
             ),
             skills=[],
-            experiences=[
-                ProfileExperience(
-                    experience_id=1,
-                    company_name="iXora Solution Ltd.",
-                    designation=ExperienceDesignation(designation=designation.designation,
-                                                      designation_id=1),
-                    start_date=None,
-                    end_date=None,
-                    job_responsibility=None
-                )
-            ],
+            experiences=new_experience,
             educations=[],
             cv_files=[]
         )
@@ -618,7 +590,7 @@ class ProfileService:
                         name=designation.designation
                     )
                 )
-            ],
+            ] if new_experience else [],
             educations=[],
             personal_details=personal_detail_response,
             profile_status=ResponseEnumData(
@@ -629,7 +601,11 @@ class ProfileService:
         return response
 
     @staticmethod
-    async def _create_user_profile_by_user(profile_request: ProfileBasicRequest) -> ProfileResponse:
+    async def _create_user_profile_by_user(profile_request: ProfileBasicRequest,
+                                           email: str) -> ProfileResponse:
+        if not email == profile_request.email:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="You are not allowed to create/update other profiles")
         if profile_request.email is None:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -647,8 +623,7 @@ class ProfileService:
             )
 
         designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
-        profile_status_object: ProfileStatus = await ProfileStatus.get(
-            profile_request.profile_status.value)  # type: ignore
+
         personal_detail = ProfilePersonalDetails(
             name=profile_request.name,
             date_of_birth=profile_request.date_of_birth,
@@ -658,15 +633,12 @@ class ProfileService:
             address=None,
             experience_year=None
         )
-        designation_status_object: DesignationStatus = await DesignationStatus.get(
-            profile_request.designation_status.value  # type: ignore
-        )
 
         gender_data: Gender = await Gender.get(profile_request.gender)  # type: ignore
 
         """
         Create profile object to insert into the database
-        """
+        # """
         db_profile = Profiles(
             user_id=profile_request.email,
             personal_detail=personal_detail,
@@ -677,21 +649,11 @@ class ProfileService:
                 designation_status=DesignationStatusEnum.inactive,
             ),
             skills=[],
-            experiences=[
-                ProfileExperience(
-                    experience_id=1,
-                    company_name="iXora Solution Ltd.",
-                    designation=ExperienceDesignation(designation=designation.designation,
-                                                      designation_id=1),
-                    start_date=None,
-                    end_date=None,
-                    job_responsibility=None,
-                    status=StatusEnum.active,
-                )
-            ],
+            experiences=[],
             educations=[],
             cv_files=[]
         )
+
         """
         Insert profile into database
         """
@@ -728,33 +690,17 @@ class ProfileService:
                 designation=designation.designation,
                 start_date=None, end_date=None,
                 designation_status=ResponseEnumData(
-                    id=designation_status_object.id,
-                    name=designation_status_object.name
+                    id=db_profile.designation.designation_status,
+                    name=DesignationStatusEnum(db_profile.designation.designation_status).name
                 ),
             ),
             skills=[],
-            experiences=[
-                ProfileExperienceResponse(
-                    experience_id=1,
-                    company_name="iXora Solution Ltd.",
-                    designation=ProfileExperienceDesignationResponse(
-                        designation=designation.designation,
-                        designation_id=1
-                    ),
-                    start_date=None,
-                    end_date=None,
-                    job_responsibility=None,
-                    status=ResponseEnumData(
-                        id=designation.id,
-                        name=designation.designation
-                    )
-                )
-            ],
+            experiences=[],
             educations=[],
             personal_details=personal_detail_response,
             profile_status=ResponseEnumData(
-                id=profile_status_object.id,
-                name=profile_status_object.name
+                id=db_profile.profile_status,
+                name=ProfileStatusEnum(db_profile.profile_status).name
             )
         )
         return response
