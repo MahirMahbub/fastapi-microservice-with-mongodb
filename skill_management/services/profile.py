@@ -84,9 +84,9 @@ class ProfileService:
             gender=profile_request.gender,
             mobile=profile_request.mobile,
             address=profile_request.address,
-            # designation_id=profile_request.designation_id,
+            designation_id=profile_request.designation_id,
             profile_status=profile_request.designation_status,  # type: ignore
-            # designation_status=profile_request.designation_status,
+            designation_status=profile_request.designation_status,
             about=profile_request.about)
         item_dict = update_item.dict(
             exclude_unset=True,

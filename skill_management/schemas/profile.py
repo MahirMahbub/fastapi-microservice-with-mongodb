@@ -393,14 +393,14 @@ class ProfileUpdateByAdmin(BaseModel):
     gender: GenderEnum | None = Field(description="gender of the user")
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
-    # designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
+    designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
     profile_status: ProfileStatusEnum | None = Field(description="""profile status of the user
 
         full_time: 1, part_time: 2, delete: 3, inactive: 4
         """)
-    # designation_status: DesignationStatusEnum | None = Field(default=DesignationStatusEnum.active, description="""designation status of user
-    #     active: 1, inactive: 2
-    #     """)
+    designation_status: DesignationStatusEnum | None = Field(default=DesignationStatusEnum.active, description="""designation status of user
+        active: 1, inactive: 2
+        """)
     about: str | None = Field(max_length=256, description="description of the user")
 
 
