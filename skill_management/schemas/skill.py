@@ -1,4 +1,4 @@
-from beanie import Link
+from beanie import Link, PydanticObjectId
 from pydantic import BaseModel, Field, validator
 
 from skill_management.enums import StatusEnum, UserStatusEnum, SkillTypeEnum, SkillCategoryEnum
@@ -65,6 +65,71 @@ class CreateSkillDataRequest(SkillCreate):
     0 or 1''')
     status: UserStatusEnum | None = Field(UserStatusEnum.active,
                                           description="""skill data validity status 
+
+    1: active, 3: delete""")
+
+    @validator("achievements", always=True)
+    def validate_achievements(cls, value: str) -> str | None:
+        if value is None:
+            return None
+        try:
+            ascii_value = ord(value)
+        except TypeError as type_exec:
+            raise ValueError("not a valid value, not a valid number marker")
+        if ascii_value > 49 or ascii_value < 48:
+            """
+            Ascii_value of "0" is 48 and "1" is 49.
+            """
+            raise ValueError("not a valid value, out of ascii value range")
+        return value
+
+    @validator("certificate", always=True)
+    def validate_certificate(cls, value: str) -> str | None:
+        if value is None:
+            return None
+        try:
+            ascii_value = ord(value)
+        except TypeError as type_exec:
+            raise ValueError("not a valid value, not a valid number marker")
+        if ascii_value > 49 or ascii_value < 48:
+            """
+            Ascii_value of "0" is 48 and "1" is 49.
+            """
+            raise ValueError("not a valid value, out of ascii value range")
+        return value
+
+    class Config:
+        schema_extra = {
+            "example":
+                {
+                    "skill_id": 1,
+                    "experience_year": 4,
+                    "number_of_projects": 4,
+                    "level": 5,
+                    "training_duration": 2,
+                    "achievements": "1",
+                    "achievements_description": "It is the achievement's description",
+                    "certificate": "1",
+                    "status": 1
+                }
+        }
+
+
+class CreateSkillDataAdminRequest(SkillCreate):
+    profile_id: PydanticObjectId = Field(description="id of the profile")
+    experience_year: int | None = Field(None, le=45, description="experience of the indicated skill")
+    number_of_projects: int | None = Field(None, le=80, description="number of projects on that skill")
+    level: int | None = Field(None, le=10, ge=1, description="level of proficiency on the skill")
+    training_duration: int | None = Field(None, le=100, description="training duration in months")
+    achievements: str | None = Field(None, max_length=1, description='''marker for having the achievements
+
+    0 or 1''')
+    achievements_description: str | None = Field(None, max_length=255, description="description of the achievement")
+    certificate: str | None = Field(None, max_length=1, description='''marker for having the certificate
+
+    0 or 1''')
+    status: StatusEnum | None = Field(UserStatusEnum.active,
+                                      description="""skill data validity status 
 
     1: active, 3: delete""")
 
@@ -363,16 +428,18 @@ class ProfileSkill(BaseModel):
     number_of_projects: int | None = Field(le=80, description="number of projects on that skill")
     level: int | None = Field(le=10, ge=1, description="level of proficiency on the skill")
     training_duration: int | None = Field(le=100, description="training duration in months")
-    achievements: str = Field(max_length=1, description='''marker for having the achievements
+    achievements: str | None = Field(default="0", max_length=1, description='''marker for having the achievements
 
         0 or 1''')
     achievements_description: str | None = Field(max_length=255, description="description of the achievement")
-    certificate: str = Field(max_length=1, description='''marker for having the certificate
+    certificate: str | None = Field(default="0", max_length=1, description='''marker for having the certificate
 
         0 or 1''')
 
     @validator("achievements", always=True)
     def validate_achievements(cls, value: str) -> str | None:
+        if value is None:
+            return "0"
         try:
             ascii_value = ord(value)
         except TypeError as type_exec:
@@ -386,6 +453,8 @@ class ProfileSkill(BaseModel):
 
     @validator("certificate", always=True)
     def validate_certificate(cls, value: str) -> str | None:
+        if value is None:
+            return "0"
         try:
             ascii_value = ord(value)
         except TypeError as type_exec:
