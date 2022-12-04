@@ -41,7 +41,7 @@ services:
       dockerfile: auth_management/AuthDockerfile
     container_name: "auth"
     hostname: "auth"
-    command: bash -c "uvicorn auth_management.main:auth_management --host 0.0.0.0 --port 7003 --log-config=auth_management/logging.conf  --reload"
+    command: bash -c "uvicorn auth_management.main:auth_management --host 0.0.0.0 --port 7003 --logs-config=auth_management/logging.conf  --reload"
     volumes:
       - ./:/auth_management
     env_file: auth_management/.env
@@ -75,7 +75,7 @@ services:
     build:
       context: auth_management
       dockerfile: auth_management/AuthDockerfile
-    command: "celery -A auth_management.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_management/logs/email_worker.log -Q send_verify_email,send_change_password_email"
+    command: "celery -A auth_management.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_management/logs/email_worker.logs -Q send_verify_email,send_change_password_email"
     env_file: email-worker.env
     volumes:
       - './:/auth_management'
@@ -108,7 +108,7 @@ services:
       dockerfile: SkillDockerfile
     container_name: "skill_management"
     hostname: "skill_management"
-    command: bash -c "uvicorn skill_management.main:skill_app --host 0.0.0.0 --port 7004 --log-config=skill_management/logging.conf --reload"
+    command: bash -c "uvicorn skill_management.main:skill_app --host 0.0.0.0 --port 7004 --logs-config=skill_management/logging.conf --reload"
     volumes:
       - ./:/skill_management
     ports:

@@ -87,7 +87,8 @@ class ProfileService:
             designation_id=profile_request.designation_id,
             profile_status=profile_request.designation_status,  # type: ignore
             designation_status=profile_request.designation_status,
-            about=profile_request.about)
+            about=profile_request.about
+        )
         item_dict = update_item.dict(
             exclude_unset=True,
             exclude_none=True
@@ -97,11 +98,10 @@ class ProfileService:
         if item_dict.get("designation_id") is not None:
             item_dict.pop("designation_id")
 
-        old_profile_details  = old_profile.personal_detail.dict()
+        old_profile_details = old_profile.personal_detail.dict()
         for key, value in item_dict.items():
             if key in old_profile_details:
                 old_profile_details[key] = value
-
 
         if profile_request.designation_id is None:
             db_profile = await profile_crud_manager.update(  # type: ignore
@@ -142,7 +142,7 @@ class ProfileService:
                     start_date=None,
                     end_date=None,
                     job_responsibility=None,
-                    status=profile_request.designation_status  # type: ignore
+                    status=StatusEnum.active  # type: ignore
                 )
 
                 """
@@ -333,7 +333,7 @@ class ProfileService:
             designation_id = None
 
         update_item = ProfileUpdateByUser(
-            name= profile_name,
+            name=profile_name,
             date_of_birth=profile_request.date_of_birth,
             gender=profile_request.gender,
             mobile=profile_request.mobile,
@@ -345,18 +345,37 @@ class ProfileService:
             exclude_unset=True,
             exclude_none=True
         )
+        if item_dict.get("designation_status") is not None:
+            item_dict.pop("designation_status")
+        if item_dict.get("designation_id") is not None:
+            item_dict.pop("designation_id")
         old_profile_details = old_profile.personal_detail.dict()
+
         for key, value in item_dict.items():
             if key in old_profile_details:
                 old_profile_details[key] = value
-
-        # if profile_request.designation_id is None:
-        db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
-            id_=profile_request.profile_id,  # type: ignore
-            item_dict={
-                "personal_detail": old_profile_details
-            }
-        )
+        if profile_request.designation_id is not None:
+            designation: Designations = await Designations.get(profile_request.designation_id)
+            db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
+                id_=profile_request.profile_id,  # type: ignore
+                item_dict={
+                    "personal_detail": old_profile_details,
+                    "designation": {
+                        'designation_id': designation.id,
+                        'designation': designation.designation,
+                        'designation_status': DesignationStatusEnum.inactive,
+                        "end_date": None,
+                        "start_date": None
+                    }
+                }
+            )
+        else:
+            db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
+                id_=profile_request.profile_id,  # type: ignore
+                item_dict={
+                    "personal_detail": old_profile_details
+                }
+            )
 
         """
         Create skill list for the response

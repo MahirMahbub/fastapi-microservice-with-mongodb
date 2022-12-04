@@ -3,7 +3,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field, validator, root_validator
 
-from skill_management.enums import StatusEnum, UserStatusEnum, DesignationStatusEnum
+from skill_management.enums import StatusEnum, UserStatusEnum
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.designation import DesignationDataResponse
 
@@ -42,6 +42,7 @@ class ProfileExperience(BaseModel):
     job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
     designation: ExperienceDesignation = Field(
         description="designation for this profile experience")
+    designation_id: int | None = Field(None, description="designation id for profile experience")
     start_date: datetime | None = Field(description="start date of experience")
     end_date: datetime | None = Field(description="end date of experience")
     status: StatusEnum = Field(default=StatusEnum.active, description="designation status of experience")

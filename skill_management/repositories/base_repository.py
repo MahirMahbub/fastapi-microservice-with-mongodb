@@ -56,7 +56,7 @@ class TableRepository:
         return await document_object.delete()
 
     async def update(self,
-                     id_: PydanticObjectId | UUID4,
+                     id_: PydanticObjectId | UUID4| int,
                      item_dict: dict[str, Any] | None = None,
                      push_item: dict[str, Any] | None = None) -> Optional[Document]:
 

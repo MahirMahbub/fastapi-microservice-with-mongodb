@@ -131,7 +131,7 @@ services:
     build:
       context: ./auth_management
       dockerfile: AuthDockerfile
-    command: "celery -A auth_management.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_management/logs/email_worker.log -Q send_verify_email,send_change_password_email"
+    command: "celery -A auth_management.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_management/logs/email_worker.logs -Q send_verify_email,send_change_password_email"
     env_file: email-worker.env
     volumes:
       - ./:/auth_management

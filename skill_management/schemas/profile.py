@@ -8,9 +8,9 @@ from pydantic import Field, BaseModel, EmailStr, UUID4, validator, root_validato
 from skill_management.enums import GenderEnum, ProfileStatusEnum, DesignationStatusEnum
 from skill_management.schemas.base import PaginatedResponse, ResponseEnumData
 from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignationResponse, \
-    DesignationDataCreate
+    DesignationDataCreate, ProfileDesignation
 from skill_management.schemas.education import ProfileEducationResponse
-from skill_management.schemas.experience import ProfileExperienceResponse
+from skill_management.schemas.experience import ProfileExperienceResponse, ProfileExperience
 from skill_management.schemas.skill import ProfileSkillDataResponse, ProfileSkillResponse, ProfileSkill
 
 
@@ -416,5 +416,15 @@ class ProfileUpdateByUser(BaseModel):
 
 
 class ProfileSkillView(BaseModel):
-    id: Any
+    id: PydanticObjectId = Field(alias='_id')
     skills: list[ProfileSkill]
+
+
+class ProfileDesignationView(BaseModel):
+    id: PydanticObjectId = Field(alias='_id')
+    designation: ProfileDesignation
+
+class ProfileDesignationExperiencesView(BaseModel):
+    id: PydanticObjectId = Field(alias='_id')
+    designation: ProfileDesignation
+    experiences: list[ProfileExperience]

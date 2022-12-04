@@ -106,7 +106,8 @@ class SkillService:
             skill_request_dict = skill_request.dict(exclude_unset=True, exclude_defaults=True)
             skill_request_dict = {"skills.$." + str(key): val for key, val in skill_request_dict.items()}
             db_profile: Profiles | None = await profile_crud_manager.update_by_query(  # type: ignore
-                query={"skills.skill_id": skill_request.skill_id},
+                query={"skills.skill_id": skill_request.skill_id,
+                       "_id": profile_skill.id},  # type: ignore
                 item_dict=skill_request_dict
             )
 
