@@ -2,9 +2,12 @@ from fastapi import APIRouter, Request, Depends, Body
 from fastapi.responses import ORJSONResponse
 
 from skill_management.schemas.base import ErrorMessage
-from skill_management.schemas.education import EducationCreateRequest, EducationCreateResponse
+from skill_management.schemas.education import EducationCreateRequest, EducationCreateResponse, \
+    EducationListDataResponse
+from skill_management.services.education import EducationService
 from skill_management.utils.auth_manager import JWTBearer
 from skill_management.utils.logger import get_logger
+from skill_management.utils.profile_manager import get_profile_email
 
 education_router: APIRouter = APIRouter(tags=["education"])
 logger = get_logger()
@@ -12,7 +15,7 @@ logger = get_logger()
 
 @education_router.post("/profile/educations",
                        response_class=ORJSONResponse,
-                       response_model=EducationCreateResponse,
+                       response_model=EducationListDataResponse,
                        status_code=201,
                        responses={
                            400: {
@@ -57,7 +60,8 @@ async def create_education(request: Request,  # type: ignore
                                },
 
                                description="input education data"),
-                           user_id: str = Depends(JWTBearer())):
+                           user_id: str = Depends(JWTBearer()),
+                           service: EducationService = Depends()):
     """
     **Create:** Must provide all the data except *"education_id"*. *"status"* is optional.
     
@@ -65,5 +69,6 @@ async def create_education(request: Request,  # type: ignore
     **Update:** Must provide *"education_id"*. Other attributes are optional.
     """
 
-
-pass
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.create_or_update_education_by_user(education_request=education,
+                                                      email=email)

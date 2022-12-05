@@ -9,7 +9,7 @@ from skill_management.enums import GenderEnum, ProfileStatusEnum, DesignationSta
 from skill_management.schemas.base import PaginatedResponse, ResponseEnumData
 from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignationResponse, \
     DesignationDataCreate, ProfileDesignation
-from skill_management.schemas.education import ProfileEducationResponse
+from skill_management.schemas.education import ProfileEducationResponse, ProfileEducation
 from skill_management.schemas.experience import ProfileExperienceResponse, ProfileExperience
 from skill_management.schemas.skill import ProfileSkillDataResponse, ProfileSkillResponse, ProfileSkill
 
@@ -424,7 +424,13 @@ class ProfileDesignationView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     designation: ProfileDesignation
 
+
 class ProfileDesignationExperiencesView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     designation: ProfileDesignation
     experiences: list[ProfileExperience]
+
+
+class ProfileEducationView(BaseModel):
+    id: PydanticObjectId = Field(alias='_id')
+    educations: list[ProfileEducation]

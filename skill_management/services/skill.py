@@ -1,3 +1,5 @@
+from typing import cast
+
 from beanie.odm.operators.find.array import ElemMatch
 from fastapi import HTTPException, status
 
@@ -29,13 +31,23 @@ class SkillService:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Must provide a valid skill")
         profile_skill: ProfileSkillView | None = await profile_crud_manager.get_by_query(
-            query={"user_id": email})  # type: ignore
-        # projection_model=ProfileSkillView)
+            query={"user_id": email},
+            projection_model=ProfileSkillView)
         if profile_skill is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
 
-        if profile_skill.skills is None or profile_skill.skills == []:
+        has_skill = await Profiles.find(
+            {
+                "user_id": email
+            },
+            ElemMatch(
+                Profiles.skills, {"skill_id": skill_request.skill_id}
+            ),
+            projection_model=ProfileSkillView
+        ).first_or_none()
+
+        if has_skill is None:
             """
              It is  a create operation. 
             """
@@ -44,13 +56,13 @@ class SkillService:
                 skill_type=skill_data.skill_type,
                 skill_category=skill_data.skill_categories,
                 skill_name=skill_data.skill_name,
-                status=skill_request.status,  # type: ignore
+                status=cast(StatusEnum, skill_request.status),
                 experience_year=skill_request.experience_year,
                 number_of_projects=skill_request.number_of_projects,
                 level=skill_request.level, training_duration=skill_request.training_duration,
-                achievements=skill_request.achievements,  # type: ignore
+                achievements=skill_request.achievements,
                 achievements_description=skill_request.achievements_description,
-                certificate=skill_request.certificate,  # type: ignore
+                certificate=skill_request.certificate,
                 certificate_files=[])
             db_profile: Profiles | None = await profile_crud_manager.update(
                 id_=profile_skill.id,  # type: ignore
@@ -99,19 +111,21 @@ class SkillService:
                         skill_type=ResponseEnumData(
                             id=skill_.skill_type,
                             name=SkillTypeEnum(skill_.skill_type).name
-                        )
+                        ),
+                        certificates_url=certificate_files
                     )
 
                 )
             return CreateSkillListDataResponse(skills=skill_list)
         else:
             skill_request_dict = skill_request.dict(exclude_unset=True, exclude_defaults=True)
+            skill_request_dict.pop('skill_id')
             skill_request_dict = {"skills.$." + str(key): val for key, val in skill_request_dict.items()}
             db_profile: Profiles | None = await profile_crud_manager.update_by_query(  # type: ignore
                 query={
                     "skills.skill_id": skill_request.skill_id,
                     "_id": profile_skill.id
-                },  # type: ignore
+                },
                 item_dict=skill_request_dict
             )
 
@@ -119,7 +133,7 @@ class SkillService:
             for skill_ in db_profile.skills:  # type: ignore
                 certificate_files = [
                     FileResponse(
-                        file_name=file,
+                        file_name=file.file_name,
                         url="/files/%s" % file.id
                     ) async for file in Files.find(
                         {
@@ -143,6 +157,7 @@ class SkillService:
                             id=skill_status_object.id,
                             name=(StatusEnum(skill_status_object.id)).name
                         ),
+                        certificates_url=certificate_files,
                         achievements_description=skill_.achievements_description,
                         skill_category=[
                             ResponseEnumData(

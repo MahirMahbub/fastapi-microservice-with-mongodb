@@ -1,25 +1,24 @@
-from typing import TypeVar
+from typing import cast
 
-from beanie import Document
 from fastapi import HTTPException, status
 
 from skill_management.enums import DesignationStatusEnum, StatusEnum
+from skill_management.models.profile import Profiles
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.designation import DesignationCreateRequest, ProfileDesignationResponse, \
     DesignationCreateAdminRequest
 from skill_management.schemas.experience import ProfileExperience, ExperienceDesignation
-from skill_management.schemas.profile import ProfileDesignationView, ProfileDesignationExperiencesView
-from  skill_management.models.designation import Designations
-
-Profiles_T = TypeVar("Profiles_T", bound=Document)
+from skill_management.schemas.profile import ProfileDesignationExperiencesView
 
 
 class DesignationService:
     @staticmethod
-    async def update_designation_by_user(designation_request: DesignationCreateRequest, email):
+    async def update_designation_by_user(designation_request: DesignationCreateRequest,
+                                         email: str) -> ProfileDesignationResponse:
         profile_crud_manager = ProfileRepository()
         profile_designation_experiences: ProfileDesignationExperiencesView | None = await profile_crud_manager.get_by_query(
+            # type: ignore
             query={"user_id": email}, projection_model=ProfileDesignationExperiencesView)
 
         if profile_designation_experiences is None:
@@ -37,7 +36,7 @@ class DesignationService:
             if key in old_designation_data:
                 old_designation_data[key] = value
 
-        exist_experience = False
+        exist_experience: ProfileExperience | None = None
         for data in profile_designation_experiences.experiences:
             if data.designation_id == profile_designation_experiences.designation.designation_id:
                 exist_experience = data
@@ -58,14 +57,14 @@ class DesignationService:
             )
         old_designation_data["designation_status"] = DesignationStatusEnum.inactive
 
-        db_profile: Profiles_T = await profile_crud_manager.update_by_query(
+        db_profile = cast(Profiles, await profile_crud_manager.update_by_query(
             query={
                 "user_id": email
             },
             item_dict={
                 "designation": old_designation_data
             }
-        )
+        ))
         return ProfileDesignationResponse(
             designation=db_profile.designation.designation,
             designation_id=db_profile.designation.designation_id,
@@ -78,13 +77,17 @@ class DesignationService:
         )
 
     @staticmethod
-    async def update_designation_by_admin(designation_request: DesignationCreateAdminRequest):
+    async def update_designation_by_admin(
+            designation_request: DesignationCreateAdminRequest) -> ProfileDesignationResponse:
         profile_crud_manager = ProfileRepository()
         old_profile: Profiles = await profile_crud_manager.get(id_=designation_request.profile_id)  # type: ignore
-        profile_designation_experiences: ProfileDesignationExperiencesView | None = await profile_crud_manager.get_by_query(
-            query={
-                "_id": designation_request.profile_id
-            }, projection_model=ProfileDesignationExperiencesView
+        profile_designation_experiences = cast(
+            ProfileDesignationExperiencesView,
+            await profile_crud_manager.get_by_query(
+                query={
+                    "_id": designation_request.profile_id
+                }, projection_model=ProfileDesignationExperiencesView
+            )
         )
 
         if profile_designation_experiences is None:
@@ -107,7 +110,7 @@ class DesignationService:
             if key in old_designation_data:
                 old_designation_data[key] = value
         if designation_request.designation_status == DesignationStatusEnum.active:
-            exist_experience = False
+            exist_experience: ProfileExperience | None = None
             for data in profile_designation_experiences.experiences:
                 if data.designation_id == profile_designation_experiences.designation.designation_id:
                     exist_experience = data
@@ -119,14 +122,14 @@ class DesignationService:
                         experience_dict[key] = value
                 experience_dict["status"] = StatusEnum.active
                 experience_request_dict = {"experiences.$." + str(key): val for key, val in experience_dict.items()}
-                db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
+                await profile_crud_manager.update_by_query(
                     query={
                         "experiences.experience_id": exist_experience.experience_id,
                         "_id": designation_request.profile_id
                     },
                     item_dict=experience_request_dict
                 )
-                db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
+                db_profile = cast(Profiles, await profile_crud_manager.update_by_query(
                     query={
                         "_id": designation_request.profile_id
                     },
@@ -134,6 +137,7 @@ class DesignationService:
                         "designation": old_designation_data
                     },
                 )
+                                  )
             else:
                 all_experience_id = [
                     experience.experience_id for experience in profile_designation_experiences.experiences
@@ -149,11 +153,6 @@ class DesignationService:
                     new_experience_id = max(all_experience_id) + 1
 
                 """
-                Get Designation Data
-                """
-                # designation: Designations = profile_designation_experiences.designation  # type: ignore
-
-                """
                 Create new experience from the designation id provided
                 """
                 new_experience = ProfileExperience(
@@ -166,7 +165,7 @@ class DesignationService:
                     end_date=profile_designation_experiences.designation.end_date,
                     job_responsibility=None,
                     designation_id=profile_designation_experiences.designation.designation_id,
-                    status=StatusEnum.active  # type: ignore
+                    status=StatusEnum.active
                 )
                 db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
                     query={
@@ -182,7 +181,7 @@ class DesignationService:
                     }
                 )
         else:
-            exist_experience = False
+            exist_experience = None
             for data in profile_designation_experiences.experiences:
                 if data.designation_id == profile_designation_experiences.designation.designation_id:
                     exist_experience = data
@@ -194,12 +193,14 @@ class DesignationService:
                         experience_dict[key] = value
                 experience_dict["status"] = StatusEnum.cancel
                 experience_request_dict = {"experiences.$." + str(key): val for key, val in experience_dict.items()}
-                db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
-                    query={
-                        "experiences.experience_id": exist_experience.experience_id,
-                        "_id": designation_request.profile_id
-                    },
-                    item_dict=experience_request_dict
+                db_profile = cast(
+                    Profiles, await profile_crud_manager.update_by_query(
+                        query={
+                            "experiences.experience_id": exist_experience.experience_id,
+                            "_id": designation_request.profile_id
+                        },
+                        item_dict=experience_request_dict
+                    )
                 )
             old_designation_data["designation_status"] = DesignationStatusEnum.inactive
             db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore

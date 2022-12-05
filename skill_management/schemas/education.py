@@ -87,3 +87,6 @@ class EducationCreateResponse(ProfileEducationResponse):
                     "grade": 3.80
                 },
         }
+
+class EducationListDataResponse(BaseModel):
+    educations: list[EducationCreateResponse]

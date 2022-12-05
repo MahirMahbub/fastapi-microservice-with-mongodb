@@ -198,6 +198,7 @@ class CreateSkillDataResponse(BaseModel):
     certificate: str | None = Field(max_length=1, description='''marker for having the certificate
 
     0 or 1''')
+    certificates_url: list[FileResponse] | None = Field(description="file response url of certificates")
 
     @validator("achievements", always=True)
     def validate_achievements(cls, value: str) -> str | None:
@@ -258,7 +259,14 @@ class CreateSkillDataResponse(BaseModel):
                         {
                             "id": 1,
                             "name": "active"
-                        }
+                        },
+                    "certificates_url":
+                        [
+                            {
+                                "file_name": "certificate_file.pdf",
+                                "url": "/files/1"
+                            }
+                        ]
                 }
         }
 

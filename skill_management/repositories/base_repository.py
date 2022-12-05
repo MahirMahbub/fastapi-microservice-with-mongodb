@@ -1,4 +1,4 @@
-from typing import Optional, Type, Any, Sequence
+from typing import Optional, Type, Any, Sequence, TypeVar
 
 from beanie import PydanticObjectId, Document
 from beanie.odm.operators.update.array import Push
@@ -9,12 +9,12 @@ from beanie.odm.queries.update import UpdateMany
 from pydantic import BaseModel, UUID4
 from pymongo import DeleteMany
 from pymongo.results import DeleteResult
-
+T = TypeVar("T", bound=Document)
 
 class TableRepository:
     __slots__ = ["entity_collection"]
 
-    def __init__(self, entity_collection: Type[Document]):
+    def __init__(self, entity_collection: Type[T]):
         self.entity_collection: Type[Document] = entity_collection
 
     async def insert(self, item: BaseModel) -> Document:
@@ -74,9 +74,9 @@ class TableRepository:
     async def update_by_query(self,
                               query: dict[str, Any],
                               item_dict: dict[str, Any] | None = None,
-                              push_item: dict[str, Any] | None = None) -> Optional[Document]:
+                              push_item: dict[str, Any] | None = None) -> Optional[T]:
 
-        document_object: FindMany["DocType"] | FindMany["DocumentProjectionType"] = self.entity_collection.find(query)
+        document_object = self.entity_collection.find(query)
 
         if document_object is None:
             return None
@@ -87,7 +87,7 @@ class TableRepository:
             await document_object.update(Push(push_item))
         else:
             await document_object.update(Set(item_dict))
-        return await self.entity_collection.get(PydanticObjectId(id_))  # type: ignore
+        return await self.entity_collection.get(PydanticObjectId(id_))
 
     async def upsert(self, attr: str, value: Any, item: BaseModel) -> UpdateMany:
         item_dict = item.dict(exclude_unset=True)
