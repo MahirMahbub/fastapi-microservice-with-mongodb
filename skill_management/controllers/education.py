@@ -93,41 +93,41 @@ async def create_education_by_user(request: Request,  # type: ignore
                        )
 async def create_education_by_admin(request: Request,  # type: ignore
                                     education_request: EducationCreateAdminRequest = Body(
-                                       examples={
-                                           "CREATE": {
-                                               "summary": "Create Body",
-                                               "description": "a example of body for create operation",
-                                               "value":
-                                                   {
-                                                       "profile_id": uuid.uuid4(),
-                                                       "degree_name": "B.Sc in Computer Science",
-                                                       "school_name": "University of Dhaka",
-                                                       "passing_year": "2019",
-                                                       "grade": 3.80,
-                                                       "status": 1
-                                                   }
-                                           },
+                                        examples={
+                                            "CREATE": {
+                                                "summary": "Create Body",
+                                                "description": "a example of body for create operation",
+                                                "value":
+                                                    {
+                                                        "profile_id": uuid.uuid4(),
+                                                        "degree_name": "B.Sc in Computer Science",
+                                                        "school_name": "University of Dhaka",
+                                                        "passing_year": "2019",
+                                                        "grade": 3.80,
+                                                        "status": 1
+                                                    }
+                                            },
 
-                                           "UPDATE":
-                                               {
-                                                   "summary": "Update Body",
-                                                   "description": "a example of body for update operation",
-                                                   "value":
-                                                       {
-                                                           "profile_id": uuid.uuid4(),
-                                                           "education_id": 1,
-                                                           "degree_name": "B.Sc in Computer Science",
-                                                           "school_name": "University of Dhaka",
-                                                           "passing_year": "2019",
-                                                           "grade": 3.80,
-                                                           "status": 1
-                                                       },
-                                               }
+                                            "UPDATE":
+                                                {
+                                                    "summary": "Update Body",
+                                                    "description": "a example of body for update operation",
+                                                    "value":
+                                                        {
+                                                            "profile_id": uuid.uuid4(),
+                                                            "education_id": 1,
+                                                            "degree_name": "B.Sc in Computer Science",
+                                                            "school_name": "University of Dhaka",
+                                                            "passing_year": "2019",
+                                                            "grade": 3.80,
+                                                            "status": 1
+                                                        },
+                                                }
 
-                                       },
+                                        },
 
-                                       description="input education data"),
-                                    user_id: str = Depends(JWTBearerAdmin()),
+                                        description="input education data"),
+                                    admin_user_id: str = Depends(JWTBearerAdmin()),
                                     service: EducationService = Depends()):
     """
     **Create:** Must provide all the data except *"education_id"*. *"status"* is optional.
@@ -136,5 +136,4 @@ async def create_education_by_admin(request: Request,  # type: ignore
     **Update:** Must provide *"education_id"*. Other attributes are optional.
     """
 
-    email = await get_profile_email(user_id=user_id, request=request)
     return await service.create_or_update_education_by_admin(education_request=education_request)

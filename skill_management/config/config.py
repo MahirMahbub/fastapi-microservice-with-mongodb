@@ -5,7 +5,7 @@ from aioredis import Redis
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from skill_management.models.designation import Designations
+from skill_management.models.designation import Designations, CustomDesignations
 from skill_management.models.enums import (PlanType, Status, UserStatus, FileType, SkillCategory, SkillType, \
                                            DesignationStatus, Gender, EnumInitializer, ProfileStatus)
 from skill_management.models.file import Files
@@ -23,7 +23,7 @@ async def initiate_database() -> None:
     await init_beanie(database=client.get_default_database(),
                       document_models=[EnumInitializer, PlanType, Status, UserStatus, FileType, SkillCategory,
                                        SkillType, DesignationStatus, Gender, Designations, Files, Profiles, Plans,
-                                       ProfileStatus, Skills])  # type: ignore
+                                       ProfileStatus, Skills, CustomDesignations])  # type: ignore
     # , Files, Plans,
     # Profiles, Skills
     await initialize_database()

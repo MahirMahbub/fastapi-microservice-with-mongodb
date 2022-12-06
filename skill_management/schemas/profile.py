@@ -434,3 +434,8 @@ class ProfileDesignationExperiencesView(BaseModel):
 class ProfileEducationView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     educations: list[ProfileEducation]
+
+
+class ProfileExperienceView(BaseModel):
+    id: PydanticObjectId = Field(alias='_id')
+    experiences: list[ProfileExperience]
