@@ -57,6 +57,7 @@ class PlanCreateRequest(PlanBase):
     status: UserStatusEnum | None = Field(UserStatusEnum.active, description="""status of plan
     
     1: active, 3: delete""")
+
     @root_validator
     def any_of(cls, v: dict[str, Any]) -> dict[str, Any]:
         plan_id = v.pop('plan_id')
@@ -86,6 +87,10 @@ class PlanCreateRequest(PlanBase):
     #     return value
 
 
+class PlanCreateAdminRequest(PlanCreateRequest):
+    profile_id: PydanticObjectId = Field(description="profile_id is related to profile collection")
+
+
 class PlanCreateResponse(BaseModel):
     id: UUID4 | None | str = Field(description="id of plan of type UUID")
     plan_type: ResponseEnumData | None = Field(description="Fixed plan type")
@@ -96,6 +101,7 @@ class PlanCreateResponse(BaseModel):
     start_date: datetime | None = Field(description="start date of plan")
     end_date: datetime | None = Field(description="end date of plan, must be none or greater than start_date")
     status: ResponseEnumData | None = Field(description="status of plan from fixed list of values")
+
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> Optional[datetime]:
         if values["start_date"] is None:

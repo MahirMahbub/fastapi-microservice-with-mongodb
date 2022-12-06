@@ -7,7 +7,7 @@ from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.experience import ExperienceCreateRequest, ExperienceListDataResponse, \
     ExperienceCreateAdminRequest
 from skill_management.services.experience import ExperienceService
-from skill_management.utils.auth_manager import JWTBearer
+from skill_management.utils.auth_manager import JWTBearer, JWTBearerAdmin
 from skill_management.utils.logger import get_logger
 from skill_management.utils.profile_manager import get_profile_email
 
@@ -120,7 +120,7 @@ async def create_experience_by_admin(request: Request,  # type: ignore
                                             }
 
                                     }, description="input experience data"),
-                                    user_id: str = Depends(JWTBearer()),
+                                    admin_user_id: str = Depends(JWTBearerAdmin()),
                                     service: ExperienceService = Depends()):
     """
     **Create:** Must provide all the data except *"experience_id"*. *"status"* is optional.
@@ -128,5 +128,4 @@ async def create_experience_by_admin(request: Request,  # type: ignore
 
     **Update:** Must provide *"experience_id"*. Other attributes are optional.
     """
-    email = await get_profile_email(user_id=user_id, request=request)
     return await service.create_or_update_experience_by_admin(experience_request=experience_request)
