@@ -6,6 +6,7 @@ from fastapi import Query, Depends, APIRouter, Path, Body
 from fastapi.responses import ORJSONResponse
 from starlette.requests import Request
 
+from skill_management.enums import ProfileStatusEnum
 from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.profile import ProfileResponse, PaginatedProfileResponse, ProfileBasicRequest, \
     ProfileBasicForAdminRequest
@@ -33,19 +34,36 @@ logger = get_logger()
                     }
                     )
 async def get_user_profiles_for_admin(request: Request,  # type: ignore
-                                      skill_category: str | None = Query(default=None,
-                                                                         description="input skill category as string",
-                                                                         alias="skill-category"),
-                                      skill_name: str | None = Query(default=None,
-                                                                     description="input skill name as string",
-                                                                     alias="skill-name"),
+                                      skill_id: int | None = Query(default=None,
+                                                                   description="input skill id as integer",
+                                                                   alias="skill-id"),
+                                      employee_name: str | None = Query(default=None,
+                                                                        description="input employee name as string",
+                                                                        alias="employee-name"),
+                                      mobile: str | None = Query(default=None,
+                                                                 description="input mobile as string",
+                                                                 alias="mobile"),
+                                      email: str | None = Query(default=None,
+                                                                description="input email as string",
+                                                                alias="email"),
+                                      profile_status: ProfileStatusEnum | None = Query(default=None,
+                                                                                       description="profile status as enum",
+                                                                                       alias="profile-status"),
                                       page_number: int = Query(default=1, description="page number of pagination",
                                                                gt=0,
                                                                alias="page-number"),
                                       page_size: int = Query(default=10, description="number of element in page", gt=0,
                                                              alias="page-size"),
-                                      admin_user_id: str = Depends(JWTBearerAdmin())):
-    pass
+                                      # admin_user_id: str = Depends(JWTBearerAdmin()),
+                                      service: ProfileService = Depends(),
+                                      ):
+    return await service.get_user_profiles_for_admin(skill_id=skill_id,
+                                                     employee_name=employee_name,
+                                                     mobile=mobile,
+                                                     email=email,
+                                                     profile_status=profile_status,
+                                                     page_number=page_number,
+                                                     page_size=page_size)
 
 
 @profile_router.get("/admin/user-profiles/{profile-id}",

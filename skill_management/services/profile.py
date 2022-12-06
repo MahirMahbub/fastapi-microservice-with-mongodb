@@ -1,3 +1,4 @@
+from beanie.odm.operators.find.array import ElemMatch
 from fastapi import HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
@@ -9,14 +10,15 @@ from skill_management.models.file import Files
 from skill_management.models.profile import Profiles
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.schemas.base import ResponseEnumData
-from skill_management.schemas.designation import ProfileDesignation, ProfileDesignationResponse
+from skill_management.schemas.designation import ProfileDesignation, ProfileDesignationResponse, DesignationDataResponse
 from skill_management.schemas.education import ProfileEducationResponse
 from skill_management.schemas.experience import ProfileExperience, ExperienceDesignation, ProfileExperienceResponse, \
     ProfileExperienceDesignationResponse
 from skill_management.schemas.file import FileResponse
 from skill_management.schemas.profile import ProfileBasicForAdminRequest, ProfilePersonalDetails, ProfileResponse, \
-    ProfilePersonalDetailsResponse, ProfileUpdateByAdmin, ProfileBasicRequest, ProfileUpdateByUser
-from skill_management.schemas.skill import ProfileSkillResponse
+    ProfilePersonalDetailsResponse, ProfileUpdateByAdmin, ProfileBasicRequest, ProfileUpdateByUser, \
+    ProfileBasicResponse, PaginatedProfileResponse
+from skill_management.schemas.skill import ProfileSkillResponse, ProfileSkillDataResponse
 
 
 class ProfileService:
@@ -737,3 +739,78 @@ class ProfileService:
             )
         )
         return response
+
+    async def get_user_profiles_for_admin(self, *,
+                                          skill_id=None,
+                                          employee_name=None,
+                                          mobile=None,
+                                          email=None,
+                                          profile_status=None,
+                                          page_number,
+                                          page_size):
+        query = {}
+
+        if skill_id is not None:
+            query = ElemMatch(
+                Profiles.skills,
+                {
+                    "skill_id": skill_id
+                }
+            )
+        elif employee_name is not None:
+            query = {
+                "personal_detail.name":
+                    {
+                        '$regex': employee_name, '$options': 'i'
+                    }
+            }
+
+        elif mobile is not None:
+            query = {
+                "personal_detail.mobile":
+                    {
+                        '$regex': mobile, '$options': 'i'
+                    }
+            }
+        elif email is not None:
+            query = {
+                "user_id":
+                    {
+                        '$regex': email, '$options': 'i'
+                    }
+            }
+        if profile_status is not None:
+            query["profile_status"] = profile_status
+
+        db_profiles = await Profiles.find(query).skip((page_number - 1) * page_size).limit(page_size).to_list()
+        count = await (Profiles.find(query).count())
+        response = [
+            ProfileBasicResponse(
+                id=db_profile.id,
+                email=db_profile.user_id,
+                designation=DesignationDataResponse(
+                    designation_id=db_profile.designation.designation_id,
+                    designation=db_profile.designation.designation
+                ),
+                skills=[
+                    ProfileSkillDataResponse(
+                        skill_id=skill.skill_id,
+                        experience_year=skill.experience_year,
+                        level=skill.level,
+                        skill_name=skill.skill_name
+                    ) for skill in db_profile.skills if skill.status == StatusEnum.active
+                                                        or skill.status == StatusEnum.cancel
+                ],
+                mobile=db_profile.personal_detail.mobile,
+                name=db_profile.personal_detail.name,
+                url=f"/admin/user-profiles/%s" % (str(db_profile.id))
+            ) for db_profile in db_profiles]
+        return PaginatedProfileResponse(
+
+            previous_page=page_number - 1 if page_number > 1 else None,
+            next_page=page_number + 1 if page_number * page_size < count else None,
+            has_previous=page_number > 1,
+            has_next=page_number * page_size < count,
+            total_items=count,
+            pages=(count // page_size + 1) if count % page_size > 0 else count // page_size,
+            items=response)

@@ -1,9 +1,8 @@
-import re
 from datetime import datetime, date, timezone, timedelta
 from typing import Any
 
 from beanie import PydanticObjectId
-from pydantic import Field, BaseModel, EmailStr, UUID4, validator, root_validator
+from pydantic import Field, BaseModel, EmailStr, validator, root_validator
 
 from skill_management.enums import GenderEnum, ProfileStatusEnum, DesignationStatusEnum
 from skill_management.schemas.base import PaginatedResponse, ResponseEnumData
@@ -19,19 +18,12 @@ class ProfileBase(BaseModel):
 
 
 class ProfileBasicResponse(ProfileBase):
-    id: UUID4 | None = Field(description="id of the user profile")
+    id: PydanticObjectId | str | None = Field(description="id of the user profile")
     url: str | None = Field(description="api endpoint for profile details by id")
     email: EmailStr | None = Field(description="email address of the user")
     mobile: str | None = Field(description="mobile number of the user")
     designation: DesignationDataResponse | None = Field(description="designation basic details of the profile user")
     skills: list[ProfileSkillDataResponse] | None
-
-    @validator("mobile", always=True)
-    def validate_mobile(cls, value: str) -> str:
-        regex = r"^(\+)[1-9][0-9\-\(\)\.]{9,15}$"
-        if value and not re.search(regex, value, re.I):
-            raise ValueError("Phone Number Invalid.")
-        return value
 
     class Config:
         schema_extra = {
