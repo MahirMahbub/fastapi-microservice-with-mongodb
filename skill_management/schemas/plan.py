@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Any
 
+from beanie import PydanticObjectId
 from pydantic import BaseModel, Field, validator, UUID4, root_validator
 
 from skill_management.enums import PlanTypeEnum, StatusEnum, UserStatusEnum
@@ -13,9 +14,10 @@ class TaskBase(BaseModel):
 
 class TaskCreate(TaskBase):
     task_id: int | None = Field(None, description="id of task for plan creation ")
-    status: PlanTypeEnum | None = Field(None, description="""status of task
+    status: StatusEnum | None = Field(None, description="""status of task
     
     1: active, 3: delete""")
+    description: str = Field(default="", max_length=255, description="description of task")
 
     # @validator("status", always=True)
     # def validate_status(cls, value: str) -> str | None:
@@ -44,20 +46,24 @@ class PlanBase(BaseModel):
 
 
 class PlanCreateRequest(PlanBase):
-    plan_id: UUID4 | None = Field(description="id for plan")
+    plan_id: PydanticObjectId = Field(description="id for plan")
     skill_id: int | None = Field(gt=0, description="skill_id is related to skill collection")
     task: list[TaskCreate] | None = []
     start_date: datetime | None = Field(description="start date of plan")
     end_date: datetime | None = Field(description='''end date of plan
     
     > start_date''')
-
+    delete_tasks: list[int] | None = Field(None, description="list of task id to delete")
+    status: UserStatusEnum | None = Field(UserStatusEnum.active, description="""status of plan
+    
+    1: active, 3: delete""")
     @root_validator
     def any_of(cls, v: dict[str, Any]) -> dict[str, Any]:
         plan_id = v.pop('plan_id')
         if plan_id is None:
             notes = v.pop('notes')
             task = v.pop('task')
+            delete_tasks = v.pop('delete_tasks')
             if None in v.values():
                 raise ValueError('You must provide skill_id, start_date, end_date, plan_type for creating a plan')
             v["notes"] = notes
@@ -73,23 +79,23 @@ class PlanCreateRequest(PlanBase):
             raise ValueError("end_date must be greater than start_date")
         return value
 
-    @validator("plan_type", always=True)
-    def validate_plan_type(cls, value: str) -> str | None:
-        if value not in [data.name for data in PlanTypeEnum]:
-            raise ValueError("status must be valid")
-        return value
+    # @validator("plan_type", always=True)
+    # def validate_plan_type(cls, value: str) -> str | None:
+    #     if value not in [data.name for data in PlanTypeEnum]:
+    #         raise ValueError("status must be valid")
+    #     return value
 
 
 class PlanCreateResponse(BaseModel):
-    id: UUID4 | None = Field(description="id of plan of type UUID")
+    id: UUID4 | None | str = Field(description="id of plan of type UUID")
     plan_type: ResponseEnumData | None = Field(description="Fixed plan type")
     notes: str | None = Field(max_length=255, description="notes for plan")
     skill_id: int | None = Field(gt=0, description="skill_id is related to skill collection")
-    profile_id: int | None = Field(gt=0, description="profile_id is related to profile collection")
+    # profile_id: int | None = Field(gt=0, description="profile_id is related to profile collection")
     task: list[TaskResponse] | None = Field([], description="task list for plan")
     start_date: datetime | None = Field(description="start date of plan")
     end_date: datetime | None = Field(description="end date of plan, must be none or greater than start_date")
-
+    status: ResponseEnumData | None = Field(description="status of plan from fixed list of values")
     @validator("end_date", always=True)
     def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> Optional[datetime]:
         if values["start_date"] is None:
@@ -134,3 +140,7 @@ class PlanCreateResponse(BaseModel):
         start_date: datetime = Field(description="start date of task")
         end_date: datetime = Field(description="end date of task, must be none or greater than start_date")
         status: StatusEnum = Field(description="status of task")
+
+
+class PlanListDataResponse(BaseModel):
+    plans: list[PlanCreateResponse]
