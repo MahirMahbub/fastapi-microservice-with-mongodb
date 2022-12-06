@@ -7,7 +7,6 @@ from skill_management.enums import StatusEnum
 from skill_management.models.profile import Profiles
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.schemas.base import ResponseEnumData
-from skill_management.schemas.education import EducationListDataResponse, ProfileEducation
 from skill_management.schemas.experience import ExperienceCreateRequest, ExperienceListDataResponse, \
     ExperienceCreateAdminRequest, ExperienceCreateResponse, ProfileExperienceDesignationResponse, ProfileExperience, \
     ExperienceDesignation
@@ -71,9 +70,12 @@ class ExperienceService:
                                 detail="Must provide a valid experience id to update")
         experience_request_dict = experience_request.dict(exclude_unset=True, exclude_defaults=True)
         experience_request_dict.pop("experience_id")
+        designation = experience_request_dict.pop("designation")
         experience_request_dict = {
             "experiences.$." + str(key): val for key, val in experience_request_dict.items()
         }
+        experience_request_dict["experiences.$.designation.designation"] = designation
+        experience_request_dict["experiences.$.designation.designation_id"] = None
         db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
             query={
                 "experiences.experience_id": experience_request.experience_id,
@@ -130,7 +132,6 @@ class ExperienceService:
 
         new_experience = ProfileExperience(
             experience_id=new_experience_id,
-            designation_id=None,
             company_name=cast(str, experience_request.company_name),
             designation=ExperienceDesignation(
                 designation=experience_request.designation,
@@ -171,14 +172,15 @@ class ExperienceService:
             ]
         )
 
-    async def _update_experience_by_admin(self, experience_request: ExperienceCreateAdminRequest) -> ExperienceListDataResponse:
+    async def _update_experience_by_admin(self,
+                                          experience_request: ExperienceCreateAdminRequest) -> ExperienceListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_experiences = await profile_crud_manager.get_by_query(
-                query={
-                    "_id": experience_request.profile_id
-                },
-                projection_model=ProfileExperienceView
-            )
+            query={
+                "_id": experience_request.profile_id
+            },
+            projection_model=ProfileExperienceView
+        )
         if profile_experiences is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
@@ -194,10 +196,11 @@ class ExperienceService:
         experience_request_dict = experience_request.dict(exclude_unset=True, exclude_defaults=True)
         experience_request_dict.pop("experience_id")
         designation = experience_request_dict.pop("designation")
-        if designation is not None:
         experience_request_dict = {
             "experiences.$." + str(key): val for key, val in experience_request_dict.items()
         }
+        experience_request_dict["experiences.$.designation.designation"] = designation
+        experience_request_dict["experiences.$.designation.designation_id"] = None
         db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
             query={
                 "experiences.experience_id": experience_request.experience_id,
@@ -224,7 +227,8 @@ class ExperienceService:
             ]
         )
 
-    async def _create_experience_by_admin(self, experience_request: ExperienceCreateAdminRequest) -> ExperienceListDataResponse:
+    async def _create_experience_by_admin(self,
+                                          experience_request: ExperienceCreateAdminRequest) -> ExperienceListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_experiences = cast(
             ProfileExperienceView,

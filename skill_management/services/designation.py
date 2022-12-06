@@ -43,11 +43,16 @@ class DesignationService:
                 break
         if exist_experience:
             experience_dict = exist_experience.dict()
+            designation = experience_dict.pop("designation")
             for key, value in item_dict.items():
                 if key in experience_dict:
                     experience_dict[key] = value
             experience_dict["status"] = StatusEnum.cancel
+            experience_dict.pop("experience_id")
             experience_request_dict = {"experiences.$." + str(key): val for key, val in experience_dict.items()}
+
+            experience_request_dict["experiences.$.designation.designation"] = designation
+            experience_request_dict["experiences.$.designation.designation_id"] = None
             db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
                 query={
                     "experiences.experience_id": exist_experience.experience_id,
@@ -117,11 +122,15 @@ class DesignationService:
                     break
             if exist_experience:
                 experience_dict = exist_experience.dict()
+                designation = experience_dict.pop("designation")
                 for key, value in item_dict.items():
                     if key in experience_dict:
                         experience_dict[key] = value
                 experience_dict["status"] = StatusEnum.active
+                experience_dict.pop("experience_id")
                 experience_request_dict = {"experiences.$." + str(key): val for key, val in experience_dict.items()}
+                experience_request_dict["experiences.$.designation.designation"] = designation
+                experience_request_dict["experiences.$.designation.designation_id"] = None
                 await profile_crud_manager.update_by_query(
                     query={
                         "experiences.experience_id": exist_experience.experience_id,
@@ -193,6 +202,13 @@ class DesignationService:
                         experience_dict[key] = value
                 experience_dict["status"] = StatusEnum.cancel
                 experience_request_dict = {"experiences.$." + str(key): val for key, val in experience_dict.items()}
+                experience_request_dict.pop("experience_id")
+                designation = experience_request_dict.pop("designation")
+                experience_request_dict = {
+                    "experiences.$." + str(key): val for key, val in experience_request_dict.items()
+                }
+                experience_request_dict["experiences.$.designation.designation"] = designation
+                experience_request_dict["experiences.$.designation.designation_id"] = None
                 db_profile = cast(
                     Profiles, await profile_crud_manager.update_by_query(
                         query={
