@@ -93,7 +93,7 @@ paths:
                 summary: Create Body
                 description: a example of body for create operation
                 value:
-                  profile_id: 0c2f17f5-7054-41ad-8a87-97719869d585
+                  profile_id: 2c86e42a-ba65-4ca2-8fc5-5239024a56f6
                   plan_type: 1
                   notes: It is a note for the planning
                   skill_id: 1
@@ -107,7 +107,7 @@ paths:
                 summary: Update Body
                 description: a example of body for update operation
                 value:
-                  profile_id: dfb1a902-7545-4f0c-8543-9758e7ef00e0
+                  profile_id: fcd84e8c-a5cf-4f70-be28-0848c10d45b0
                   plan_id: 954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0
                   plan_type: 1
                   notes: It is a note for the planning
@@ -233,7 +233,7 @@ paths:
                 summary: Create Body
                 description: a example of body for create operation
                 value:
-                  profile_id: ab96f3b1-32df-4187-b9f2-66515b7e27c4
+                  profile_id: 0f023196-830c-4618-9bfa-2b321a7cb94c
                   skill_id: 1
                   experience_year: 4
                   number_of_projects: 4
@@ -246,7 +246,7 @@ paths:
                 summary: Update Body
                 description: a example of body for update operation
                 value:
-                  profile_id: d0117f25-1fb0-4a83-a8c5-381266183aec
+                  profile_id: e9de7523-5a32-420c-bdf5-e0d5bbbf49ef
                   skill_id: 1
                   experience_year: 4
                   number_of_projects: 4
@@ -408,26 +408,57 @@ paths:
       summary: Get User Profiles For Admin
       operationId: get_user_profiles_for_admin_api_v1_admin_user_profiles_get
       parameters:
-      - name: skill-category
+      - name: skill-id
         in: query
-        description: input skill category as string
+        description: input skill id as integer
         required: false
         style: form
         explode: true
         schema:
-          title: Skill-Category
-          type: string
-          description: input skill category as string
-      - name: skill-name
+          title: Skill-Id
+          type: integer
+          description: input skill id as integer
+          format: int32
+      - name: employee-name
         in: query
-        description: input skill name as string
+        description: input employee name as string
         required: false
         style: form
         explode: true
         schema:
-          title: Skill-Name
+          title: Employee-Name
           type: string
-          description: input skill name as string
+          description: input employee name as string
+      - name: mobile
+        in: query
+        description: input mobile as string
+        required: false
+        style: form
+        explode: true
+        schema:
+          title: Mobile
+          type: string
+          description: input mobile as string
+      - name: email
+        in: query
+        description: input email as string
+        required: false
+        style: form
+        explode: true
+        schema:
+          title: Email
+          type: string
+          description: input email as string
+      - name: profile-status
+        in: query
+        description: profile status as enum
+        required: false
+        style: form
+        explode: true
+        schema:
+          description: profile status as enum
+          allOf:
+          - $ref: '#/components/schemas/ProfileStatusEnum'
       - name: page-number
         in: query
         description: page number of pagination
@@ -471,8 +502,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
-      security:
-      - JWTBearerAdmin: []
   /api/v1/admin/user-profiles/{profile-id}:
     get:
       tags:
@@ -558,7 +587,7 @@ paths:
                 summary: Update Body
                 description: a example of body for update operation
                 value:
-                  profile_id: 821ff996-353f-4270-8d63-818a8f18dd93
+                  profile_id: 0ed58a05-2701-4aa3-88cd-dd3aa2ef07c2
                   date_of_birth: 1995-07-21
                   gender: 2
                   mobile: +01611123456
@@ -622,7 +651,7 @@ paths:
                 summary: Update Body
                 description: An example of body for update operation
                 value:
-                  profile_id: a597e339-326a-4cd0-a925-67af760b51b2
+                  profile_id: 1bfe44d5-aff3-4eaa-aba4-8efc7a963d6d
                   name: Chelsey Adams
                   date_of_birth: 1995-07-21
                   gender: 2
@@ -745,7 +774,7 @@ paths:
                 summary: Create Body
                 description: a example of body for create operation
                 value:
-                  profile_id: 6d0413ba-bb11-4370-af66-cd8afc3bdc80
+                  profile_id: aebe35e1-f745-40ae-abde-dcc3b89af4a8
                   company_name: X Software
                   job_responsibility: Backend Development
                   designation: Software Engineer
@@ -756,7 +785,7 @@ paths:
                 description: a example of body for update operation
                 value:
                   experience_id: 1
-                  profile_id: 6fb60fbc-2ba0-4858-9996-7608abb36ae2
+                  profile_id: 9e778971-95e6-4f2b-8d87-a0bb4883697f
                   company_name: X Software
                   job_responsibility: Backend Development
                   designation: Software Engineer
@@ -870,7 +899,7 @@ paths:
                 summary: Create Body
                 description: a example of body for create operation
                 value:
-                  profile_id: b0a2405f-ae1e-413c-b404-cb5382c20858
+                  profile_id: c2a91b29-b380-4025-a909-037d1649ec5c
                   degree_name: B.Sc in Computer Science
                   school_name: University of Dhaka
                   passing_year: "2019"
@@ -880,7 +909,7 @@ paths:
                 summary: Update Body
                 description: a example of body for update operation
                 value:
-                  profile_id: 39232f7e-038c-4fc9-85bc-7bace2bf231a
+                  profile_id: e3719516-d048-41aa-8208-c8122dc4eb0a
                   education_id: 1
                   degree_name: B.Sc in Computer Science
                   school_name: University of Dhaka
@@ -1148,7 +1177,7 @@ paths:
                 summary: Update Body
                 description: a example of body for update operation
                 value:
-                  profile_id: 677844f7-3375-4316-bee9-3ccc8d81a8ab
+                  profile_id: a9b43369-249f-4ae9-b481-0b74c2510c28
                   start_date: 2019-08-24T14:15:22Z
                   end_date: 2020-12-24T14:15:22Z
                   designation_status: 2
@@ -1739,8 +1768,8 @@ components:
         company_name: X Software
         job_responsibility: Backend Development
         designation_id: 2
-        start_date: 2021-07-24T11:36:34.815267+00:00
-        end_date: 2022-05-20T11:36:34.815282+00:00
+        start_date: 2021-07-24T13:39:59.628121+00:00
+        end_date: 2022-05-20T13:39:59.628131+00:00
         status: 1
     ExperienceCreateRequest:
       title: ExperienceCreateRequest
@@ -1786,8 +1815,8 @@ components:
         company_name: X Software
         job_responsibility: Backend Development
         designation_id: 2
-        start_date: 2021-07-24T11:36:34.798349+00:00
-        end_date: 2022-05-20T11:36:34.798360+00:00
+        start_date: 2021-07-24T13:39:59.607295+00:00
+        end_date: 2022-05-20T13:39:59.607309+00:00
         status: 1
     ExperienceCreateResponse:
       title: ExperienceCreateResponse
@@ -1836,8 +1865,8 @@ components:
         designation:
           designation_id: 2
           designation: Software Developer
-        start_date: 2021-07-24T11:36:34.805623+00:00
-        end_date: 2022-05-20T11:36:34.805633+00:00
+        start_date: 2021-07-24T13:39:59.616246+00:00
+        end_date: 2022-05-20T13:39:59.616259+00:00
         status:
           id: 1
           name: active
@@ -2174,8 +2203,8 @@ components:
         notes: It is a note for the planning
         skill_id: 1
         profile_id: 1
-        start_date: 2022-12-06T11:36:35.242938+00:00
-        end_date: 2022-12-07T11:36:35.242943+00:00
+        start_date: 2022-12-06T13:40:00.532913+00:00
+        end_date: 2022-12-07T13:40:00.532923+00:00
         task:
         - id: 1
           description: It is a task for the planning
@@ -2311,9 +2340,10 @@ components:
           description: name of the user
         id:
           title: Id
-          type: string
           description: id of the user profile
-          format: uuid4
+          anyOf:
+          - type: string
+          - type: string
         url:
           title: Url
           type: string
@@ -2603,8 +2633,8 @@ components:
         designation:
           designation: Software Engineer
           designation_id: 1
-          start_date: 2022-12-06T11:36:35.047515+00:00
-          end_date: 2022-12-07T11:36:35.047520+00:00
+          start_date: 2022-12-06T13:39:59.971746+00:00
+          end_date: 2022-12-07T13:39:59.971754+00:00
           designation_status:
             id: 1
             name: active
@@ -2650,8 +2680,8 @@ components:
           designation:
             designation_id: 1
             designation: Software Developer
-          start_date: 2020-03-11T11:36:35.047539+00:00
-          end_date: 2021-07-24T11:36:35.047541+00:00
+          start_date: 2020-03-11T13:39:59.971795+00:00
+          end_date: 2021-07-24T13:39:59.971800+00:00
           status:
             id: 1
             name: active
@@ -2661,8 +2691,8 @@ components:
           designation:
             designation_id: 1
             designation: Software Engineer
-          start_date: 2021-07-24T11:36:35.047545+00:00
-          end_date: 2022-05-20T11:36:35.047546+00:00
+          start_date: 2021-07-24T13:39:59.971805+00:00
+          end_date: 2022-05-20T13:39:59.971808+00:00
           status:
             id: 1
             name: active
