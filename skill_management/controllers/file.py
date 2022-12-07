@@ -1,20 +1,24 @@
-from fastapi import APIRouter, Request, Depends, UploadFile, File, Path
+from beanie import PydanticObjectId
+from fastapi import APIRouter, Request, Depends, UploadFile, File, Path, Form, status
 from fastapi.responses import ORJSONResponse
 from starlette.responses import FileResponse
 
+from skill_management.enums import UserStatusEnum
 from skill_management.schemas.base import ErrorMessage
-from skill_management.schemas.file import ResumeUploadResponse, ProfilePictureUploadResponse
-from skill_management.utils.auth_manager import JWTBearer
+from skill_management.schemas.file import FileUploadResponse
+from skill_management.services.file import FileService
+from skill_management.utils.auth_manager import JWTBearer, JWTBearerAdmin
 from skill_management.utils.logger import get_logger
+from skill_management.utils.profile_manager import get_profile_email
 
 file_router: APIRouter = APIRouter(tags=["file"])
 logger = get_logger()
 
 
-@file_router.post("/profile/skills/upload-resume",
+@file_router.post("/profile/files/upload-resume",
                   response_class=ORJSONResponse,
-                  response_model=ResumeUploadResponse,
-                  status_code=201,
+                  response_model=FileUploadResponse,
+                  status_code=status.HTTP_201_CREATED,
                   responses={
                       400: {
                           "model": ErrorMessage,
@@ -26,14 +30,17 @@ logger = get_logger()
                   })
 async def upload_resume(request: Request,  # type: ignore
                         file: UploadFile = File(description="select certificate files to upload"),
+                        file_status: UserStatusEnum = Form(UserStatusEnum.active, description="status of the file"),
+                        service: FileService = Depends(FileService),
                         user_id: str = Depends(JWTBearer())):
-    pass
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.create_resume(file, file_status, email)
 
 
-@file_router.post("/profile/skills/upload-profile-picture",
+@file_router.post("/profile/files/upload-profile-picture",
                   response_class=ORJSONResponse,
-                  response_model=ProfilePictureUploadResponse,
-                  status_code=201,
+                  response_model=FileUploadResponse,
+                  status_code=status.HTTP_201_CREATED,
                   responses={
                       400: {
                           "model": ErrorMessage,
@@ -45,22 +52,51 @@ async def upload_resume(request: Request,  # type: ignore
                   })
 async def upload_profile_picture(request: Request,  # type: ignore
                                  file: UploadFile = File(description="select certificate files to upload"),
+                                 file_status: UserStatusEnum = Form(UserStatusEnum.active,
+                                                                    description="status of the file"),
+                                 service: FileService = Depends(FileService),
                                  user_id: str = Depends(JWTBearer())):
-    pass
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.create_profile_picture(file, file_status, email)
 
 
-@file_router.get('/file/{file-id}',
+@file_router.get('/profile/files/response/{file_id}',
                  response_class=FileResponse,
-                 status_code=200,
+                 status_code=status.HTTP_200_OK,
                  responses={
                      400: {
                          "model": ErrorMessage,
                          "description": "The profile picture is not available"
                      },
                      200: {
-                         "description": "The profile picture is rendered",
+                         "description": "The profile picture is rendered or file provided as attachment",
                      },
                  })
-async def response_file(file_id: int = Path(..., description="input file id for file response", alias="file-id"),  # type: ignore
-                        user_id: str = Depends(JWTBearer())):
-    pass
+async def get_file_response_for_user(request: Request,  # type: ignore
+                                     file_id: PydanticObjectId = Path(...,
+                                                                      description="input file id for file response"),
+                                     user_id: str = Depends(JWTBearer()),
+                                     service: FileService = Depends(FileService)):
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.get_file_response_by_user(file_id, email)
+
+
+@file_router.get('/admin/files/response/{file_id}',
+                 response_class=FileResponse,
+                 status_code=status.HTTP_200_OK,
+                 responses={
+                     400: {
+                         "model": ErrorMessage,
+                         "description": "The profile picture is not available"
+                     },
+                     200: {
+                         "description": "The profile picture is rendered or file provided as attachment",
+                     },
+                 })
+async def get_file_response_for_admin(request: Request,  # type: ignore
+                                      file_id: PydanticObjectId = Path(...,
+                                                                       description="input file id for file response"),
+                                      admin_user_id: str = Depends(JWTBearerAdmin()),
+                                      service: FileService = Depends(FileService)):
+    # email = await get_profile_email(user_id=user_id, request=request)
+    return await service.get_file_response_by_admin(file_id)

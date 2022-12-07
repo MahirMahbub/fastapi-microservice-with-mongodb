@@ -144,7 +144,7 @@ async def create_skill_by_admin(request: Request,  # type: ignore
     return await service.create_or_update_skill_by_admin(skill_request=skill_request)
 
 
-@skill_router.post("/profile/skills/upload-certificate",
+@skill_router.post("/profile/skills/{skill_id}/upload-certificate",
                    response_class=ORJSONResponse,
                    response_model=SkillCertificateResponse,
                    status_code=201,
@@ -158,9 +158,12 @@ async def create_skill_by_admin(request: Request,  # type: ignore
                        },
                    })
 async def upload_certificate(request: Request,  # type: ignore
+                             skill_id: int= Path(..., description="provide the skill id"),
                              files: list[UploadFile] = File(None, description="select certificate files to upload"),
-                             user_id: str = Depends(JWTBearer())):
-    pass
+                             user_id: str = Depends(JWTBearer()),
+                             service: SkillService = Depends()):
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.upload_certificate(skill_id=skill_id, files=files, email=email)
 
 
 @skill_router.get("/skills/{skill-id}",

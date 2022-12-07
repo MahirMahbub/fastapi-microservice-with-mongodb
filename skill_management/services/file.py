@@ -1,0 +1,164 @@
+import os
+
+from beanie import PydanticObjectId
+from fastapi import UploadFile, status, HTTPException
+from fastapi.responses import FileResponse
+from pydantic import ValidationError
+
+from skill_management.enums import UserStatusEnum, FileTypeEnum, StatusEnum
+from skill_management.models.file import Files
+from skill_management.repositories.profile import ProfileRepository
+from skill_management.schemas.base import ResponseEnumData
+from skill_management.schemas.file import FileUploadResponse
+from skill_management.schemas.profile import ProfileView
+from skill_management.utils.file_name_search import next_file_name
+
+IMAGE_FORMAT = (
+    '.ras', '.xwd', '.bmp', '.jpe',
+    '.jpg', '.jpeg', '.xpm', '.ief', '.pbm',
+    '.tif', '.gif', '.ppm', '.xbm', '.tiff',
+    '.rgb', '.pgm', '.png', '.pnm')
+
+
+class FileService:
+    def __init__(self):
+        self.file_path = os.getcwd() + os.getenv("FILE_UPLOAD_PATH")
+
+    async def read(self, path):
+        with open(path, 'r') as f:
+            return f.read()
+
+    async def write(self, data, save_path):
+        with open(save_path, 'wb') as f:
+            f.write(data)
+
+    async def create_resume(self, file: UploadFile, file_status: UserStatusEnum, email: str):
+        extension, file_pattern, main_file_name = await self._get_filename_and_extension(file)
+        if not extension == "pdf":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Only pdf files are allowed")
+        file_name: str = await next_file_name(file_pattern, self.file_path, main_file_name)
+        ########################
+        save_path = self.file_path + file_name
+        await self.write(file.file.read(), save_path)
+        profile_crud_manager = ProfileRepository()
+        profile: ProfileView | None = await profile_crud_manager.get_by_query(
+            query={"user_id": email},
+            projection_model=ProfileView)
+        return await self._create_file(file_name=file_name, location=self.file_path, owner=profile.id,
+                                       file_status=file_status, file_type=FileTypeEnum.resume,
+                                       file_size=os.path.getsize(save_path), skill_id=None)
+        # headers = {'Content-Disposition': 'attachment; filename=%s' % file_name}
+        # return FileResponse(path=save_path, headers=headers)
+
+    async def create_profile_picture(self, file: UploadFile, file_status: UserStatusEnum, email: str):
+        extension, file_pattern, main_file_name = await self._get_filename_and_extension(file)
+        if not "." + extension in IMAGE_FORMAT:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Only pdf files are allowed. allowed formats are: " + ", ".join(IMAGE_FORMAT))
+        file_name: str = await next_file_name(file_pattern, self.file_path, main_file_name)
+        ########################
+        save_path = self.file_path + file_name
+        await self.write(file.file.read(), save_path)
+        profile_crud_manager = ProfileRepository()
+        profile: ProfileView | None = await profile_crud_manager.get_by_query(
+            query={"user_id": email},
+            projection_model=ProfileView)
+        return await self._create_file(file_name=file_name, location=self.file_path, owner=profile.id,
+                                       file_status=file_status, file_type=FileTypeEnum.picture,
+                                       file_size=os.path.getsize(save_path), skill_id=None)
+        # headers = {'Content-Disposition': 'attachment; filename=%s' % file_name}
+        # return FileResponse(path=save_path, headers=headers)
+    async def create_certificate(self, file: UploadFile, skill_id, file_status: UserStatusEnum, email: str):
+        extension, file_pattern, main_file_name = await self._get_filename_and_extension(file)
+        if not "." + extension in IMAGE_FORMAT:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Only pdf files are allowed. allowed formats are: " + ", ".join(IMAGE_FORMAT))
+        file_name: str = await next_file_name(file_pattern, self.file_path, main_file_name)
+        ########################
+        save_path = self.file_path + file_name
+        await self.write(file.file.read(), save_path)
+        profile_crud_manager = ProfileRepository()
+        profile: ProfileView | None = await profile_crud_manager.get_by_query(
+            query={"user_id": email},
+            projection_model=ProfileView)
+        return await self._create_file(file_name=file_name, location=self.file_path, owner=profile.id,
+                                       file_status=file_status, file_type=FileTypeEnum.certificate,
+                                       file_size=os.path.getsize(save_path), skill_id=skill_id)
+    async def _get_filename_and_extension(self, file):
+        name, extension = file.filename.split(".")
+        file_pattern: str = name + "(" + "%s" + ")" + "." + extension
+        main_file_name: str = name + "." + extension
+        return extension, file_pattern, main_file_name
+
+    async def _create_file(self, file_name: str, location: str,
+                           owner: PydanticObjectId, file_status: UserStatusEnum,
+                           file_type: FileTypeEnum,
+                           file_size, skill_id: int | None = None):
+        try:
+            file = Files(file_name=file_name, location=location, owner=owner,
+                         status=file_status, file_type=file_type, file_size=file_size / 1000,
+                         skill_id=skill_id)
+            await file.insert()
+        except ValidationError as valid_exec:
+            os.remove(location + file_name)
+            return None
+        try:
+            response = FileUploadResponse(file_id=file.id,
+                                          file_name=file.file_name,
+                                          file_type=ResponseEnumData(id=file.file_type,
+                                                                     name=FileTypeEnum(file.file_type).name),
+                                          file_size=str(file.file_size) + "KB",
+                                          status=ResponseEnumData(id=file.status,
+                                                                  name=StatusEnum(file.status).name),
+                                          file_response_url="/profile/files/response/" + str(file.id),
+                                          admin_file_response_url="/admin/files/response/" + str(file.id))
+        except ValidationError as valid_exec:
+            response = None
+        return response
+
+    async def get_file_response_by_user(self, file_id: PydanticObjectId, email: str):
+        profile_crud_manager = ProfileRepository()
+        profile: ProfileView | None = await profile_crud_manager.get_by_query(
+            query={"user_id": email},
+            projection_model=ProfileView
+        )
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Profile is not found"
+            )
+        file: Files = await Files.find(
+            {
+                "_id": file_id, "owner": profile.id
+            }
+        ).first_or_none()
+        if file is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="File not found"
+            )
+        # headers = {'Content-Disposition': 'attachment; filename=%s' % file.file_name}
+        if not file.file_type == FileTypeEnum.picture:
+            headers = {'Content-Disposition': 'attachment; filename=%s' % file.file_name}
+            return FileResponse(path=file.location + file.file_name, headers=headers)
+        else:
+            return FileResponse(path=file.location + file.file_name)
+
+    async def get_file_response_by_admin(self, file_id: PydanticObjectId):
+        file: Files = await Files.find(
+            {
+                "_id": file_id
+            }
+        ).first_or_none()
+        if file is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="File not found"
+            )
+        # headers = {'Content-Disposition': 'attachment; filename=%s' % file.file_name}
+        if not file.file_type == FileTypeEnum.picture:
+            headers = {'Content-Disposition': 'attachment; filename=%s' % file.file_name}
+            return FileResponse(path=file.location + file.file_name, headers=headers)
+        else:
+            return FileResponse(path=file.location + file.file_name)

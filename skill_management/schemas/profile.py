@@ -406,6 +406,8 @@ class ProfileUpdateByUser(BaseModel):
     designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
     about: str | None = Field(max_length=256, description="description of the user")
 
+class ProfileView(BaseModel):
+    id: PydanticObjectId = Field(alias='_id')
 
 class ProfileSkillView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')

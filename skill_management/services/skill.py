@@ -1,9 +1,9 @@
 from typing import cast
 
 from beanie.odm.operators.find.array import ElemMatch
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 
-from skill_management.enums import FileTypeEnum, SkillCategoryEnum, SkillTypeEnum, StatusEnum
+from skill_management.enums import FileTypeEnum, SkillCategoryEnum, SkillTypeEnum, StatusEnum, UserStatusEnum
 from skill_management.models.enums import Status
 from skill_management.models.file import Files
 from skill_management.models.profile import Profiles
@@ -11,10 +11,11 @@ from skill_management.models.skill import Skills
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.repositories.skill import SkillRepository
 from skill_management.schemas.base import ResponseEnumData
-from skill_management.schemas.file import FileResponse
+from skill_management.schemas.file import FileResponse, SkillCertificateResponse
 from skill_management.schemas.profile import ProfileSkillView
 from skill_management.schemas.skill import CreateSkillDataRequest, ProfileSkill, CreateSkillDataResponse, \
     CreateSkillListDataResponse, CreateSkillDataAdminRequest
+from skill_management.services.file import FileService
 
 
 class SkillService:
@@ -329,3 +330,28 @@ class SkillService:
 
                 )
             return CreateSkillListDataResponse(skills=skill_list)
+
+    async def upload_certificate(self, skill_id: int,
+                                 files: list[UploadFile],
+                                 email: str):
+        """
+        Create a certificate for a skill
+        """
+        skill_crud_manager = SkillRepository()
+        skill_data: Skills | None = await skill_crud_manager.get_by_query({"_id": skill_id})
+        if skill_data is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Must provide a valid skill id")
+        file_service = FileService()
+        successful_files = []
+        failed_files = []
+        for file in files:
+            file_response = await file_service.create_certificate(file=file,
+                                                  skill_id=skill_id,
+                                                  email=email,
+                                                  file_status=cast(UserStatusEnum,StatusEnum.active))
+
+            if file_response is None:
+                failed_files.append(file.filename)
+            else:
+                successful_files.append(file.filename)
+        return SkillCertificateResponse(succeed_upload_list=successful_files, failed_upload_list=failed_files)
