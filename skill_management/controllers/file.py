@@ -4,7 +4,7 @@ from fastapi.responses import ORJSONResponse
 from starlette.responses import FileResponse
 
 from skill_management.enums import UserStatusEnum
-from skill_management.schemas.base import ErrorMessage
+from skill_management.schemas.base import ErrorMessage, SuccessMessage
 from skill_management.schemas.file import FileUploadResponse
 from skill_management.services.file import FileService
 from skill_management.utils.auth_manager import JWTBearer, JWTBearerAdmin
@@ -100,3 +100,46 @@ async def get_file_response_for_admin(request: Request,  # type: ignore
                                       service: FileService = Depends(FileService)):
     # email = await get_profile_email(user_id=user_id, request=request)
     return await service.get_file_response_by_admin(file_id)
+
+
+@file_router.delete('/admin/files/{file_id}',
+                    response_class=ORJSONResponse,
+                    status_code=status.HTTP_200_OK,
+                    responses={
+                        400: {
+                            "model": ErrorMessage,
+                            "description": "The profile picture can not be deleted"
+                        },
+                        200: {
+                            "model": SuccessMessage,
+                            "description": "The profile picture is deleted successfully",
+                        },
+                    })
+async def delete_file_by_admin(request: Request,  # type: ignore
+                                      file_id: PydanticObjectId = Path(...,
+                                                                       description="input file id for file response"),
+                                      admin_user_id: str = Depends(JWTBearerAdmin()),
+                                      service: FileService = Depends(FileService)):
+    # email = await get_profile_email(user_id=user_id, request=request)
+    return await service.delete_file_by_admin(file_id)
+
+@file_router.delete('/profile/files/{file_id}',
+                    response_class=ORJSONResponse,
+                    status_code=status.HTTP_200_OK,
+                    responses={
+                        400: {
+                            "model": ErrorMessage,
+                            "description": "The profile picture can not be deleted"
+                        },
+                        200: {
+                            "model": SuccessMessage,
+                            "description": "The profile picture is deleted successfully",
+                        },
+                    })
+async def delete_file_by_user(request: Request,  # type: ignore
+                                      file_id: PydanticObjectId = Path(...,
+                                                                       description="input file id for file response"),
+                                      user_id: str = Depends(JWTBearer()),
+                                      service: FileService = Depends(FileService)):
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.delete_file_by_user(file_id, email)

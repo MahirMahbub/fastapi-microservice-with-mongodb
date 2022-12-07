@@ -1,4 +1,5 @@
 import os
+from typing import cast
 
 from beanie import PydanticObjectId
 from fastapi import UploadFile, status, HTTPException
@@ -7,6 +8,7 @@ from pydantic import ValidationError
 
 from skill_management.enums import UserStatusEnum, FileTypeEnum, StatusEnum
 from skill_management.models.file import Files
+from skill_management.repositories.file import FileRepository
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.file import FileUploadResponse
@@ -69,6 +71,7 @@ class FileService:
                                        file_size=os.path.getsize(save_path), skill_id=None)
         # headers = {'Content-Disposition': 'attachment; filename=%s' % file_name}
         # return FileResponse(path=save_path, headers=headers)
+
     async def create_certificate(self, file: UploadFile, skill_id, file_status: UserStatusEnum, email: str):
         extension, file_pattern, main_file_name = await self._get_filename_and_extension(file)
         if not "." + extension in IMAGE_FORMAT:
@@ -85,6 +88,7 @@ class FileService:
         return await self._create_file(file_name=file_name, location=self.file_path, owner=profile.id,
                                        file_status=file_status, file_type=FileTypeEnum.certificate,
                                        file_size=os.path.getsize(save_path), skill_id=skill_id)
+
     async def _get_filename_and_extension(self, file):
         name, extension = file.filename.split(".")
         file_pattern: str = name + "(" + "%s" + ")" + "." + extension
@@ -162,3 +166,68 @@ class FileService:
             return FileResponse(path=file.location + file.file_name, headers=headers)
         else:
             return FileResponse(path=file.location + file.file_name)
+
+    async def delete_file_by_admin(self, file_id: PydanticObjectId):
+        file_crud_manager = FileRepository()
+        file: Files = cast(Files, await file_crud_manager.get_by_query(query={
+            "_id": file_id,
+            "status": UserStatusEnum.active
+        }))
+        if file is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="File not found"
+            )
+        changed_response = cast(Files, await file_crud_manager.update_by_query(query={
+            "_id": file_id
+        }, item_dict={"status": UserStatusEnum.delete}))
+        if changed_response is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File not deleted"
+            )
+        if not changed_response.status == UserStatusEnum.delete:
+            raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File not deleted")
+        else:
+            raise HTTPException(
+            status_code=status.HTTP_200_OK,
+                detail="File deleted")
+
+    async def delete_file_by_user(self, file_id, email):
+        file_crud_manager = FileRepository()
+        profile_crud_manager = ProfileRepository()
+        profile: ProfileView | None = await profile_crud_manager.get_by_query(
+            query={"user_id": email},
+            projection_model=ProfileView)
+        if profile is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
+
+        file: Files = cast(Files, await file_crud_manager.get_by_query(query={
+            "_id": file_id,
+            "status": UserStatusEnum.active,
+            "owner": profile.id
+        }))
+        if file is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="File not found"
+            )
+        changed_response = cast(Files, await file_crud_manager.update_by_query(query={
+            "_id": file_id
+        }, item_dict={"status": UserStatusEnum.delete}))
+        if changed_response is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File not deleted"
+            )
+        if not changed_response.status == UserStatusEnum.delete:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File not deleted")
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_200_OK,
+                detail="File deleted")
+

@@ -33,7 +33,8 @@ class DateMixin(BaseModel):
 
 class ErrorMessage(BaseModel):
     detail: str = "An error message"
-
+class SuccessMessage(BaseModel):
+    detail: str = "An success message"
 
 class PaginatedResponse(BaseModel):
     previous_page: int | None = Field(description="previous page of current pagination page")
