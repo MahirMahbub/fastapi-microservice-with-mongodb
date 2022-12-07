@@ -53,7 +53,11 @@ async def get_designation_list(request: Request,  # type: ignore
                                designation_name: str | None = Query(default=None,
                                                                     description="input designation name as string",
                                                                     alias="designation-name"),
-                               user_id: str = Depends(JWTBearer())):
+                               user_id: str = Depends(JWTBearer()),
+                               service: DesignationService = Depends()):
+    return await service.get_master_designation_list(designation_name)
+
+
     pass
 
 

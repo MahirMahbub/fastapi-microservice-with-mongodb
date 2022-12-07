@@ -3,11 +3,13 @@ from typing import cast
 from fastapi import HTTPException, status
 
 from skill_management.enums import DesignationStatusEnum, StatusEnum
+from skill_management.models.designation import Designations
 from skill_management.models.profile import Profiles
+from skill_management.repositories.designation import DesignationRepository
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.designation import DesignationCreateRequest, ProfileDesignationResponse, \
-    DesignationCreateAdminRequest
+    DesignationCreateAdminRequest, DesignationDataResponse
 from skill_management.schemas.experience import ProfileExperience, ExperienceDesignation
 from skill_management.schemas.profile import ProfileDesignationExperiencesView
 
@@ -237,3 +239,24 @@ class DesignationService:
             end_date=db_profile.designation.end_date,
             start_date=db_profile.designation.start_date,
         )
+
+    async def get_master_designation_list(self, designation_name):
+        query = {}
+        if designation_name is not None:
+            query = {
+                "designation":
+                    {
+                        '$regex': designation_name, '$options': 'i'
+                    }
+            }
+
+        designation_crud_manager = DesignationRepository()
+        designation_list = cast(list[Designations], await designation_crud_manager.gets(query))
+        response = [DesignationDataResponse(designation_id=data.id,
+                                            designation=data.designation) for data in designation_list]
+        return response
+
+    # def get_master_designation_detail(self, designation_id):
+    #     designation_crud_manager = DesignationRepository()
+    #     designation_list = cast(list[Designations], designation_crud_manager.gets(query))
+    #     return response

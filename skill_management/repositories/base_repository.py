@@ -35,7 +35,9 @@ class TableRepository:
     async def get_by_modified_id(self, id_: Any) -> Optional[Document]:
         return await self.entity_collection.get(id_)
 
-    async def gets(self) -> Sequence[Document | None]:
+    async def gets(self, query: dict[str, Any]| None = None) -> Sequence[Document | None]:
+        if query is not None:
+            return await self.entity_collection.find(query).to_list()
         return await self.entity_collection.find().to_list()
 
     async def get_paginated(self, page_size: int = 10, page_number: int = 1) -> Sequence[Document | None]:
