@@ -1,6 +1,9 @@
+import json
 import os
 
 from fastapi import FastAPI
+from fastapi.openapi.utils import get_openapi
+
 from auth_management.config.config import initiate_database, initiate_redis_pool
 from auth_management.controllers.router import api_router
 from auth_management.utils.logger import get_logger
@@ -32,6 +35,14 @@ auth_app.include_router(api_router, prefix='/api/v1/auth')
 @auth_app.on_event("startup")
 async def start_database() -> None:
     logger = get_logger()
+    with open('openapi/auth_management/openapi.json', 'w') as f:
+        json.dump(get_openapi(
+            title=auth_app.title,
+            version=auth_app.version,
+            openapi_version=auth_app.openapi_version,
+            description=auth_app.description,
+            routes=auth_app.routes,
+        ), f)
     logger.info("Initiating database........")
     await initiate_database()
     logger.info("Initiating database completed........")

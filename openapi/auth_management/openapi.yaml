@@ -1,0 +1,683 @@
+openapi: 3.0.2
+info:
+  description: Authentication Application
+  title: AuthApp
+  version: 1.0.0
+servers:
+- url: /
+paths:
+  /api/v1/auth/hello/{name}:
+    get:
+      operationId: say_hello_api_v1_auth_hello__name__get
+      parameters:
+      - explode: false
+        in: path
+        name: name
+        required: true
+        schema:
+          title: Name
+          type: string
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Say Hello
+  /api/v1/auth/jwt/login:
+    post:
+      operationId: auth_jwt_login_api_v1_auth_jwt_login_post
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Body_auth_jwt_login_api_v1_auth_jwt_login_post'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              example:
+                access_token: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiOTIyMWZmYzktNjQwZi00MzcyLTg2ZDMtY2U2NDJjYmE1NjAzIiwiYXVkIjoiZmFzdGFwaS11c2VyczphdXRoIiwiZXhwIjoxNTcxNTA0MTkzfQ.M10bjOe45I5Ncu_uXvOmVV8QxnL-nZfcH96U90JaocI
+                token_type: bearer
+              schema:
+                $ref: '#/components/schemas/BearerResponse'
+          description: Successful Response
+        "400":
+          content:
+            application/json:
+              examples:
+                LOGIN_BAD_CREDENTIALS:
+                  summary: Bad credentials or the user is inactive.
+                  value:
+                    detail: LOGIN_BAD_CREDENTIALS
+                LOGIN_USER_NOT_VERIFIED:
+                  summary: The user is not verified.
+                  value:
+                    detail: LOGIN_USER_NOT_VERIFIED
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Bad Request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Auth:Jwt.Login
+      tags:
+      - auth
+  /api/v1/auth/jwt/logout:
+    post:
+      operationId: auth_jwt_logout_api_v1_auth_jwt_logout_post
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "401":
+          description: Missing token or inactive user.
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Auth:Jwt.Logout
+      tags:
+      - auth
+  /api/v1/auth/register:
+    post:
+      operationId: register_register_api_v1_auth_register_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+        required: true
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+          description: Successful Response
+        "400":
+          content:
+            application/json:
+              examples:
+                REGISTER_USER_ALREADY_EXISTS:
+                  summary: A user with this email already exists.
+                  value:
+                    detail: REGISTER_USER_ALREADY_EXISTS
+                REGISTER_INVALID_PASSWORD:
+                  summary: Password validation failed.
+                  value:
+                    detail:
+                      code: REGISTER_INVALID_PASSWORD
+                      reason: Password should beat least 3 characters
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Bad Request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Register:Register
+      tags:
+      - auth
+  /api/v1/auth/forgot-password:
+    post:
+      operationId: reset_forgot_password_api_v1_auth_forgot_password_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Body_reset_forgot_password_api_v1_auth_forgot_password_post'
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Reset:Forgot Password
+      tags:
+      - auth
+  /api/v1/auth/reset-password:
+    post:
+      operationId: reset_reset_password_api_v1_auth_reset_password_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Body_reset_reset_password_api_v1_auth_reset_password_post'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "400":
+          content:
+            application/json:
+              examples:
+                RESET_PASSWORD_BAD_TOKEN:
+                  summary: Bad or expired token.
+                  value:
+                    detail: RESET_PASSWORD_BAD_TOKEN
+                RESET_PASSWORD_INVALID_PASSWORD:
+                  summary: Password validation failed.
+                  value:
+                    detail:
+                      code: RESET_PASSWORD_INVALID_PASSWORD
+                      reason: Password should be at least 3 characters
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Bad Request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Reset:Reset Password
+      tags:
+      - auth
+  /api/v1/auth/request-verify-token:
+    post:
+      operationId: verify_request_token_api_v1_auth_request_verify_token_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Body_verify_request_token_api_v1_auth_request_verify_token_post'
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema: {}
+          description: Successful Response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Verify:Request-Token
+      tags:
+      - auth
+  /api/v1/auth/verify:
+    post:
+      operationId: verify_verify_api_v1_auth_verify_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Body_verify_verify_api_v1_auth_verify_post'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserReadVerify'
+          description: Successful Response
+        "400":
+          content:
+            application/json:
+              examples:
+                VERIFY_USER_BAD_TOKEN:
+                  summary: Bad token, not existing user ornot the e-mail currently
+                    set for the user.
+                  value:
+                    detail: VERIFY_USER_BAD_TOKEN
+                VERIFY_USER_ALREADY_VERIFIED:
+                  summary: The user is already verified.
+                  value:
+                    detail: VERIFY_USER_ALREADY_VERIFIED
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Bad Request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      summary: Verify:Verify
+      tags:
+      - auth
+  /api/v1/auth/users/me:
+    get:
+      operationId: users_current_user_api_v1_auth_users_me_get
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+          description: Successful Response
+        "401":
+          description: Missing token or inactive user.
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Users:Current User
+      tags:
+      - users
+    patch:
+      operationId: users_patch_current_user_api_v1_auth_users_me_patch
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+          description: Successful Response
+        "401":
+          description: Missing token or inactive user.
+        "400":
+          content:
+            application/json:
+              examples:
+                UPDATE_USER_EMAIL_ALREADY_EXISTS:
+                  summary: A user with this email already exists.
+                  value:
+                    detail: UPDATE_USER_EMAIL_ALREADY_EXISTS
+                UPDATE_USER_INVALID_PASSWORD:
+                  summary: Password validation failed.
+                  value:
+                    detail:
+                      code: UPDATE_USER_INVALID_PASSWORD
+                      reason: Password should beat least 3 characters
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Bad Request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Users:Patch Current User
+      tags:
+      - users
+  /api/v1/auth/users/{id}:
+    delete:
+      operationId: users_delete_user_api_v1_auth_users__id__delete
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          title: Id
+        style: simple
+      responses:
+        "204":
+          description: Successful Response
+        "401":
+          description: Missing token or inactive user.
+        "403":
+          description: Not a superuser.
+        "404":
+          description: The user does not exist.
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Users:Delete User
+      tags:
+      - users
+    get:
+      operationId: users_user_api_v1_auth_users__id__get
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          title: Id
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+          description: Successful Response
+        "401":
+          description: Missing token or inactive user.
+        "403":
+          description: Not a superuser.
+        "404":
+          description: The user does not exist.
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Users:User
+      tags:
+      - users
+    patch:
+      operationId: users_patch_user_api_v1_auth_users__id__patch
+      parameters:
+      - explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          title: Id
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRead'
+          description: Successful Response
+        "401":
+          description: Missing token or inactive user.
+        "403":
+          description: Not a superuser.
+        "404":
+          description: The user does not exist.
+        "400":
+          content:
+            application/json:
+              examples:
+                UPDATE_USER_EMAIL_ALREADY_EXISTS:
+                  summary: A user with this email already exists.
+                  value:
+                    detail: UPDATE_USER_EMAIL_ALREADY_EXISTS
+                UPDATE_USER_INVALID_PASSWORD:
+                  summary: Password validation failed.
+                  value:
+                    detail:
+                      code: UPDATE_USER_INVALID_PASSWORD
+                      reason: Password should beat least 3 characters
+              schema:
+                $ref: '#/components/schemas/ErrorModel'
+          description: Bad Request
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+          description: Validation Error
+      security:
+      - OAuth2PasswordBearer: []
+      summary: Users:Patch User
+      tags:
+      - users
+components:
+  schemas:
+    BearerResponse:
+      example:
+        access_token: access_token
+        token_type: token_type
+      properties:
+        access_token:
+          title: Access Token
+          type: string
+        token_type:
+          title: Token Type
+          type: string
+      required:
+      - access_token
+      - token_type
+      title: BearerResponse
+      type: object
+    Body_auth_jwt_login_api_v1_auth_jwt_login_post:
+      properties:
+        grant_type:
+          pattern: password
+          title: Grant Type
+          type: string
+        username:
+          title: Username
+          type: string
+        password:
+          title: Password
+          type: string
+        scope:
+          default: ""
+          title: Scope
+          type: string
+        client_id:
+          title: Client Id
+          type: string
+        client_secret:
+          title: Client Secret
+          type: string
+      required:
+      - password
+      - username
+      title: Body_auth_jwt_login_api_v1_auth_jwt_login_post
+      type: object
+    Body_reset_forgot_password_api_v1_auth_forgot_password_post:
+      properties:
+        email:
+          format: email
+          title: Email
+          type: string
+      required:
+      - email
+      title: Body_reset_forgot_password_api_v1_auth_forgot_password_post
+      type: object
+    Body_reset_reset_password_api_v1_auth_reset_password_post:
+      properties:
+        token:
+          title: Token
+          type: string
+        password:
+          title: Password
+          type: string
+      required:
+      - password
+      - token
+      title: Body_reset_reset_password_api_v1_auth_reset_password_post
+      type: object
+    Body_verify_request_token_api_v1_auth_request_verify_token_post:
+      properties:
+        email:
+          format: email
+          title: Email
+          type: string
+      required:
+      - email
+      title: Body_verify_request_token_api_v1_auth_request_verify_token_post
+      type: object
+    Body_verify_verify_api_v1_auth_verify_post:
+      properties:
+        token:
+          title: Token
+          type: string
+      required:
+      - token
+      title: Body_verify_verify_api_v1_auth_verify_post
+      type: object
+    ErrorModel:
+      properties:
+        detail:
+          anyOf:
+          - type: string
+          - additionalProperties:
+              type: string
+            type: object
+          title: Detail
+      required:
+      - detail
+      title: ErrorModel
+      type: object
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          title: Detail
+          type: array
+      title: HTTPValidationError
+      type: object
+    UserCreate:
+      example:
+        email: developer.ixorasolution@gmail.com
+        password: <provided password>
+      properties:
+        email:
+          format: email
+          title: Email
+          type: string
+        password:
+          title: Password
+          type: string
+      required:
+      - email
+      - password
+      title: UserCreate
+      type: object
+    UserRead:
+      description: Base User model.
+      example:
+        id: <uuid id>
+        email: developer.ixorasolution@gmail.com
+        is_active: true
+        is_superuser: false
+        is_verified: false
+      properties:
+        id:
+          title: Id
+        email:
+          format: email
+          title: Email
+          type: string
+        is_active:
+          default: true
+          title: Is Active
+          type: boolean
+        is_superuser:
+          default: false
+          title: Is Superuser
+          type: boolean
+        is_verified:
+          default: false
+          title: Is Verified
+          type: boolean
+      required:
+      - email
+      title: UserRead
+      type: object
+    UserReadVerify:
+      example:
+        email: developer.ixorasolution@gmail.com
+        is_active: true
+        is_superuser: false
+        is_verified: false
+      properties:
+        email:
+          format: email
+          title: Email
+          type: string
+        is_active:
+          title: Is Active
+          type: boolean
+        is_superuser:
+          title: Is Superuser
+          type: boolean
+        is_verified:
+          title: Is Verified
+          type: boolean
+      required:
+      - email
+      - is_active
+      - is_superuser
+      - is_verified
+      title: UserReadVerify
+      type: object
+    UserUpdate:
+      example:
+        email: developer.ixorasolution@gmail.com
+        password: <provided password>
+      properties:
+        password:
+          title: Password
+          type: string
+        email:
+          format: email
+          title: Email
+          type: string
+        is_active:
+          title: Is Active
+          type: boolean
+        is_superuser:
+          title: Is Superuser
+          type: boolean
+        is_verified:
+          title: Is Verified
+          type: boolean
+      title: UserUpdate
+      type: object
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          title: Location
+          type: array
+        msg:
+          title: Message
+          type: string
+        type:
+          title: Error Type
+          type: string
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+      type: object
+  securitySchemes:
+    OAuth2PasswordBearer:
+      flows:
+        password:
+          scopes: {}
+          tokenUrl: auth/jwt/login
+      type: oauth2
