@@ -103,3 +103,7 @@ class ProfileDesignation(BaseModel):
         if values["start_date"] > value:
             raise ValueError("end_date must be greater than start_date")
         return value
+
+
+class ProfileDesignationDetailsResponse(BaseModel):
+    designation: ProfileDesignationResponse

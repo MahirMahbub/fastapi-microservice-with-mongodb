@@ -46,7 +46,7 @@ class PlanBase(BaseModel):
 
 
 class PlanCreateRequest(PlanBase):
-    plan_id: PydanticObjectId = Field(description="id for plan")
+    plan_id: PydanticObjectId|None = Field(default=None, description="id for plan")
     skill_id: int | None = Field(gt=0, description="skill_id is related to skill collection")
     task: list[TaskCreate] | None = []
     start_date: datetime | None = Field(description="start date of plan")
@@ -93,6 +93,8 @@ class PlanCreateAdminRequest(PlanCreateRequest):
 
 class PlanCreateResponse(BaseModel):
     id: UUID4 | None | str = Field(description="id of plan of type UUID")
+    skill_name: str = Field(description="skill name of plan")
+    skill_type: ResponseEnumData = Field(description="skill type of plan")
     plan_type: ResponseEnumData | None = Field(description="Fixed plan type")
     notes: str | None = Field(max_length=255, description="notes for plan")
     skill_id: int | None = Field(gt=0, description="skill_id is related to skill collection")

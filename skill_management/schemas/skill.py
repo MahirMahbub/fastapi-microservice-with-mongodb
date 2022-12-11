@@ -424,6 +424,11 @@ class ProfileSkillResponse(BaseModel):
         return value
 
 
+class ProfileSkillBasicResponse(BaseModel):
+    skill_id: int | None = Field(description="id of skill")
+    url: str = Field(description="api url to profile skills")
+
+
 class ProfileSkill(BaseModel):
     skill_id: int = Field(ge=1, description="id of skill")
     skill_type: SkillTypeEnum = Field(description="type of skill from fixed list of values")
@@ -473,3 +478,7 @@ class ProfileSkill(BaseModel):
             """
             raise ValueError("not a valid value, out of ascii value range")
         return value
+
+
+class ProfileSkillDetailsResponse(BaseModel):
+    skills: list[ProfileSkillResponse]

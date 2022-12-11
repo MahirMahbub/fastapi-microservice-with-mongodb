@@ -1,5 +1,7 @@
 import uuid
+from typing import cast
 
+from beanie import PydanticObjectId
 from fastapi import APIRouter, Request, Body, Depends, UploadFile, File, Path, Query
 from fastapi.responses import ORJSONResponse
 
@@ -7,7 +9,7 @@ from skill_management.enums import SkillCategoryEnum
 from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.file import SkillCertificateResponse
 from skill_management.schemas.skill import CreateSkillDataRequest, GetSkillDataResponse, \
-    GetSkillDataResponseList, CreateSkillListDataResponse, CreateSkillDataAdminRequest
+    GetSkillDataResponseList, CreateSkillListDataResponse, CreateSkillDataAdminRequest, ProfileSkillDetailsResponse
 from skill_management.services.skill import SkillService
 from skill_management.utils.auth_manager import JWTBearer, JWTBearerAdmin
 from skill_management.utils.logger import get_logger
@@ -158,7 +160,7 @@ async def create_skill_by_admin(request: Request,  # type: ignore
                        },
                    })
 async def upload_certificate(request: Request,  # type: ignore
-                             skill_id: int= Path(..., description="provide the skill id"),
+                             skill_id: int = Path(..., description="provide the skill id"),
                              files: list[UploadFile] = File(None, description="select certificate files to upload"),
                              user_id: str = Depends(JWTBearer()),
                              service: SkillService = Depends()):
@@ -210,3 +212,45 @@ async def get_skill_list(request: Request,  # type: ignore
                                                         alias="skill-name"),
                          user_id: str = Depends(JWTBearer())):
     pass
+
+
+@skill_router.get("/profile/admin/user-profiles/{profile_id}/skills",
+                  response_class=ORJSONResponse,
+                  response_model=ProfileSkillDetailsResponse,
+                  status_code=200,
+                  responses={
+                      404: {
+                          "model": ErrorMessage,
+                          "description": "The skills details are not available"
+                      },
+                      200: {
+                          "description": "The skills requested by profile id",
+                      },
+                  })
+async def get_profile_skills_by_admin(request: Request,  # type: ignore
+                                     user_id: str = Depends(JWTBearerAdmin()),
+                                     profile_id: PydanticObjectId = Path(...,
+                                                                         description="input profile id of the user",
+                                                                         alias="profile_id"),
+                                     service: SkillService = Depends()):
+    return await service.get_skill_details_by_admin(profile_id=profile_id)
+
+
+@skill_router.get("/profile/user-profiles/skills",
+                  response_class=ORJSONResponse,
+                  response_model=ProfileSkillDetailsResponse,
+                  status_code=200,
+                  responses={
+                      404: {
+                          "model": ErrorMessage,
+                          "description": "The skills details are not available"
+                      },
+                      200: {
+                          "description": "The skills requested by profile id",
+                      },
+                  })
+async def get_profile_skills_by_user(request: Request,  # type: ignore
+                                    user_id: str = Depends(JWTBearer()),
+                                    service: SkillService = Depends()):
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.get_skill_details_by_user(email=cast(str, email))

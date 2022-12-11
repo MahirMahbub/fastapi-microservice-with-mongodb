@@ -1,15 +1,16 @@
 from typing import cast
 
+from beanie import PydanticObjectId
 from beanie.odm.operators.find.array import ElemMatch
 from fastapi import HTTPException, status
 
-from skill_management.enums import StatusEnum
+from skill_management.enums import StatusEnum, ProfileStatusEnum
 from skill_management.models.profile import Profiles
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.experience import ExperienceCreateRequest, ExperienceListDataResponse, \
     ExperienceCreateAdminRequest, ExperienceCreateResponse, ProfileExperienceDesignationResponse, ProfileExperience, \
-    ExperienceDesignation
+    ExperienceDesignation, ProfileExperienceDetailsResponse, ProfileExperienceResponse
 from skill_management.schemas.profile import ProfileExperienceView
 
 
@@ -294,5 +295,72 @@ class ExperienceService:
                                             name=StatusEnum(experience.status).name)
                 )
                 for experience in db_profile.experiences
+            ]
+        )
+
+    async def get_experiences_details_by_admin(self, profile_id: PydanticObjectId) -> ProfileExperienceDetailsResponse:
+        query = {
+            '_id': profile_id,
+        }
+        db_profiles: ProfileExperienceView = cast(ProfileExperienceView, await Profiles.find(
+            query,
+            projection_model=ProfileExperienceView
+        ).first_or_none())
+        if db_profiles is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Must provide a valid profile id")
+
+        return ProfileExperienceDetailsResponse(
+            experiences=[
+                ProfileExperienceResponse(experience_id=data.experience_id,
+                                          company_name=data.company_name,
+                                          job_responsibility=data.job_responsibility,
+                                          designation=ProfileExperienceDesignationResponse(
+                                              designation=data.designation.designation,
+                                              designation_id=data.designation.designation_id),
+                                          start_date=data.start_date,
+                                          end_date=data.end_date,
+                                          status=ResponseEnumData(
+                                              id=data.status,
+                                              name=StatusEnum(data.status).name)
+                                          )
+                for data in db_profiles.experiences if
+                data.status in [StatusEnum.active, StatusEnum.cancel]
+            ]
+        )
+
+    async def get_experiences_details_by_user(self, email: str) -> ProfileExperienceDetailsResponse:
+        query = {
+            'user_id': email,
+        }
+        db_profiles: ProfileExperienceView = cast(
+            ProfileExperienceView, await Profiles.find(
+                query,
+                projection_model=ProfileExperienceView
+            ).first_or_none())
+        if db_profiles is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must provide a valid profile id"
+            )
+        if db_profiles.profile_status in [ProfileStatusEnum.inactive, ProfileStatusEnum.delete]:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must be an active profile"
+            )
+        return ProfileExperienceDetailsResponse(
+            experiences=[
+                ProfileExperienceResponse(experience_id=data.experience_id,
+                                          company_name=data.company_name,
+                                          job_responsibility=data.job_responsibility,
+                                          designation=ProfileExperienceDesignationResponse(
+                                              designation=data.designation.designation,
+                                              designation_id=data.designation.designation_id),
+                                          start_date=data.start_date,
+                                          end_date=data.end_date,
+                                          status=ResponseEnumData(
+                                              id=data.status,
+                                              name=StatusEnum(data.status).name)
+                                          ) for data in db_profiles.experiences if data.status == StatusEnum.active
             ]
         )

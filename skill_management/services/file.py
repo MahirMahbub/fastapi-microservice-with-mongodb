@@ -1,4 +1,5 @@
 import os
+from datetime import datetime, timezone
 from typing import cast
 
 from beanie import PydanticObjectId
@@ -63,9 +64,10 @@ class FileService:
         save_path = self.file_path + file_name
         await self.write(file.file.read(), save_path)
         profile_crud_manager = ProfileRepository()
-        profile: ProfileView | None = await profile_crud_manager.get_by_query(
+        profile: ProfileView = cast(ProfileView, await profile_crud_manager.get_by_query(
             query={"user_id": email},
-            projection_model=ProfileView)
+            projection_model=ProfileView))
+
         return await self._create_file(file_name=file_name, location=self.file_path, owner=profile.id,
                                        file_status=file_status, file_type=FileTypeEnum.picture,
                                        file_size=os.path.getsize(save_path), skill_id=None)
@@ -100,10 +102,27 @@ class FileService:
                            file_type: FileTypeEnum,
                            file_size, skill_id: int | None = None):
         try:
-            file = Files(file_name=file_name, location=location, owner=owner,
-                         status=file_status, file_type=file_type, file_size=file_size / 1000,
-                         skill_id=skill_id)
+            file = Files(file_name=file_name,
+                         location=location,
+                         owner=owner,
+                         status=cast(StatusEnum, file_status),
+                         file_type=file_type,
+                         file_size=file_size / 1000,
+                         skill_id=skill_id,
+                         created_at=datetime.now(timezone.utc).isoformat())
             await file.insert()
+            if file_type == FileTypeEnum.picture:
+                file_crud_manager = FileRepository()
+                changed_response = cast(
+                    Files, await file_crud_manager.update_by_query(
+                        query={
+                            "owner": owner,
+                            "file_type": FileTypeEnum.picture
+                        }, item_dict={
+                            "status": UserStatusEnum.delete
+                        }
+                    )
+                )
         except ValidationError as valid_exec:
             os.remove(location + file_name)
             return None
@@ -188,11 +207,11 @@ class FileService:
             )
         if not changed_response.status == UserStatusEnum.delete:
             raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File not deleted")
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="File not deleted")
         else:
             raise HTTPException(
-            status_code=status.HTTP_200_OK,
+                status_code=status.HTTP_200_OK,
                 detail="File deleted")
 
     async def delete_file_by_user(self, file_id, email):
@@ -230,4 +249,3 @@ class FileService:
             raise HTTPException(
                 status_code=status.HTTP_200_OK,
                 detail="File deleted")
-

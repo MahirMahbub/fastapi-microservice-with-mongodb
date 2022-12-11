@@ -1,12 +1,15 @@
 import uuid
+from typing import cast
 
-from fastapi import APIRouter, Depends, Body, Request
+from beanie import PydanticObjectId
+from fastapi import APIRouter, Depends, Body, Request, Path
 from fastapi.responses import ORJSONResponse
 
 from skill_management.schemas.base import ErrorMessage
-from skill_management.schemas.plan import PlanCreateRequest, PlanCreateResponse, PlanCreateAdminRequest
+from skill_management.schemas.plan import PlanCreateRequest, PlanCreateResponse, PlanCreateAdminRequest, \
+    PlanListDataResponse
 from skill_management.services.plan import PlanService
-from skill_management.utils.auth_manager import JWTBearer
+from skill_management.utils.auth_manager import JWTBearer, JWTBearerAdmin
 from skill_management.utils.logger import get_logger
 from skill_management.utils.profile_manager import get_profile_email
 
@@ -154,3 +157,44 @@ async def create_plan_by_admin(request: Request,  # type: ignore
     """
     return await service.create_or_update_plan_by_admin(plan_request=plan)
 
+
+@plan_router.get("/profile/admin/user-profiles/{profile_id}/plans",
+                 response_class=ORJSONResponse,
+                 response_model=PlanListDataResponse,
+                 status_code=200,
+                 responses={
+                     404: {
+                         "model": ErrorMessage,
+                         "description": "The skills details are not available"
+                     },
+                     200: {
+                         "description": "The skills requested by profile id",
+                     },
+                 })
+async def get_profile_plans_by_admin(request: Request,  # type: ignore
+                                     user_id: str = Depends(JWTBearerAdmin()),
+                                     profile_id: PydanticObjectId = Path(...,
+                                                                         description="input profile id of the user",
+                                                                         alias="profile_id"),
+                                     service: PlanService = Depends()):
+    return await service.get_plan_details_by_admin(profile_id=profile_id)
+
+
+@plan_router.get("/profile/user-profiles/plans",
+                 response_class=ORJSONResponse,
+                 response_model=PlanListDataResponse,
+                 status_code=200,
+                 responses={
+                     404: {
+                         "model": ErrorMessage,
+                         "description": "The educations details are not available"
+                     },
+                     200: {
+                         "description": "The educations requested by profile id",
+                     },
+                 })
+async def get_profile_plans_by_user(request: Request,  # type: ignore
+                                    user_id: str = Depends(JWTBearer()),
+                                    service: PlanService = Depends()):
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.get_plan_details_by_user(email=cast(str, email))

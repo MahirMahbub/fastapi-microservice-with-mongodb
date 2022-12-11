@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone, timedelta
-from uuid import UUID
 
+from beanie import PydanticObjectId
 from fastapi import Query, Depends, APIRouter, Path, Body
 from fastapi.responses import ORJSONResponse
 from starlette.requests import Request
@@ -9,9 +9,9 @@ from starlette.requests import Request
 from skill_management.enums import ProfileStatusEnum
 from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.profile import ProfileResponse, PaginatedProfileResponse, ProfileBasicRequest, \
-    ProfileBasicForAdminRequest
+    ProfileBasicForAdminRequest, ProfileDetailsResponse
 from skill_management.services.profile import ProfileService
-from skill_management.utils.auth_manager import JWTBearerAdmin, JWTBearer
+from skill_management.utils.auth_manager import JWTBearerAdmin, JWTBearer, JWTBearerInactive
 from skill_management.utils.logger import get_logger
 from skill_management.utils.profile_manager import get_profile_email
 
@@ -19,7 +19,7 @@ profile_router: APIRouter = APIRouter(tags=["profile"])
 logger = get_logger()
 
 
-@profile_router.get("/admin/user-profiles",
+@profile_router.get("/admin/profiles/",
                     response_class=ORJSONResponse,
                     response_model=PaginatedProfileResponse,
                     status_code=200,
@@ -54,7 +54,7 @@ async def get_user_profiles_for_admin(request: Request,  # type: ignore
                                                                alias="page-number"),
                                       page_size: int = Query(default=10, description="number of element in page", gt=0,
                                                              alias="page-size"),
-                                      # admin_user_id: str = Depends(JWTBearerAdmin()),
+                                      admin_user_id: str = Depends(JWTBearerAdmin()),
                                       service: ProfileService = Depends(),
                                       ):
     return await service.get_user_profiles_for_admin(skill_id=skill_id,
@@ -66,9 +66,9 @@ async def get_user_profiles_for_admin(request: Request,  # type: ignore
                                                      page_size=page_size)
 
 
-@profile_router.get("/admin/user-profiles/{profile-id}",
+@profile_router.get("/admin/user-profiles/{profile_id}",
                     response_class=ORJSONResponse,
-                    response_model=ProfileResponse,
+                    response_model=ProfileDetailsResponse,
                     status_code=200,
                     responses={
                         404: {
@@ -81,16 +81,38 @@ async def get_user_profiles_for_admin(request: Request,  # type: ignore
                     }
                     )
 async def get_user_profile_by_id_for_admin(request: Request,  # type: ignore
-                                           profile_id: UUID = Path(...,
-                                                                   description="input profile id of the user",
-                                                                   alias="profile-id"),
-                                           profile_status: int | None = Query(..., ge=1, le=2, alias="profile-status"),
-                                           admin_user_id: str = Depends(JWTBearerAdmin())):
-    pass
+                                           profile_id: PydanticObjectId = Path(...,
+                                                                               description="input profile id of the user"),
+                                           admin_user_id: str = Depends(JWTBearerAdmin()),
+                                           service: ProfileService = Depends(),
+                                           ):
+    return await service.get_user_profile_by_admin(profile_id)
+
+
+@profile_router.get("/profile/user-profiles/",
+                    response_class=ORJSONResponse,
+                    response_model=ProfileDetailsResponse,
+                    status_code=200,
+                    responses={
+                        404: {
+                            "model": ErrorMessage,
+                            "description": "The profile details is not available"
+                        },
+                        200: {
+                            "description": "The profile details is requested",
+                        },
+                    }
+                    )
+async def get_user_profile_by_user(request: Request,  # type: ignore
+                                   user_id: str = Depends(JWTBearer()),
+                                   service: ProfileService = Depends(),
+                                   ):
+    email = await get_profile_email(request=request, user_id=user_id)
+    return await service.get_user_profile_by_user(email)
 
 
 # ProfileBasicRequest
-@profile_router.post("/user-profiles/",
+@profile_router.post("/profile/user-profiles/",
                      response_class=ORJSONResponse,
                      response_model=ProfileResponse,
                      status_code=200,
@@ -142,7 +164,7 @@ async def create_user_profile_by_user(request: Request,  # type: ignore
                                           },
 
                                           description="input profile data"),
-                                      user_id: str = Depends(JWTBearer()),
+                                      user_id: str = Depends(JWTBearerInactive()),
                                       service: ProfileService = Depends(),
                                       ):
     """

@@ -101,3 +101,4 @@ class SkillCertificateResponse(BaseModel):
 class FileResponse(BaseModel):
     file_name: str | None = Field(description="name of the file")
     url: str = Field(description="api url of the file")
+    status: ResponseEnumData = Field(description="status of the file")

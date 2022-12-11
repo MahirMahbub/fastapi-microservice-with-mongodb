@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from beanie import Document, PydanticObjectId
 from pydantic import Field
 
@@ -12,6 +14,7 @@ class Files(Document):
     location: str = Field(description="location of the file")
     owner: PydanticObjectId = Field(description="owner of the file")
     skill_id: int|None = Field(None, description="skill id of the file that is a certificate")
+    created_at: datetime = Field(description="creation time of the file")
 
     class Settings:
         use_revision = True

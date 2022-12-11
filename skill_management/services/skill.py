@@ -1,9 +1,11 @@
 from typing import cast
 
+from beanie import PydanticObjectId
 from beanie.odm.operators.find.array import ElemMatch
 from fastapi import HTTPException, status, UploadFile
 
-from skill_management.enums import FileTypeEnum, SkillCategoryEnum, SkillTypeEnum, StatusEnum, UserStatusEnum
+from skill_management.enums import FileTypeEnum, SkillCategoryEnum, SkillTypeEnum, StatusEnum, UserStatusEnum, \
+    ProfileStatusEnum
 from skill_management.models.enums import Status
 from skill_management.models.file import Files
 from skill_management.models.profile import Profiles
@@ -14,7 +16,7 @@ from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.file import FileResponse, SkillCertificateResponse
 from skill_management.schemas.profile import ProfileSkillView
 from skill_management.schemas.skill import CreateSkillDataRequest, ProfileSkill, CreateSkillDataResponse, \
-    CreateSkillListDataResponse, CreateSkillDataAdminRequest
+    CreateSkillListDataResponse, CreateSkillDataAdminRequest, ProfileSkillDetailsResponse, ProfileSkillResponse
 from skill_management.services.file import FileService
 
 
@@ -345,13 +347,142 @@ class SkillService:
         successful_files = []
         failed_files = []
         for file in files:
-            file_response = await file_service.create_certificate(file=file,
-                                                  skill_id=skill_id,
-                                                  email=email,
-                                                  file_status=cast(UserStatusEnum,StatusEnum.active))
+            file_response = await file_service.create_certificate(
+                file=file,
+                skill_id=skill_id,
+                email=email,
+                file_status=cast(UserStatusEnum, StatusEnum.active))
 
             if file_response is None:
                 failed_files.append(file.filename)
             else:
                 successful_files.append(file.filename)
         return SkillCertificateResponse(succeed_upload_list=successful_files, failed_upload_list=failed_files)
+
+    async def get_skill_details_by_admin(self, profile_id: PydanticObjectId) -> ProfileSkillDetailsResponse:
+        query = {
+            '_id': profile_id,
+        }
+        db_profiles = await Profiles.find(
+            query,
+            projection_model=ProfileSkillView
+        ).first_or_none()
+        if db_profiles is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Must provide a valid profile id")
+        certificate_files = await Files.find(
+            {
+                "file_type": FileTypeEnum.certificate,
+                "owner": profile_id,
+                "status": {"$in": [StatusEnum.active, StatusEnum.cancel]}
+            }
+        ).to_list()
+
+        return ProfileSkillDetailsResponse(
+            skills=[
+                ProfileSkillResponse(
+                    skill_id=data.skill_id,
+                    skill_type=ResponseEnumData(
+                        id=data.skill_type,
+                        name=SkillTypeEnum(data.skill_type).name
+                    ),
+                    skill_category=[
+                        ResponseEnumData(
+                            id=category_data,
+                            name=SkillTypeEnum(category_data).name
+                        ) for category_data in data.skill_category
+                    ],
+                    skill_name=data.skill_name,
+                    status=ResponseEnumData(
+                        id=data.status,
+                        name=StatusEnum(data.status).name
+                    ),
+                    certificate_files=[
+                        FileResponse(
+                            file_name=file_data.file_name,
+                            url="/admin/files/response/" + str(file_data.id),
+                            status=ResponseEnumData(
+                                id=file_data.status,
+                                name=StatusEnum(file_data.status).name
+                            )
+                        ) for file_data in certificate_files
+                    ],
+                    experience_year=data.experience_year,
+                    number_of_projects=data.number_of_projects,
+                    level=data.level,
+                    training_duration=data.training_duration,
+                    achievements=data.achievements,
+                    achievements_description=data.achievements_description, certificate=data.certificate
+                )
+                for data in db_profiles.skills if data.status in [
+                    StatusEnum.active, StatusEnum.cancel
+                ]
+            ]
+        )
+
+    async def get_skill_details_by_user(self, email: str) -> ProfileSkillDetailsResponse:
+        query = {
+            'user_id': email,
+        }
+        db_profiles: ProfileSkillView = cast(
+            ProfileSkillView, await Profiles.find(
+                query,
+                projection_model=ProfileSkillView
+            ).first_or_none())
+        if db_profiles is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must provide a valid profile id"
+            )
+        if db_profiles.profile_status in [ProfileStatusEnum.inactive, ProfileStatusEnum.delete]:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must be an active profile"
+            )
+        certificate_files = await Files.find(
+            {
+                "file_type": FileTypeEnum.certificate,
+                "owner": db_profiles.id,
+                "status": StatusEnum.active
+            }
+        ).to_list()
+
+        return ProfileSkillDetailsResponse(
+            skills=[
+                ProfileSkillResponse(
+                    skill_id=data.skill_id,
+                    skill_type=ResponseEnumData(
+                        id=data.skill_type,
+                        name=SkillTypeEnum(data.skill_type).name
+                    ),
+                    skill_category=[
+                        ResponseEnumData(
+                            id=category_data,
+                            name=SkillTypeEnum(category_data).name
+                        ) for category_data in data.skill_category
+                    ],
+                    skill_name=data.skill_name,
+                    status=ResponseEnumData(
+                        id=data.status,
+                        name=StatusEnum(data.status).name
+                    ),
+                    certificate_files=[
+                        FileResponse(
+                            file_name=file_data.file_name,
+                            url="/profile/files/response/" + str(file_data.id),
+                            status=ResponseEnumData(
+                                id=file_data.status,
+                                name=StatusEnum(file_data.status).name
+                            )
+                        ) for file_data in certificate_files
+                    ],
+                    experience_year=data.experience_year,
+                    number_of_projects=data.number_of_projects,
+                    level=data.level,
+                    training_duration=data.training_duration,
+                    achievements=data.achievements,
+                    achievements_description=data.achievements_description, certificate=data.certificate
+                )
+                for data in db_profiles.skills if data.status == StatusEnum.active
+            ]
+        )

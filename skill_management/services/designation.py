@@ -2,16 +2,16 @@ from typing import cast
 
 from fastapi import HTTPException, status
 
-from skill_management.enums import DesignationStatusEnum, StatusEnum
+from skill_management.enums import DesignationStatusEnum, StatusEnum, ProfileStatusEnum
 from skill_management.models.designation import Designations
 from skill_management.models.profile import Profiles
 from skill_management.repositories.designation import DesignationRepository
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.designation import DesignationCreateRequest, ProfileDesignationResponse, \
-    DesignationCreateAdminRequest, DesignationDataResponse
+    DesignationCreateAdminRequest, DesignationDataResponse, ProfileDesignationDetailsResponse
 from skill_management.schemas.experience import ProfileExperience, ExperienceDesignation
-from skill_management.schemas.profile import ProfileDesignationExperiencesView
+from skill_management.schemas.profile import ProfileDesignationExperiencesView, ProfileDesignationView
 
 
 class DesignationService:
@@ -260,3 +260,58 @@ class DesignationService:
     #     designation_crud_manager = DesignationRepository()
     #     designation_list = cast(list[Designations], designation_crud_manager.gets(query))
     #     return response
+    async def get_designation_details_by_admin(self, profile_id) -> ProfileDesignationDetailsResponse:
+        query = {
+            '_id': profile_id,
+        }
+        db_profiles: ProfileDesignationView = cast(ProfileDesignationView, await Profiles.find(
+            query,
+            projection_model=ProfileDesignationView
+        ).first_or_none())
+        if db_profiles is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Must provide a valid profile id")
+        return ProfileDesignationDetailsResponse(
+            designation=ProfileDesignationResponse(
+                designation_id=db_profiles.designation.designation_id,
+                designation=db_profiles.designation.designation,
+                start_date=db_profiles.designation.start_date,
+                end_date=db_profiles.designation.end_date,
+                designation_status=ResponseEnumData(
+                    id=db_profiles.designation.designation_status,
+                    name=DesignationStatusEnum(db_profiles.designation.designation_status).name
+                )
+            )
+        )
+
+    async def get_designation_details_by_user(self, email) -> ProfileDesignationDetailsResponse:
+        query = {
+            'user_id': email,
+        }
+        db_profiles: ProfileDesignationView = cast(
+            ProfileDesignationView, await Profiles.find(
+                query,
+                projection_model=ProfileDesignationView
+            ).first_or_none())
+        if db_profiles is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must provide a valid profile id"
+            )
+        if db_profiles.profile_status in [ProfileStatusEnum.inactive, ProfileStatusEnum.delete]:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must be an active profile"
+            )
+        return ProfileDesignationDetailsResponse(
+            designation=ProfileDesignationResponse(
+                designation_id=db_profiles.designation.designation_id,
+                designation=db_profiles.designation.designation,
+                start_date=db_profiles.designation.start_date,
+                end_date=db_profiles.designation.end_date,
+                designation_status=ResponseEnumData(
+                    id=db_profiles.designation.designation_status,
+                    name=DesignationStatusEnum(db_profiles.designation.designation_status).name
+                )
+            )
+        )

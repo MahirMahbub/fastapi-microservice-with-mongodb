@@ -1,13 +1,15 @@
 from typing import cast
 
+from beanie import PydanticObjectId
 from beanie.odm.operators.find.array import ElemMatch
 from fastapi import HTTPException, status
 
-from skill_management.enums import StatusEnum
+from skill_management.enums import StatusEnum, ProfileStatusEnum
 from skill_management.models.profile import Profiles
 from skill_management.repositories.profile import ProfileRepository
+from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.education import EducationCreateRequest, EducationCreateResponse, ProfileEducation, \
-    EducationListDataResponse, EducationCreateAdminRequest
+    EducationListDataResponse, EducationCreateAdminRequest, ProfileEducationResponse, ProfileEducationDetailsResponse
 from skill_management.schemas.profile import ProfileEducationView
 
 
@@ -259,5 +261,67 @@ class EducationService:
                     status=education.status,
                 )
                 for education in db_profile.educations
+            ]
+        )
+
+    async def get_education_details_by_admin(self, profile_id: PydanticObjectId) -> ProfileEducationDetailsResponse:
+        query = {
+            '_id': profile_id,
+        }
+        db_profiles: ProfileEducationView = cast(ProfileEducationView, await Profiles.find(
+            query,
+            projection_model=ProfileEducationView
+        ).first_or_none())
+        if db_profiles is None:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="Must provide a valid profile id")
+
+        return ProfileEducationDetailsResponse(
+            educations=[
+                ProfileEducationResponse(
+                    degree_name=data.degree_name,
+                    school_name=data.school_name,
+                    passing_year=data.passing_year,
+                    grade=data.grade,
+                    education_id=data.education_id,
+                    status=ResponseEnumData(
+                        id=data.status,
+                        name=StatusEnum(data.status).name
+                    )
+                ) for data in db_profiles.educations if data.status in [StatusEnum.active, StatusEnum.cancel]]
+        )
+
+    async def get_education_details_by_user(self, email: str) -> ProfileEducationDetailsResponse:
+        query = {
+            'user_id': email,
+        }
+        db_profiles: ProfileEducationView = cast(
+            ProfileEducationView, await Profiles.find(
+                query,
+                projection_model=ProfileEducationView
+            ).first_or_none())
+        if db_profiles is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must provide a valid profile id"
+            )
+        if db_profiles.profile_status in [ProfileStatusEnum.inactive, ProfileStatusEnum.delete]:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must be an active profile"
+            )
+        return ProfileEducationDetailsResponse(
+            educations=[
+                ProfileEducationResponse(
+                    degree_name=data.degree_name,
+                    school_name=data.school_name,
+                    passing_year=data.passing_year,
+                    grade=data.grade,
+                    education_id=data.education_id,
+                    status=ResponseEnumData(
+                        id=data.status,
+                        name=StatusEnum(data.status).name
+                    )
+                ) for data in db_profiles.educations if data.status == StatusEnum.active
             ]
         )

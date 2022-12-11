@@ -5,6 +5,7 @@ from beanie import PydanticObjectId
 from pydantic import BaseModel, Field, validator, root_validator
 
 from skill_management.enums import UserStatusEnum, StatusEnum
+from skill_management.schemas.base import ResponseEnumData
 
 
 class EducationBase(BaseModel):
@@ -113,6 +114,7 @@ class EducationCreateAdminRequest(BaseModel):
 
 class ProfileEducationResponse(EducationBase):
     education_id: int | None = Field(gt=0, description="id of the user education")
+    status: ResponseEnumData| None = Field(description="status of the education")
 
 
 class EducationCreateResponse(ProfileEducationResponse):
@@ -134,3 +136,7 @@ class EducationCreateResponse(ProfileEducationResponse):
 
 class EducationListDataResponse(BaseModel):
     educations: list[EducationCreateResponse]
+
+
+class ProfileEducationDetailsResponse(BaseModel):
+    educations: list[ProfileEducationResponse]

@@ -1,4 +1,6 @@
-from datetime import datetime, date, timezone, timedelta
+import datetime
+import uuid
+from datetime import date, timezone, timedelta
 from typing import Any
 
 from beanie import PydanticObjectId
@@ -10,6 +12,7 @@ from skill_management.schemas.designation import DesignationDataResponse, Profil
     DesignationDataCreate, ProfileDesignation
 from skill_management.schemas.education import ProfileEducationResponse, ProfileEducation
 from skill_management.schemas.experience import ProfileExperienceResponse, ProfileExperience
+from skill_management.schemas.file import FileResponse
 from skill_management.schemas.skill import ProfileSkillDataResponse, ProfileSkillResponse, ProfileSkill
 
 
@@ -73,7 +76,7 @@ class ProfilePersonalDetails(BaseModel):
     def validate_date_of_birth(cls, value: date | None) -> date | None:
         if value is None:
             return value
-        if abs((datetime.now().date() - value).days) < 5844:
+        if abs((datetime.datetime.now().date() - value).days) < 5844:
             raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
         return value
 
@@ -85,16 +88,49 @@ class ProfilePersonalDetailsResponse(BaseModel):
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     about: str | None = Field(max_length=500, description="about of the user")
-    _picture_url: str | None = Field(max_length=255, description="image response api url of user profile picture")
+    picture_url: str | None = Field(max_length=255, description="image response api url of user profile picture")
     experience_year: int | None = Field(description="experience year of the user")
+    cv_urls: list[FileResponse] = Field(max_items=3, description="cv urls of the user")
 
     @validator("date_of_birth", always=True)
     def validate_date_of_birth(cls, value: date | None) -> date | None:
         if value is None:
             return value
-        if abs((datetime.now().date() - value).days) < 5844:
+        if abs((datetime.datetime.now().date() - value).days) < 5844:
             raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
         return value
+
+
+class ProfileDetailsResponse(BaseModel):
+    id: PydanticObjectId | None = Field(description="id of the user profile")
+    email: str | None = Field(description="email address of the user")
+    personal_details: ProfilePersonalDetailsResponse | None
+    profile_status: ResponseEnumData | None = Field(description="profile status/ job type of the user")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": uuid.uuid4(),
+                "email": "developer.ixorasolution@gmail.com",
+                "personal_details": {
+                    "name": "Chelsey Adams",
+                    "date_of_birth": (datetime.datetime.now()-datetime.timedelta(days=5543)).date(),
+                    "gender": {
+                        "id": 1,
+                        "name": "male"
+                    },
+                    "mobile": "+01611123456",
+                    "address": "House: X, State:Y, Z, Country",
+                    "about": "about the user",
+                    "picture_url": "/admin/files/response/42242mjj2424",
+                    "experience_year": 4
+                },
+                "profile_status": {
+                    "id": 1,
+                    "name": "active"
+                }
+            }
+        }
 
 
 class ProfileResponse(BaseModel):
@@ -106,14 +142,6 @@ class ProfileResponse(BaseModel):
     educations: list[ProfileEducationResponse]
     personal_details: ProfilePersonalDetailsResponse | None
     profile_status: ResponseEnumData | None = Field(description="profile status/ job type of the user")
-    _latest_cv_url: str | None = Field(description="latest CV file response api url")
-
-    def set_latest_cv_url(self, file_id: str | None = None) -> str | None:
-        if file_id is not None:
-            self._latest_cv_url = "/files/" + str(file_id)
-        else:
-            self._latest_cv_url = None
-        return self._latest_cv_url
 
     class Config:
         schema_extra = {
@@ -124,8 +152,8 @@ class ProfileResponse(BaseModel):
                     "designation": {
                         "designation": "Software Engineer",
                         "designation_id": 1,
-                        "start_date": datetime.now(timezone.utc),
-                        "end_date": datetime.now(timezone.utc) + timedelta(days=1),
+                        "start_date": datetime.datetime.now(timezone.utc),
+                        "end_date": datetime.datetime.now(timezone.utc) + timedelta(days=1),
                         "designation_status": {
                             "id": 1,
                             "name": "active"
@@ -134,7 +162,7 @@ class ProfileResponse(BaseModel):
                     "personal_details":
                         {
                             "name": "Chelsey Adams",
-                            "date_of_birth": datetime.now(timezone.utc).date() - timedelta(days=10000),
+                            "date_of_birth": datetime.datetime.now(timezone.utc).date() - timedelta(days=10000),
                             "gender":
                                 {
                                     "id": 1,
@@ -193,8 +221,8 @@ class ProfileResponse(BaseModel):
                                 "designation_id": 1,
                                 "designation": "Software Developer"
                             },
-                            "start_date": datetime.now(timezone.utc) - timedelta(days=1000),
-                            "end_date": datetime.now(timezone.utc) - timedelta(days=500),
+                            "start_date": datetime.datetime.now(timezone.utc) - timedelta(days=1000),
+                            "end_date": datetime.datetime.now(timezone.utc) - timedelta(days=500),
                             "status": {
                                 "id": 1,
                                 "name": "active"
@@ -208,8 +236,8 @@ class ProfileResponse(BaseModel):
                                 "designation_id": 1,
                                 "designation": "Software Engineer"
                             },
-                            "start_date": datetime.now(timezone.utc) - timedelta(days=500),
-                            "end_date": datetime.now(timezone.utc) - timedelta(days=200),
+                            "start_date": datetime.datetime.now(timezone.utc) - timedelta(days=500),
+                            "end_date": datetime.datetime.now(timezone.utc) - timedelta(days=200),
                             "status": {
                                 "id": 1,
                                 "name": "active"
@@ -235,8 +263,7 @@ class ProfileResponse(BaseModel):
                     "profile_status": {
                         "id": 1,
                         "name": "full_time"
-                    },
-                    "_latest_cv_url": "/file/1"
+                    }
                 }
         }
 
@@ -300,7 +327,7 @@ class ProfileBasicRequest(BaseModel):
     def validate_date_of_birth(cls, value: date | None) -> date | None:
         if value is None:
             return value
-        if abs(datetime.today().date() - value).days < 5844:
+        if abs(datetime.datetime.today().date() - value).days < 5844:
             raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
         return value
 
@@ -350,7 +377,7 @@ class ProfileBasicForAdminRequest(BaseModel):
     def validate_date_of_birth(cls, value: date | None) -> date | None:
         if value is None:
             return value
-        if abs(datetime.today().date() - value).days < 5844:
+        if abs(datetime.datetime.today().date() - value).days < 5844:
             raise ValueError("input a valid date of birth. you must be at least 15 years or 5844 days old.")
         return value
 
@@ -406,17 +433,21 @@ class ProfileUpdateByUser(BaseModel):
     designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
     about: str | None = Field(max_length=256, description="description of the user")
 
+
 class ProfileView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
+
 
 class ProfileSkillView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     skills: list[ProfileSkill]
+    profile_status: ProfileStatusEnum
 
 
 class ProfileDesignationView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     designation: ProfileDesignation
+    profile_status: ProfileStatusEnum
 
 
 class ProfileDesignationExperiencesView(BaseModel):
@@ -428,8 +459,17 @@ class ProfileDesignationExperiencesView(BaseModel):
 class ProfileEducationView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     educations: list[ProfileEducation]
+    profile_status: ProfileStatusEnum
 
 
 class ProfileExperienceView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
     experiences: list[ProfileExperience]
+    profile_status: ProfileStatusEnum
+
+
+class ProfileProfileDetailsView(BaseModel):
+    id: PydanticObjectId = Field(alias='_id')
+    personal_detail: ProfilePersonalDetails
+    user_id: str
+    profile_status: ProfileStatusEnum

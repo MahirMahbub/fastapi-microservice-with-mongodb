@@ -1,11 +1,13 @@
 import uuid
+from typing import cast
 
+from beanie import PydanticObjectId
 from fastapi import APIRouter, Request, Depends, Path, Query, Body
 from fastapi.responses import ORJSONResponse
 
 from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignationResponse, \
-    DesignationCreateRequest, DesignationCreateAdminRequest
+    DesignationCreateRequest, DesignationCreateAdminRequest, ProfileDesignationDetailsResponse
 from skill_management.services.designation import DesignationService
 from skill_management.utils.auth_manager import JWTBearer, JWTBearerAdmin
 from skill_management.utils.logger import get_logger
@@ -57,7 +59,6 @@ async def get_designation_list(request: Request,  # type: ignore
                                service: DesignationService = Depends()):
     return await service.get_master_designation_list(designation_name)
 
-
     pass
 
 
@@ -75,7 +76,7 @@ async def get_designation_list(request: Request,  # type: ignore
                              },
                          }
                          )
-async def update_designation(request: Request,  # type: ignore
+async def update_designation(request: Request,
                              designation_request: DesignationCreateRequest = Body(..., examples={
                                  # "CREATE": {
                                  #     "summary": "Create Body",
@@ -108,7 +109,7 @@ async def update_designation(request: Request,  # type: ignore
     """
     email = await get_profile_email(user_id=user_id, request=request)
     return await service.update_designation_by_user(designation_request=designation_request,
-                                                    email=email)
+                                                    email=cast(str, email))
 
 
 @designation_router.post("/admin/profile/designations",  # type: ignore
@@ -125,7 +126,7 @@ async def update_designation(request: Request,  # type: ignore
                              },
                          }
                          )
-async def update_designation_by_admin(request: Request,  # type: ignore
+async def update_designation_by_admin(request: Request,
                                       designation_request: DesignationCreateAdminRequest = Body(..., examples={
                                           # "CREATE": {
                                           #     "summary": "Create Body",
@@ -158,3 +159,45 @@ async def update_designation_by_admin(request: Request,  # type: ignore
     **Update:** For update purposes provide *"start_date"* and *"end_date"*.
     """
     return await service.update_designation_by_admin(designation_request=designation_request)
+
+
+@designation_router.get("/profile/admin/user-profiles/{profile_id}/designation",
+                        response_class=ORJSONResponse,
+                        response_model=ProfileDesignationDetailsResponse,
+                        status_code=200,
+                        responses={
+                            404: {
+                                "model": ErrorMessage,
+                                "description": "The designation details is not available"
+                            },
+                            200: {
+                                "description": "The designation requested by profile id",
+                            },
+                        })
+async def get_profile_designation_by_admin(request: Request,  # type: ignore
+                                           user_id: str = Depends(JWTBearerAdmin()),
+                                           profile_id: PydanticObjectId = Path(...,
+                                                                               description="input profile id of the user",
+                                                                               alias="profile_id"),
+                                           service: DesignationService = Depends()):
+    return await service.get_designation_details_by_admin(profile_id=profile_id)
+
+
+@designation_router.get("/profile/user-profiles/designation",
+                        response_class=ORJSONResponse,
+                        response_model=ProfileDesignationDetailsResponse,
+                        status_code=200,
+                        responses={
+                            404: {
+                                "model": ErrorMessage,
+                                "description": "The designation details is not available"
+                            },
+                            200: {
+                                "description": "The designation requested by profile id",
+                            },
+                        })
+async def get_profile_designation_by_user(request: Request,  # type: ignore
+                                          user_id: str = Depends(JWTBearer()),
+                                          service: DesignationService = Depends()):
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.get_designation_details_by_user(email=email)

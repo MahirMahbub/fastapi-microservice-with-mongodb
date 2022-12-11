@@ -1,3 +1,5 @@
+from typing import cast
+
 from beanie.odm.operators.find.array import ElemMatch
 from fastapi import HTTPException, status
 from pymongo.errors import DuplicateKeyError
@@ -17,7 +19,7 @@ from skill_management.schemas.experience import ProfileExperience, ExperienceDes
 from skill_management.schemas.file import FileResponse
 from skill_management.schemas.profile import ProfileBasicForAdminRequest, ProfilePersonalDetails, ProfileResponse, \
     ProfilePersonalDetailsResponse, ProfileUpdateByAdmin, ProfileBasicRequest, ProfileUpdateByUser, \
-    ProfileBasicResponse, PaginatedProfileResponse
+    ProfileBasicResponse, PaginatedProfileResponse, ProfileDetailsResponse, ProfileProfileDetailsView
 from skill_management.schemas.skill import ProfileSkillResponse, ProfileSkillDataResponse
 
 
@@ -804,7 +806,7 @@ class ProfileService:
                 mobile=db_profile.personal_detail.mobile,
                 name=db_profile.personal_detail.name,
                 url=f"/admin/user-profiles/%s" % (str(db_profile.id))
-            ) for db_profile in db_profiles]
+            ) for db_profile in db_profiles if not db_profile.profile_status == ProfileStatusEnum.delete]
         return PaginatedProfileResponse(
 
             previous_page=page_number - 1 if page_number > 1 else None,
@@ -814,3 +816,138 @@ class ProfileService:
             total_items=count,
             pages=(count // page_size + 1) if count % page_size > 0 else count // page_size,
             items=response)
+
+    async def get_user_profile_by_admin(self, profile_id) -> ProfileDetailsResponse:
+        query = {'_id': profile_id}
+        db_profiles: ProfileProfileDetailsView = cast(
+            ProfileProfileDetailsView,
+            await Profiles.find(
+                query,
+                projection_model=ProfileProfileDetailsView
+            ).first_or_none()
+        )
+        profile_pictures = await Files.find(
+            {
+                "owner": profile_id,
+                "file_type": FileTypeEnum.picture,
+                "status": StatusEnum.active
+            }
+        ).sort("-created_at").to_list()
+        cv_files = await Files.find(
+            {
+                "owner": db_profiles.id,
+                "file_type": FileTypeEnum.resume,
+                "status": StatusEnum.active
+            }
+        ).sort("-created_at").to_list()
+        profile_url = None
+        if profile_pictures:
+            profile_url = "/admin/files/response/" + str(profile_pictures[0].id)
+
+        response = ProfileDetailsResponse(
+            id=db_profiles.id,
+            email=db_profiles.user_id,
+            personal_details=ProfilePersonalDetailsResponse(
+                name=db_profiles.personal_detail.name,
+                date_of_birth=db_profiles.personal_detail.date_of_birth,
+                gender=ResponseEnumData(
+                    id=db_profiles.personal_detail.gender,
+                    name=GenderEnum(db_profiles.personal_detail.gender).name,
+                ),
+                mobile=db_profiles.personal_detail.mobile,
+                address=db_profiles.personal_detail.address,
+                about=db_profiles.personal_detail.about,
+                picture_url=profile_url,
+                experience_year=db_profiles.personal_detail.experience_year,
+                cv_urls=[
+                    FileResponse(
+                        file_name=data.file_name,
+                        url="/profile/files/response/" + str(data.id),
+                        status=ResponseEnumData(
+                            id=data.status,
+                            name=StatusEnum(data.status).name
+                        )
+                    ) for data in cv_files
+                ]
+            ),
+            profile_status=ResponseEnumData(
+                id=db_profiles.profile_status,
+                name=ProfileStatusEnum(db_profiles.profile_status).name,
+            ),
+        )
+
+        return response
+
+    async def get_user_profile_by_user(self, email: str) -> ProfileDetailsResponse:
+        query = {
+            'user_id': email,
+        }
+        db_profiles: ProfileProfileDetailsView = cast(
+            ProfileProfileDetailsView,
+            await Profiles.find(
+                query,
+                projection_model=ProfileProfileDetailsView
+            ).first_or_none()
+        )
+        if db_profiles is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must provide a valid profile id"
+            )
+        if db_profiles.profile_status in [ProfileStatusEnum.inactive, ProfileStatusEnum.delete]:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Must be an active profile"
+            )
+
+        profile_pictures = await Files.find(
+            {
+                "owner": db_profiles.id,
+                "file_type": FileTypeEnum.picture,
+                "status": StatusEnum.active
+            }
+        ).sort("-created_at").to_list()
+        cv_files = await Files.find(
+            {
+                "owner": db_profiles.id,
+                "file_type": FileTypeEnum.resume,
+                "status": StatusEnum.active
+            }
+        ).sort("-created_at").to_list()
+        profile_url = None
+        if profile_pictures:
+            profile_url = "/profile/files/response/" + str(profile_pictures[0].id)
+
+        response = ProfileDetailsResponse(
+            id=db_profiles.id,
+            email=db_profiles.user_id,
+            personal_details=ProfilePersonalDetailsResponse(
+                name=db_profiles.personal_detail.name,
+                date_of_birth=db_profiles.personal_detail.date_of_birth,
+                gender=ResponseEnumData(
+                    id=db_profiles.personal_detail.gender,
+                    name=GenderEnum(db_profiles.personal_detail.gender).name,
+                ),
+                mobile=db_profiles.personal_detail.mobile,
+                address=db_profiles.personal_detail.address,
+                about=db_profiles.personal_detail.about,
+                picture_url=profile_url,
+                experience_year=db_profiles.personal_detail.experience_year,
+                cv_urls=[
+                    FileResponse(
+                        file_name=data.file_name,
+                        url="/profile/files/response/" + str(data.id),
+                        status=ResponseEnumData(
+                            id=data.status,
+                            name=StatusEnum(data.status).name
+                        )
+                    ) for data in cv_files
+                ]
+            ),
+            profile_status=ResponseEnumData(
+                id=db_profiles.profile_status,
+                name=ProfileStatusEnum(db_profiles.profile_status).name,
+            ),
+        )
+
+        return response

@@ -176,3 +176,7 @@ class ExperienceCreateAdminRequest(BaseModel):
 
 class ExperienceListDataResponse(BaseModel):
     experiences: list[ExperienceCreateResponse]
+
+
+class ProfileExperienceDetailsResponse(BaseModel):
+    experiences: list[ProfileExperienceResponse]

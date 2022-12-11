@@ -1,11 +1,14 @@
 import uuid
+from typing import cast
 
-from fastapi import APIRouter, Request, Depends, Body
+from beanie import PydanticObjectId
+from fastapi import APIRouter, Request, Depends, Body, Path
 from fastapi.responses import ORJSONResponse
 
 from skill_management.schemas.base import ErrorMessage
 from skill_management.schemas.education import EducationCreateRequest, EducationListDataResponse, \
-    EducationCreateAdminRequest
+    EducationCreateAdminRequest, ProfileEducationDetailsResponse
+from skill_management.schemas.skill import ProfileSkillDetailsResponse
 from skill_management.services.education import EducationService
 from skill_management.utils.auth_manager import JWTBearer, JWTBearerAdmin
 from skill_management.utils.logger import get_logger
@@ -137,3 +140,45 @@ async def create_education_by_admin(request: Request,  # type: ignore
     """
 
     return await service.create_or_update_education_by_admin(education_request=education_request)
+
+
+@education_router.get("/profile/admin/user-profiles/{profile_id}/educations",
+                      response_class=ORJSONResponse,
+                      response_model=ProfileEducationDetailsResponse,
+                      status_code=200,
+                      responses={
+                          404: {
+                              "model": ErrorMessage,
+                              "description": "The skills details are not available"
+                          },
+                          200: {
+                              "description": "The skills requested by profile id",
+                          },
+                      })
+async def get_profile_educations_by_admin(request: Request,  # type: ignore
+                                          user_id: str = Depends(JWTBearerAdmin()),
+                                          profile_id: PydanticObjectId = Path(...,
+                                                                              description="input profile id of the user",
+                                                                              alias="profile_id"),
+                                          service: EducationService = Depends()):
+    return await service.get_education_details_by_admin(profile_id=profile_id)
+
+
+@education_router.get("/profile/user-profiles/educations",
+                      response_class=ORJSONResponse,
+                      response_model=ProfileEducationDetailsResponse,
+                      status_code=200,
+                      responses={
+                          404: {
+                              "model": ErrorMessage,
+                              "description": "The educations details are not available"
+                          },
+                          200: {
+                              "description": "The educations requested by profile id",
+                          },
+                      })
+async def get_profile_educations_by_user(request: Request,  # type: ignore
+                                         user_id: str = Depends(JWTBearer()),
+                                         service: EducationService = Depends()):
+    email = await get_profile_email(user_id=user_id, request=request)
+    return await service.get_education_details_by_user(email=cast(str, email))

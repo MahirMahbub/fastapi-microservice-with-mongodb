@@ -1,9 +1,10 @@
 from typing import cast
 
+from beanie import PydanticObjectId
 from fastapi import HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
-from skill_management.enums import PlanTypeEnum, StatusEnum
+from skill_management.enums import PlanTypeEnum, StatusEnum, SkillTypeEnum
 from skill_management.models.plan import Plans
 from skill_management.models.skill import Skills
 from skill_management.repositories.plan import PlanRepository
@@ -11,7 +12,8 @@ from skill_management.repositories.profile import ProfileRepository
 from skill_management.repositories.skill import SkillRepository
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.plan import PlanCreateRequest, PlanCreateResponse, Task, TaskResponse, \
-    PlanCreateAdminRequest
+    PlanCreateAdminRequest, PlanListDataResponse
+from skill_management.schemas.profile import ProfileView
 
 
 class PlanService:
@@ -326,3 +328,60 @@ class PlanService:
                                     name=StatusEnum(db_plan.status).name)
         )
         return plan_response
+
+    async def get_plan_details_by_admin(self, profile_id: PydanticObjectId):
+        db_plans = await Plans.find(Plans.profile.id == profile_id, fetch_links=True).to_list()
+        plan_response = [
+            PlanCreateResponse(
+                id=str(db_plan.id),
+                plan_type=ResponseEnumData(id=db_plan.plan_type, name=PlanTypeEnum(db_plan.plan_type).name),
+                notes=db_plan.notes,
+                skill_id=db_plan.skill.id,
+                skill_name=db_plan.skill.skill_name,
+                skill_type=ResponseEnumData(id=db_plan.skill.skill_type,
+                                            name=SkillTypeEnum(db_plan.skill.skill_type).name),
+                task=[
+                    TaskResponse(
+                        id=data.id,
+                        description=data.description,
+                        status=ResponseEnumData(
+                            id=data.status,
+                            name=StatusEnum(data.status).name
+                        )
+                    ) for data in db_plan.task if data.status == StatusEnum.active],
+                start_date=db_plan.start_date,
+                end_date=db_plan.end_date,
+                status=ResponseEnumData(id=db_plan.status,
+                                        name=StatusEnum(db_plan.status).name)
+            ) for db_plan in db_plans if db_plan.status in [StatusEnum.active, StatusEnum.cancel]
+        ]
+        return PlanListDataResponse(plans=plan_response)
+
+    async def get_plan_details_by_user(self, email: str):
+        user_id = await ProfileRepository().get_by_query({"user_id": email}, projection_model=ProfileView)
+        db_plans = await Plans.find(Plans.profile.id == user_id.id, fetch_links=True).to_list()
+        plan_response = [
+            PlanCreateResponse(
+                id=str(db_plan.id),
+                plan_type=ResponseEnumData(id=db_plan.plan_type, name=PlanTypeEnum(db_plan.plan_type).name),
+                notes=db_plan.notes,
+                skill_id=db_plan.skill.id,
+                skill_name=db_plan.skill.skill_name,
+                skill_type=ResponseEnumData(id=db_plan.skill.skill_type,
+                                            name=SkillTypeEnum(db_plan.skill.skill_type).name),
+                task=[
+                    TaskResponse(
+                        id=data.id,
+                        description=data.description,
+                        status=ResponseEnumData(
+                            id=data.status,
+                            name=StatusEnum(data.status).name
+                        )
+                    ) for data in db_plan.task],
+                start_date=db_plan.start_date,
+                end_date=db_plan.end_date,
+                status=ResponseEnumData(id=db_plan.status,
+                                        name=StatusEnum(db_plan.status).name)
+            ) for db_plan in db_plans if db_plan.status == StatusEnum.active
+        ]
+        return PlanListDataResponse(plans=plan_response)
