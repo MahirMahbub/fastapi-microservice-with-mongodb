@@ -713,8 +713,9 @@ class ProfileService:
             mobile=profile_request.mobile,
             about=None,
             address=None,
-            experience_year=None
-        )
+            experience_year=None,
+            cv_urls=[],
+            picture_url=None)
 
         """
         The final response for the profile create

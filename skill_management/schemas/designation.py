@@ -9,11 +9,11 @@ from skill_management.schemas.base import ResponseEnumData
 
 
 class DesignationBase(BaseModel):
-    designation: str | None = Field(min_length=2, description="designation of the user")
+    designation: str | None = Field(None, description="designation of the user")
 
 
 class DesignationDataResponse(DesignationBase):
-    designation_id: int | None = Field(ge=1, description="id of designation")
+    designation_id: int | None = Field(None, description="id of designation")
 
 
 class ProfileDesignationResponse(DesignationDataResponse):

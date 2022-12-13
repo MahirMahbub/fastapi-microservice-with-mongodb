@@ -76,34 +76,34 @@ async def get_designation_list(request: Request,  # type: ignore
                              },
                          }
                          )
-async def update_designation(request: Request,
-                             designation_request: DesignationCreateRequest = Body(..., examples={
-                                 # "CREATE": {
-                                 #     "summary": "Create Body",
-                                 #     "description": "a example of body for create operation",
-                                 #     "value":
-                                 #         {
-                                 #             "designation_id": 1,
-                                 #             "start_date": "2019-08-24T14:15:22Z",
-                                 #             "end_date": "2020-08-24T14:15:22Z",
-                                 #         },
-                                 # },
+async def create_or_update_designation(request: Request,
+                                       designation_request: DesignationCreateRequest = Body(..., examples={
+                                           # "CREATE": {
+                                           #     "summary": "Create Body",
+                                           #     "description": "a example of body for create operation",
+                                           #     "value":
+                                           #         {
+                                           #             "designation_id": 1,
+                                           #             "start_date": "2019-08-24T14:15:22Z",
+                                           #             "end_date": "2020-08-24T14:15:22Z",
+                                           #         },
+                                           # },
 
-                                 "UPDATE":
-                                     {
-                                         "summary": "Update Body",
-                                         "description": "a example of body for update operation",
-                                         "value":
-                                             {
-                                                 "start_date": "2019-08-24T14:15:22Z",
-                                                 "end_date": "2020-12-24T14:15:22Z",
-                                                 # "status": 2
-                                             },
-                                     }
+                                           "UPDATE":
+                                               {
+                                                   "summary": "Update Body",
+                                                   "description": "a example of body for update operation",
+                                                   "value":
+                                                       {
+                                                           "start_date": "2019-08-24T14:15:22Z",
+                                                           "end_date": "2020-12-24T14:15:22Z",
+                                                           # "status": 2
+                                                       },
+                                               }
 
-                             }, ),
-                             user_id: str = Depends(JWTBearer()),
-                             service: DesignationService = Depends()):
+                                       }, ),
+                                       user_id: str = Depends(JWTBearer()),
+                                       service: DesignationService = Depends()):
     """
     **Update:** For update purposes provide *"start_date"* and *"end_date"*.
     """

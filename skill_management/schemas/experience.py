@@ -43,7 +43,7 @@ class ProfileExperience(BaseModel):
     job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
     designation: ExperienceDesignation = Field(
         description="designation for this profile experience")
-    designation_id: int | None = Field(None, description="designation id for profile experience")
+    # designation_id: int | None = Field(None, description="designation id for profile experience")
     start_date: datetime | None = Field(description="start date of experience")
     end_date: datetime | None = Field(description="end date of experience")
     status: StatusEnum = Field(default=StatusEnum.active, description="designation status of experience")
