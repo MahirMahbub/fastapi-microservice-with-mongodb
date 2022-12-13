@@ -59,19 +59,36 @@ class EducationService:
         if profile_educations is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
+
+        if not profile_educations.profile_status in [
+            ProfileStatusEnum.full_time,
+            ProfileStatusEnum.part_time
+        ]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You can only update education for profile that is active.")
         has_education = await Profiles.find(
             {
                 "user_id": email
             },
-            ElemMatch(Profiles.educations, {"education_id": education_request.education_id}),
+            ElemMatch(
+                Profiles.educations,
+                {
+                    "education_id": education_request.education_id
+                }
+            ),
             projection_model=ProfileEducationView).first_or_none()
         if has_education is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Must provide a valid education id to update")
-        education_request_dict = education_request.dict(exclude_unset=True, exclude_defaults=True)
+        education_request_dict = education_request.dict()
         education_request_dict.pop("education_id")
+        education_status = education_request_dict.pop("status")
+        if education_status is not None:
+            education_request_dict["status"] = cast(StatusEnum, profile_educations.educations[0].status)
+        else:
+            education_request_dict["status"] = education_request.status
         education_request_dict = {
-            "educations.$." + str(key): val for key, val in education_request_dict.items()
+            "educations.$." + str(key): val for key, val in education_request_dict.items() if val is not None
         }
         db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
             query={
@@ -88,9 +105,12 @@ class EducationService:
                     school_name=education.school_name,
                     passing_year=education.passing_year,
                     grade=education.grade,
-                    status=education.status,
+                    status=ResponseEnumData(
+                        id=education.status,
+                        name=StatusEnum(education.status).name
+                    ),
                 )
-                for education in db_profile.educations
+                for education in db_profile.educations if education.status==StatusEnum.active
             ]
         )
 
@@ -110,6 +130,13 @@ class EducationService:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
 
+        if not profile_educations.profile_status in [
+            ProfileStatusEnum.full_time,
+            ProfileStatusEnum.part_time
+        ]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You can only update education for profile that is active.")
+
         all_education_ids = [
             education.education_id for education in profile_educations.educations
         ]
@@ -127,16 +154,15 @@ class EducationService:
             grade=education_request.grade,
             passing_year=education_request.passing_year,
             school_name=education_request.school_name,
-            status=cast(StatusEnum, education_request.status)
+            status=cast(StatusEnum,
+                        education_request.status) if education_request.status is not None else StatusEnum.active
         )
         db_profile: Profiles = cast(Profiles, await profile_crud_manager.update_by_query(
             query={
                 "_id": profile_educations.id
             },
             push_item={
-                "educations": new_education.dict(
-                    exclude_unset=True, exclude_none=True
-                )
+                "educations": new_education.dict()
             }
         )
                                     )
@@ -148,9 +174,12 @@ class EducationService:
                     school_name=education.school_name,
                     passing_year=education.passing_year,
                     grade=education.grade,
-                    status=education.status,
+                    status=ResponseEnumData(
+                        id=education.status,
+                        name=StatusEnum(education.status).name
+                    )
                 )
-                for education in db_profile.educations
+                for education in db_profile.educations if education.status==StatusEnum.active
             ]
         )
 
@@ -169,21 +198,44 @@ class EducationService:
         if profile_educations is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
+
+        if not profile_educations.profile_status in [
+            ProfileStatusEnum.full_time,
+            ProfileStatusEnum.part_time
+        ]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You can only update education for profile that is active.")
+
         has_education = await Profiles.find(
             {
                 "_id": education_request.profile_id
             },
-            ElemMatch(Profiles.educations, {"education_id": education_request.education_id}),
-            projection_model=ProfileEducationView).first_or_none()
+            ElemMatch(
+                Profiles.educations, {
+                    "education_id": education_request.education_id
+                }
+            ),
+            projection_model=ProfileEducationView
+        ).first_or_none()
         if has_education is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Must provide a valid education id to update")
-        education_request_dict = education_request.dict(exclude_unset=True, exclude_defaults=True)
+
+        education_request_dict = education_request.dict()
         education_request_dict.pop("education_id")
+        education_status = education_request_dict.pop("status")
+        education_request_dict.pop("profile_id")
+
         education_request_dict = {
-            "educations.$." + str(key): val for key, val in education_request_dict.items()
+            "educations.$." + str(key): val for key, val in education_request_dict.items() if val is not None
         }
-        db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
+
+        if education_status is not None:
+            education_request_dict["status"] = cast(StatusEnum, profile_educations.educations[0].status)
+        else:
+            education_request_dict["status"] = education_request.status
+
+        db_profile: Profiles = await profile_crud_manager.update_by_query(
             query={
                 "educations.education_id": education_request.education_id,
                 "_id": profile_educations.id
@@ -198,9 +250,10 @@ class EducationService:
                     school_name=education.school_name,
                     passing_year=education.passing_year,
                     grade=education.grade,
-                    status=education.status,
+                    status=ResponseEnumData(id=education.status,
+                                            name=StatusEnum(education.status).name),
                 )
-                for education in db_profile.educations
+                for education in db_profile.educations if education.status in [StatusEnum.active, StatusEnum.cancel]
             ]
         )
 
@@ -220,6 +273,13 @@ class EducationService:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
 
+        if not profile_educations.profile_status in [
+            ProfileStatusEnum.full_time,
+            ProfileStatusEnum.part_time
+        ]:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You can only update education for profile that is active.")
+
         all_education_ids = [
             education.education_id for education in profile_educations.educations
         ]
@@ -237,16 +297,14 @@ class EducationService:
             grade=education_request.grade,
             passing_year=education_request.passing_year,
             school_name=education_request.school_name,
-            status=education_request.status
+            status=education_request.status if education_request.status is not None else StatusEnum.active
         )
         db_profile: Profiles = cast(Profiles, await profile_crud_manager.update_by_query(
             query={
                 "_id": profile_educations.id
             },
             push_item={
-                "educations": new_education.dict(
-                    exclude_unset=True, exclude_none=True
-                )
+                "educations": new_education.dict()
             }
         )
                                     )
@@ -258,9 +316,10 @@ class EducationService:
                     school_name=education.school_name,
                     passing_year=education.passing_year,
                     grade=education.grade,
-                    status=education.status,
+                    status=ResponseEnumData(id=education.status,
+                                            name=StatusEnum(education.status).name),
                 )
-                for education in db_profile.educations
+                for education in db_profile.educations if education.status in [StatusEnum.active, StatusEnum.cancel]
             ]
         )
 

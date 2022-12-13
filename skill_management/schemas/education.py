@@ -31,7 +31,7 @@ class ProfileEducation(BaseModel):
     school_name: str | None = Field(None, max_length=30, description="school name of the user's education")
     passing_year: str | None = Field(None, max_length=4, description="passing year of the user's education")
     grade: float | None = Field(None, ge=2.5, le=5.0, description="grade of the user's education'")
-    status: StatusEnum = Field(StatusEnum.active,
+    status: StatusEnum|None = Field(StatusEnum.active,
                                description="""education data validity status
 
     1: active, 3: delete""")
@@ -46,7 +46,7 @@ class EducationCreateRequest(BaseModel):
     school_name: str | None = Field(None, max_length=30, description="school name of the user's education")
     passing_year: str | None = Field(None, max_length=4, description="passing year of the user's education")
     grade: float | None = Field(None, ge=2.5, le=5.0, description="grade of the user's education'")
-    status: UserStatusEnum = Field(UserStatusEnum.active,
+    status: UserStatusEnum | None = Field(None,
                                    description="""education data validity status
                                    
     1: active, 3: delete""")
@@ -54,7 +54,11 @@ class EducationCreateRequest(BaseModel):
     @root_validator
     def any_of(cls, values: dict[str, Any]) -> dict[str, Any]:
         education_id = values.pop('education_id')
-        status = values.pop('status')
+
+        try:
+            status = values.pop('status')
+        except KeyError as key_exec:
+            raise ValueError("status is not valid")
         if education_id is None:
             if None in values.values():
                 raise ValueError("You must provide all the education information when constructing the new education")
@@ -64,6 +68,8 @@ class EducationCreateRequest(BaseModel):
 
     @validator("passing_year", always=True)
     def validate_passing_year(cls, value: str | None) -> str | None:
+        if value is None:
+            return value
         try:
             passing_year: int = int(value)
         except ValueError as val_exec:
@@ -83,7 +89,7 @@ class EducationCreateAdminRequest(BaseModel):
     school_name: str | None = Field(None, max_length=30, description="school name of the user's education")
     passing_year: str | None = Field(None, max_length=4, description="passing year of the user's education")
     grade: float | None = Field(None, ge=2.5, le=5.0, description="grade of the user's education'")
-    status: StatusEnum = Field(StatusEnum.active,
+    status: StatusEnum|None = Field(None,
                                description="""education data validity status
 
     1: active, 3: delete""")
@@ -91,7 +97,10 @@ class EducationCreateAdminRequest(BaseModel):
     @root_validator
     def any_of(cls, values: dict[str, Any]) -> dict[str, Any]:
         education_id = values.pop('education_id')
-        status = values.pop('status')
+        try:
+            status = values.pop('status')
+        except KeyError as key_exec:
+            raise ValueError("status is not valid")
         if education_id is None:
             if None in values.values():
                 raise ValueError("You must provide all the education information when constructing the new education")
@@ -118,7 +127,7 @@ class ProfileEducationResponse(EducationBase):
 
 
 class EducationCreateResponse(ProfileEducationResponse):
-    status: StatusEnum | None
+    status: ResponseEnumData | None
 
     class Config:
         schema_extra = {
