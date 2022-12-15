@@ -31,8 +31,8 @@ class ProfileEducation(BaseModel):
     school_name: str | None = Field(None, max_length=30, description="school name of the user's education")
     passing_year: str | None = Field(None, max_length=4, description="passing year of the user's education")
     grade: float | None = Field(None, ge=2.5, le=5.0, description="grade of the user's education'")
-    status: StatusEnum|None = Field(StatusEnum.active,
-                               description="""education data validity status
+    status: StatusEnum | None = Field(StatusEnum.active,
+                                      description="""education data validity status
 
     1: active, 3: delete""")
 
@@ -47,7 +47,7 @@ class EducationCreateRequest(BaseModel):
     passing_year: str | None = Field(None, max_length=4, description="passing year of the user's education")
     grade: float | None = Field(None, ge=2.5, le=5.0, description="grade of the user's education'")
     status: UserStatusEnum | None = Field(None,
-                                   description="""education data validity status
+                                          description="""education data validity status
                                    
     1: active, 3: delete""")
 
@@ -89,8 +89,8 @@ class EducationCreateAdminRequest(BaseModel):
     school_name: str | None = Field(None, max_length=30, description="school name of the user's education")
     passing_year: str | None = Field(None, max_length=4, description="passing year of the user's education")
     grade: float | None = Field(None, ge=2.5, le=5.0, description="grade of the user's education'")
-    status: StatusEnum|None = Field(None,
-                               description="""education data validity status
+    status: StatusEnum | None = Field(None,
+                                      description="""education data validity status
 
     1: active, 3: delete""")
 
@@ -123,7 +123,7 @@ class EducationCreateAdminRequest(BaseModel):
 
 class ProfileEducationResponse(EducationBase):
     education_id: int | None = Field(gt=0, description="id of the user education")
-    status: ResponseEnumData| None = Field(description="status of the education")
+    status: ResponseEnumData | None = Field(description="status of the education")
 
 
 class EducationCreateResponse(ProfileEducationResponse):

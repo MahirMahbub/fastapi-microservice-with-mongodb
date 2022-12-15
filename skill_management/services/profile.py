@@ -1,4 +1,4 @@
-from typing import cast
+from typing import cast, Any
 
 from beanie.odm.operators.find.array import ElemMatch
 from fastapi import HTTPException, status
@@ -91,7 +91,8 @@ class ProfileService:
             designation_id=profile_request.designation_id,
             profile_status=profile_request.designation_status,  # type: ignore
             designation_status=profile_request.designation_status,
-            about=profile_request.about
+            about=profile_request.about,
+            experience_year=profile_request.experience_year,
         )
         item_dict = update_item.dict(
             exclude_unset=True,
@@ -115,74 +116,80 @@ class ProfileService:
                 }
             )
         elif profile_request.designation_id is not None:
-            if profile_request.designation_status == DesignationStatusEnum.active:
-                all_experience_id = [
-                    experience.experience_id for experience in old_profile.experiences
-                ]
+            # if profile_request.designation_status == DesignationStatusEnum.active:
+            all_experience_id = [
+                experience.experience_id for experience in old_profile.experiences
+            ]
 
-                if not all_experience_id:
-                    new_experience_id = 1
+            if not all_experience_id:
+                new_experience_id = 1
 
-                else:
-                    """
-                    Calculate new experience id
-                    """
-                    new_experience_id = max(all_experience_id) + 1
+            else:
+                """
+                Calculate new experience id
+                """
+                new_experience_id = max(all_experience_id) + 1
 
-                """
-                Get Designation Data
-                """
-                designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
+            """
+            Get Designation Data
+            """
+            designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
 
-                """
-                Create new experience from the designation id provided
-                """
-                new_experience = ProfileExperience(
-                    experience_id=new_experience_id,
-                    company_name="iXora Solution Ltd.",
-                    designation=ExperienceDesignation(
-                        designation=designation.designation,
-                        designation_id=profile_request.designation_id),
-                    start_date=None,
-                    end_date=None,
-                    job_responsibility=None,
-                    status=StatusEnum.active  # type: ignore
-                )
+            """
+            Create new experience from the designation id provided
+            """
+            new_experience = ProfileExperience(
+                experience_id=new_experience_id,
+                company_name="iXora Solution Ltd.",
+                designation=ExperienceDesignation(
+                    designation=designation.designation,
+                    designation_id=profile_request.designation_id
+                ),
+                start_date=None,
+                end_date=None,
+                job_responsibility=None,
+                status=StatusEnum.active
+            )
 
-                """
-                Update the profile in the database
-                """
+            """
+            Update the profile in the database
+            """
 
-                db_profile = await profile_crud_manager.update(  # type: ignore
-                    id_=profile_request.profile_id,  # type: ignore
-                    item_dict={
-                        "personal_detail": old_profile_details,
-                        "designation": {
-                            'designation_id': designation.id,
-                            'designation': designation.designation,
-                            'start_date': None, 'end_date': None,
-                            'designation_status': profile_request.designation_status,
-                        }
-                    },
-                    push_item={
-                        "experiences": new_experience.dict(
-                            exclude_unset=True, exclude_none=True
-                        )
+            db_profile = await profile_crud_manager.update(  # type: ignore
+                id_=profile_request.profile_id,  # type: ignore
+                item_dict={
+                    "personal_detail": old_profile_details,
+                    "designation": {
+                        'designation_id': designation.id,
+                        'designation': designation.designation,
+                        'start_date': None, 'end_date': None,
+                        'designation_status': profile_request.designation_status
+                        if profile_request.designation_status is not None
+                        else DesignationStatusEnum.active
                     }
-                )
-            elif profile_request.designation_status == DesignationStatusEnum.inactive:
-                designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
-                db_profile = await profile_crud_manager.update(  # type: ignore
-                    id_=profile_request.profile_id,  # type: ignore
-                    item_dict={
-                        "personal_detail": old_profile_details,
-                        "designation": {
-                            'designation_id': designation.id,
-                            'designation': designation.designation,
-                            'designation_status': profile_request.designation_status,
-                        }
-                    }
-                )
+                },
+                push_item={
+                    "experiences": new_experience.dict(
+                    )
+                }
+            )
+        # if profile_request.designation_status == DesignationStatusEnum.inactive:
+        #     designation= None
+        #     if profile_request.designation_id is not None:
+        #         designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
+        #     db_profile = await profile_crud_manager.update(  # type: ignore
+        #         id_=profile_request.profile_id,  # type: ignore
+        #         item_dict={
+        #             "personal_detail": old_profile_details,
+        #             "designation": {
+        #                 'designation_id': designation.id if designation is not None else old_profile.designation.designation_id,
+        #                 'designation': designation.designation if designation is not None else old_profile.designation.designation,
+        #                 'start_date': None if designation is None else old_profile.designation.start_date,
+        #                 'end_date':  None if designation is None else old_profile.designation.end_date,
+        #                 'designation_status': profile_request.designation_status,
+        #             }
+        #         }
+        #     )
 
         """
         Create skill list for the response
@@ -191,14 +198,18 @@ class ProfileService:
         for skill_ in db_profile.skills:
             certificate_files = [
                 FileResponse(
-                    file_name=file,
-                    url="/files/%s" % file.id
-                ) async for file in Files.find(
+                    file_name=file.file_name,
+                    url="/admin/files/response/" + str(file.id),
+                    status=ResponseEnumData(
+                        id=file.status,
+                        name=StatusEnum(file.status).name
+                    )
+                ) for file in await Files.find(
                     {
                         "owner": db_profile.id,
                         "file_type": FileTypeEnum.certificate
                     }
-                )
+                ).to_list() if file.status == StatusEnum.active
             ]
             skill_status_object: Status = await Status.get(skill_.status.value)  # type: ignore
             skill_list.append(
@@ -234,6 +245,23 @@ class ProfileService:
         """
         Create personal detail for response
         """
+        profile_pictures = await Files.find(
+            {
+                "owner": db_profile.id,
+                "file_type": FileTypeEnum.picture,
+                "status": StatusEnum.active
+            }
+        ).sort("-created_at").to_list()
+        profile_url = None
+        if profile_pictures:
+            profile_url = "/admin/files/response/" + str(profile_pictures[0].id)
+        cv_files = await Files.find(
+            {
+                "owner": db_profile.id,
+                "file_type": FileTypeEnum.resume,
+                "status": StatusEnum.active
+            }
+        ).sort("-created_at").to_list()
         personal_detail_response = ProfilePersonalDetailsResponse(
             name=db_profile.personal_detail.name,
             date_of_birth=db_profile.personal_detail.date_of_birth,
@@ -244,7 +272,18 @@ class ProfileService:
             mobile=db_profile.personal_detail.mobile,
             about=db_profile.personal_detail.about,
             address=db_profile.personal_detail.address,
-            experience_year=db_profile.personal_detail.experience_year
+            experience_year=db_profile.personal_detail.experience_year,
+            cv_urls=[
+                FileResponse(
+                    file_name=data.file_name,
+                    url="/admin/files/response/" + str(data.id),
+                    status=ResponseEnumData(
+                        id=data.status,
+                        name=StatusEnum(data.status).name
+                    )
+                ) for data in cv_files
+            ],
+            picture_url=profile_url,
         )
 
         """
@@ -290,7 +329,9 @@ class ProfileService:
                     degree_name=education.degree_name,
                     grade=education.grade,
                     passing_year=education.passing_year,
-                    school_name=education.school_name
+                    school_name=education.school_name,
+                    status=ResponseEnumData(id=education.status,
+                                            name=StatusEnum(education.status).name)
                 ) for education in db_profile.educations
             ],
             personal_details=personal_detail_response,
@@ -359,7 +400,7 @@ class ProfileService:
             if key in old_profile_details:
                 old_profile_details[key] = value
         if profile_request.designation_id is not None:
-            designation: Designations = await Designations.get(profile_request.designation_id)
+            designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
             db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
                 id_=profile_request.profile_id,  # type: ignore
                 item_dict={
@@ -386,51 +427,71 @@ class ProfileService:
         """
         skill_list = []
         for skill_ in db_profile.skills:
-            certificate_files = [
-                FileResponse(
-                    file_name=file,
-                    url="/files/%s" % file.id
-                ) async for file in Files.find(
-                    {
-                        "owner": db_profile.id,
-                        "file_type": FileTypeEnum.certificate
-                    }
-                )
-            ]
-            skill_list.append(
-                ProfileSkillResponse(
-                    skill_id=skill_.skill_id,
-                    skill_name=skill_.skill_name,
-                    experience_year=skill_.experience_year,
-                    number_of_projects=skill_.number_of_projects,
-                    level=skill_.level,
-                    training_duration=skill_.training_duration,
-                    achievements=skill_.achievements,
-                    certificate=skill_.certificate,
-                    certificate_files=certificate_files,
-                    status=ResponseEnumData(
-                        id=skill_.status,
-                        name=StatusEnum(skill_.status).name
-                    ),
-                    achievements_description=skill_.achievements_description,
-                    skill_category=[
-                        ResponseEnumData(
-                            id=skill_category_id,
-                            name=SkillCategoryEnum(skill_category_id.value).name
+            if skill_.status == StatusEnum.active:
+                certificate_files = [
+                    FileResponse(
+                        file_name=file.file_name,
+                        url="/profile/files/response/%s" % file.id,
+                        status=ResponseEnumData(id=file.status, name=StatusEnum(file.status).name)
+                    ) for file in await Files.find(
+                        {
+                            "owner": db_profile.id,
+                            "file_type": FileTypeEnum.certificate
+                        }
+                    ).to_list() if file.status == StatusEnum.active
+                ]
+                skill_list.append(
+                    ProfileSkillResponse(
+                        skill_id=skill_.skill_id,
+                        skill_name=skill_.skill_name,
+                        experience_year=skill_.experience_year,
+                        number_of_projects=skill_.number_of_projects,
+                        level=skill_.level,
+                        training_duration=skill_.training_duration,
+                        achievements=skill_.achievements,
+                        certificate=skill_.certificate,
+                        certificate_files=certificate_files,
+                        status=ResponseEnumData(
+                            id=skill_.status,
+                            name=StatusEnum(skill_.status).name
+                        ),
+                        achievements_description=skill_.achievements_description,
+                        skill_category=[
+                            ResponseEnumData(
+                                id=skill_category_id,
+                                name=SkillCategoryEnum(skill_category_id.value).name
+                            )
+                            for skill_category_id in skill_.skill_category
+                        ],
+                        skill_type=ResponseEnumData(
+                            id=skill_.skill_type,
+                            name=SkillTypeEnum(skill_.skill_type.value).name
                         )
-                        for skill_category_id in skill_.skill_category
-                    ],
-                    skill_type=ResponseEnumData(
-                        id=skill_.skill_type,
-                        name=SkillTypeEnum(skill_.skill_type.value).name
-                    )
 
+                    )
                 )
-            )
 
             """
             Create personal detail for response
             """
+        profile_pictures = await Files.find(
+            {
+                "owner": db_profile.id,
+                "file_type": FileTypeEnum.picture,
+                "status": StatusEnum.active
+            }
+        ).sort("-created_at").to_list()
+        profile_url = None
+
+        if profile_pictures:
+            profile_url = "/profile/files/response/" + str(profile_pictures[0].id)
+        cv_files = await Files.find(
+            {
+                "owner": db_profile.id,
+                "file_type": FileTypeEnum.resume,
+                "status": StatusEnum.active
+            }
+        ).sort("-created_at").to_list()
         personal_detail_response = ProfilePersonalDetailsResponse(
             name=db_profile.personal_detail.name,
             date_of_birth=db_profile.personal_detail.date_of_birth,
@@ -442,6 +503,18 @@ class ProfileService:
             about=db_profile.personal_detail.about,
             address=db_profile.personal_detail.address,
             experience_year=db_profile.personal_detail.experience_year,
+            cv_urls=[
+                FileResponse(
+                    file_name=data.file_name,
+                    url="/profile/files/response/" + str(data.id),
+                    status=ResponseEnumData(
+                        id=data.status,
+                        name=StatusEnum(data.status).name
+                    )
+                ) for data in cv_files
+            ],
+            picture_url=profile_url,
+
         )
 
         """
@@ -478,7 +551,7 @@ class ProfileService:
                         name=StatusEnum(experience.status.value).name
                     )
                 )
-                for experience in db_profile.experiences
+                for experience in db_profile.experiences if experience.status == StatusEnum.active
             ],
             educations=[
                 ProfileEducationResponse(
@@ -486,8 +559,13 @@ class ProfileService:
                     degree_name=education.degree_name,
                     grade=education.grade,
                     passing_year=education.passing_year,
-                    school_name=education.school_name
-                ) for education in db_profile.educations
+                    school_name=education.school_name,
+                    status=ResponseEnumData(
+                        id=education.status,
+                        name=StatusEnum(education.status.value).name
+                    )
+                )
+                for education in db_profile.educations if education.status == StatusEnum.active
             ],
             personal_details=personal_detail_response,
             profile_status=ResponseEnumData(
@@ -558,12 +636,12 @@ class ProfileService:
         db_profile = Profiles(
             user_id=profile_request.email,
             personal_detail=personal_detail,
-            profile_status=profile_request.profile_status,
+            profile_status=cast(ProfileStatusEnum, profile_request.profile_status),
             designation=ProfileDesignation(
                 designation_id=designation.id,
                 designation=designation.designation,
                 start_date=None, end_date=None,
-                designation_status=profile_request.designation_status,
+                designation_status=cast(DesignationStatusEnum, profile_request.designation_status),
             ),
             skills=[],
             experiences=new_experience,
@@ -592,7 +670,9 @@ class ProfileService:
             mobile=profile_request.mobile,
             about=None,
             address=None,
-            experience_year=None
+            experience_year=None,
+            cv_urls=[],
+            picture_url=None,
         )
 
         """
@@ -664,7 +744,7 @@ class ProfileService:
         personal_detail = ProfilePersonalDetails(
             name=profile_request.name,
             date_of_birth=profile_request.date_of_birth,
-            gender=profile_request.gender,
+            gender=cast(GenderEnum, profile_request.gender),
             mobile=profile_request.mobile,
             about=None,
             address=None,
@@ -750,16 +830,23 @@ class ProfileService:
                                           email=None,
                                           profile_status=None,
                                           page_number,
-                                          page_size):
-        query = {}
+                                          page_size) -> PaginatedProfileResponse:
+        query: dict[str, Any] | ElemMatch = {}
 
         if skill_id is not None:
-            query = ElemMatch(
-                Profiles.skills,
-                {
-                    "skill_id": skill_id
+            # query = {ElemMatch(
+            #     Profiles.skills,
+            #     {
+            #         "skill_id": skill_id
+            #     }
+            # )}
+            query = {
+                "skills": {
+                    "$elemMatch": {
+                        "skill_id": skill_id
+                    }
                 }
-            )
+            }
         elif employee_name is not None:
             query = {
                 "personal_detail.name":

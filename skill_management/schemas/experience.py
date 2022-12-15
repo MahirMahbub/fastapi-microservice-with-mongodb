@@ -60,21 +60,24 @@ class ProfileExperience(BaseModel):
 class ExperienceCreateRequest(BaseModel):
     experience_id: int | None = Field(ge=1, description="id of experiment for user")
     company_name: str | None = Field(max_length=30, description="name of company that user worked on")
-    job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
+    job_responsibility: str | None = Field(description="responsibility for job on the company")
     designation: str | None = Field(description="designation for profile experience")
     start_date: datetime | None = Field(description="start date of experience")
     end_date: datetime | None = Field(description='''end date of experience
     
     > start_date''')
-    status: UserStatusEnum = Field(UserStatusEnum.active,
-                                   description="""experience data validity status
+    status: UserStatusEnum | None = Field(None,
+                                          description="""experience data validity status
                                    
     1: active, 3: delete""")
 
     @root_validator
     def any_of(cls, values: dict[str, Any]) -> dict[str, Any]:
         experience_id = values.pop('experience_id')
-        status = values.pop('status')
+        try:
+            status = values.pop('status')
+        except KeyError as key_exec:
+            raise ValueError("status is not valid")
         if experience_id is None:
             if None in values.values():
                 raise ValueError("You must provide all the experience information when constructing the new experience")

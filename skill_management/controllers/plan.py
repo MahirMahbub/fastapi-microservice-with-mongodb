@@ -19,7 +19,7 @@ logger = get_logger()
 
 @plan_router.post("/profile/plans",
                   response_class=ORJSONResponse,
-                  response_model=PlanCreateResponse,
+                  response_model=PlanListDataResponse,
                   status_code=201,
                   responses={
                       400: {
@@ -46,7 +46,9 @@ async def create_plan_by_user(request: Request,  # type: ignore
                                           "task": [
                                               {
                                                   "description": "It is a task for the planning",
-                                                  "status": 1
+                                                  "status": 1,
+                                                  "duration": 4,
+                                                  "spend_time": 3
                                               }
                                           ]
                                       },
@@ -61,7 +63,6 @@ async def create_plan_by_user(request: Request,  # type: ignore
                                                   "plan_id": "954eba99-b1ec-4c1f-b5b1-3cc9db9e59e0",
                                                   "plan_type": 1,
                                                   "notes": "It is a note for the planning",
-                                                  "skill_id": 1,
                                                   "start_date": "2022-11-24T11:59:28.549417+00:00",
                                                   "end_date": "2022-11-25T11:59:28.549421+00:00",
                                                   "delete_tasks": [2],
@@ -69,7 +70,9 @@ async def create_plan_by_user(request: Request,  # type: ignore
                                                   "task": [
                                                       {
                                                           "description": "It is a task for the planning",
-                                                          "status": 2
+                                                          "status": 2,
+                                                          "duration": 4,
+                                                          "spend_time": 3
                                                       }
                                                   ]
                                               }
@@ -89,7 +92,7 @@ async def create_plan_by_user(request: Request,  # type: ignore
 
 @plan_router.post("/admin/profile/plans",
                   response_class=ORJSONResponse,
-                  response_model=PlanCreateResponse,
+                  response_model=PlanListDataResponse,
                   status_code=201,
                   responses={
                       400: {
@@ -110,14 +113,15 @@ async def create_plan_by_admin(request: Request,  # type: ignore
                                            "profile_id": uuid.uuid4(),
                                            "plan_type": 1,
                                            "notes": "It is a note for the planning",
-                                           "skill_id": 1,
                                            "status": 1,
                                            "start_date": "2022-11-24T11:59:28.549417+00:00",
                                            "end_date": "2022-11-25T11:59:28.549421+00:00",
                                            "task": [
                                                {
                                                    "description": "It is a task for the planning",
-                                                   "status": 1
+                                                   "status": 1,
+                                                   "duration": 4,
+                                                   "spend_time": 3
                                                }
                                            ]
                                        },
@@ -141,7 +145,9 @@ async def create_plan_by_admin(request: Request,  # type: ignore
                                                    "task": [
                                                        {
                                                            "description": "It is a task for the planning",
-                                                           "status": 2
+                                                           "status": 1,
+                                                           "duration": 4,
+                                                           "spend_time": 3
                                                        }
                                                    ]
                                                }
@@ -149,7 +155,7 @@ async def create_plan_by_admin(request: Request,  # type: ignore
 
                                }, ),
                                service: PlanService = Depends(),
-                               user_id: str = Depends(JWTBearer())):
+                               user_id: str = Depends(JWTBearerAdmin())):
     """
     **Create:** must provide *"skill_id"*, *"profile_id"*, *"start_date"*, *"end_date"*, *"plan_type"* for creating a plan.
 

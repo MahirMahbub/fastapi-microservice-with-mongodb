@@ -114,7 +114,7 @@ class ProfileDetailsResponse(BaseModel):
                 "email": "developer.ixorasolution@gmail.com",
                 "personal_details": {
                     "name": "Chelsey Adams",
-                    "date_of_birth": (datetime.datetime.now()-datetime.timedelta(days=5543)).date(),
+                    "date_of_birth": (datetime.datetime.now() - datetime.timedelta(days=5543)).date(),
                     "gender": {
                         "id": 1,
                         "name": "male"
@@ -313,15 +313,16 @@ class PaginatedProfileResponse(PaginatedResponse):
 
 
 class ProfileBasicRequest(BaseModel):
-    profile_id: PydanticObjectId | None = Field(description="profile id of the user for update")
-    email: EmailStr | None = Field(description="Email address of the user")
-    name: str | None = Field(max_length=20, min_length=2, description="name of the user")
-    date_of_birth: date | None = Field(description="date of birth of the user")
-    gender: GenderEnum = Field(default=GenderEnum.others, description="gender of the user")
-    mobile: str | None = Field(description="mobile number of the user")
-    address: str | None = Field(max_length=255, description="address of the user")
-    designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
-    about: str | None = Field(max_length=256, description="description of the user")
+    profile_id: PydanticObjectId | None = Field(None, description="profile id of the user for update")
+    email: EmailStr | None = Field(None, description="Email address of the user")
+    name: str | None = Field(None, max_length=20, description="name of the user")
+    date_of_birth: date | None = Field(None, description="date of birth of the user")
+    gender: GenderEnum|None = Field(None, description="gender of the user")
+    mobile: str | None = Field(None, description="mobile number of the user")
+    address: str | None = Field(None, max_length=255, description="address of the user")
+    designation_id: int | None = Field(None, description="designation id of the given designation or user")
+    experience_year: int | None = Field(None, description="experience year of the user")
+    about: str | None = Field(None, max_length=256, description="description of the user")
 
     @validator("date_of_birth", always=True)
     def validate_date_of_birth(cls, value: date | None) -> date | None:
@@ -346,9 +347,10 @@ class ProfileBasicRequest(BaseModel):
         else:
             email = v.pop('email')
             name = v.pop('name')
-            designation_id = v.pop('designation_id')
-            if email is not None or name is not None or designation_id is not None:
-                raise ValueError('You should not provide email, name and designation for updating a profile')
+            # designation_id = v.pop('designation_id')
+            if email is not None or name is not None:
+                raise ValueError('You should not provide email, name for updating a profile')
+            # v["designation_id"] = designation_id
         v["profile_id"] = profile_id
 
         return v
@@ -356,22 +358,23 @@ class ProfileBasicRequest(BaseModel):
 
 class ProfileBasicForAdminRequest(BaseModel):
     profile_id: PydanticObjectId | None = Field(description="profile id of the user for update")
-    email: EmailStr | None = Field(description="Email address of the user")
-    name: str | None = Field(max_length=20, min_length=2, description="name of the user")
-    date_of_birth: date | None = Field(description="date of birth of the user")
-    gender: GenderEnum | None = Field(description="gender of the user")
-    mobile: str | None = Field(description="mobile number of the user")
-    address: str | None = Field(max_length=255, description="address of the user")
-    designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
-    profile_status: ProfileStatusEnum = Field(default=ProfileStatusEnum.inactive, description="""profile status of the user
+    email: EmailStr | None = Field(None, description="Email address of the user")
+    name: str | None = Field(None, max_length=20, min_length=2, description="name of the user")
+    date_of_birth: date | None = Field(None, description="date of birth of the user")
+    gender: GenderEnum | None = Field(None, description="gender of the user")
+    mobile: str | None = Field(None, description="mobile number of the user")
+    address: str | None = Field(None, max_length=255, description="address of the user")
+    designation_id: int | None = Field(None, description="designation id of the given designation or user")
+    experience_year: int | None = Field(None, description="experience of the user in years")
+    profile_status: ProfileStatusEnum | None = Field(default=None, description="""profile status of the user
     
     full_time: 1, part_time: 2, delete: 3, inactive: 4
     """)
-    designation_status: DesignationStatusEnum = Field(default=DesignationStatusEnum.inactive,
-                                                      description="""designation status of user
+    designation_status: DesignationStatusEnum | None = Field(default=None,
+                                                             description="""designation status of user
     active: 1, inactive: 2
     """)
-    about: str | None = Field(max_length=256, description="description of the user")
+    about: str | None = Field(None, max_length=256, description="description of the user")
 
     @validator("date_of_birth", always=True)
     def validate_date_of_birth(cls, value: date | None) -> date | None:
@@ -413,6 +416,7 @@ class ProfileUpdateByAdmin(BaseModel):
     mobile: str | None = Field(description="mobile number of the user")
     address: str | None = Field(max_length=255, description="address of the user")
     designation_id: int | None = Field(ge=1, description="designation id of the given designation or user")
+    experience_year: int | None = Field(description="experience of the user in years")
     profile_status: ProfileStatusEnum | None = Field(description="""profile status of the user
 
         full_time: 1, part_time: 2, delete: 3, inactive: 4
@@ -436,6 +440,7 @@ class ProfileUpdateByUser(BaseModel):
 
 class ProfileView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
+    profile_status: ProfileStatusEnum
 
 
 class ProfileSkillView(BaseModel):
@@ -452,8 +457,8 @@ class ProfileDesignationView(BaseModel):
 
 class ProfileDesignationExperiencesView(BaseModel):
     id: PydanticObjectId = Field(alias='_id')
-    designation: ProfileDesignation|None= Field(default=None)
-    experiences: list[ProfileExperience]|None = Field(default=None)
+    designation: ProfileDesignation | None = Field(default=None)
+    experiences: list[ProfileExperience] | None = Field(default=None)
     profile_status: ProfileStatusEnum
 
 

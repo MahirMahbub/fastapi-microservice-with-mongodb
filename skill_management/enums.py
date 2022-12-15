@@ -55,3 +55,8 @@ class ProfileStatusEnum(enum.IntEnum):
     part_time: int = 2
     delete: int = 3
     inactive: int = 4
+
+class TaskStatusEnum(enum.IntEnum):
+    complete: int = 1
+    incomplete: int = 2
+    delete: int = 3

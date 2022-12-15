@@ -14,10 +14,10 @@ class Plans(Document):
     skill: Link[Skills]
     profile: Link[Profiles]
     plan_type: PlanTypeEnum = Field(PlanTypeEnum.course, description="the type of the plan")
-    notes: str = Field(max_length=255, description="notes on the plan")
+    notes: str|None = Field(max_length=255, description="notes on the plan")
     start_date: datetime | None = Field(description="start date of plan")
     end_date: datetime | None = Field(description="end date of plan")
-    task: list[Task]
+    task: list[Task]|None
     status: StatusEnum = Field(StatusEnum.active, description="status of skill from fixed list of values")
 
     @validator("end_date", always=True)

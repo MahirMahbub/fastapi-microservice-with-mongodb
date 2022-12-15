@@ -83,10 +83,17 @@ class EducationService:
         education_request_dict = education_request.dict()
         education_request_dict.pop("education_id")
         education_status = education_request_dict.pop("status")
+        education_object=None
+        for edu in profile_educations.educations:
+            if edu.education_id == education_request.education_id:
+                education_object = edu
+                break
+
         if education_status is not None:
-            education_request_dict["status"] = cast(StatusEnum, profile_educations.educations[0].status)
+            education_request_dict["status"] = cast(StatusEnum, education_request.status)
         else:
-            education_request_dict["status"] = education_request.status
+            education_request_dict["status"] = education_object.status
+
         education_request_dict = {
             "educations.$." + str(key): val for key, val in education_request_dict.items() if val is not None
         }
@@ -230,10 +237,16 @@ class EducationService:
             "educations.$." + str(key): val for key, val in education_request_dict.items() if val is not None
         }
 
+        education_object=None
+        for edu in profile_educations.educations:
+            if edu.education_id == education_request.education_id:
+                education_object = edu
+                break
+
         if education_status is not None:
-            education_request_dict["status"] = cast(StatusEnum, profile_educations.educations[0].status)
+            education_request_dict["status"] = cast(StatusEnum, education_request.status)
         else:
-            education_request_dict["status"] = education_request.status
+            education_request_dict["status"] = education_object.status
 
         db_profile: Profiles = await profile_crud_manager.update_by_query(
             query={
