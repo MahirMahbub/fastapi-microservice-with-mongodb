@@ -16,7 +16,8 @@ from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.file import FileResponse, SkillCertificateResponse
 from skill_management.schemas.profile import ProfileSkillView
 from skill_management.schemas.skill import CreateSkillDataRequest, ProfileSkill, CreateSkillDataResponse, \
-    CreateSkillListDataResponse, CreateSkillDataAdminRequest, ProfileSkillDetailsResponse, ProfileSkillResponse
+    CreateSkillListDataResponse, CreateSkillDataAdminRequest, ProfileSkillDetailsResponse, ProfileSkillResponse, \
+    GetSkillDataResponse, PaginatedSkillResponse, GetSkillDataResponseList, MasterSkillRequest
 from skill_management.services.file import FileService
 
 
@@ -486,3 +487,129 @@ class SkillService:
                 for data in db_profiles.skills if data.status == StatusEnum.active
             ]
         )
+
+    @staticmethod
+    async def get_paginated_skills_by_admin(skill_categories,
+                                            skill_name, skill_types,
+                                            page_number, page_size) -> PaginatedSkillResponse:
+        query: dict[str, Any] = {}
+
+        if skill_categories is not None and not skill_categories == []:
+            query = {
+                "skill_categories":
+                    {
+                        "$elemMatch": {
+                            "$in": skill_categories
+                        }
+                    }
+            }
+        elif skill_name is not None:
+            query = {
+                "skill_name":
+                    {
+                        '$regex': skill_name, '$options': 'i'
+                    }
+            }
+        elif skill_types is not None and not skill_types == []:
+            query = {
+                "skill_type": {
+                    "$in": skill_types
+                }
+            }
+        db_skills = await Skills.find(query).skip((page_number - 1) * page_size).limit(page_size).to_list()
+        count = await (Skills.find(query).count())
+        response = [
+            GetSkillDataResponse(
+                skill_id=db_skill.id,
+                skill_type=ResponseEnumData(id=db_skill.skill_type,
+                                            name=SkillTypeEnum(db_skill.skill_type).name),
+                skill_category=[
+                    ResponseEnumData(
+                        id=category_data,
+                        name=SkillCategoryEnum(category_data).name
+                    ) for category_data in db_skill.skill_categories
+                ],
+                skill_name=db_skill.skill_name
+            )
+            for db_skill in db_skills]
+        return PaginatedSkillResponse(
+
+            previous_page=page_number - 1 if page_number > 1 else None,
+            next_page=page_number + 1 if page_number * page_size < count else None,
+            has_previous=page_number > 1,
+            has_next=page_number * page_size < count,
+            total_items=count,
+            pages=(count // page_size + 1) if count % page_size > 0 else count // page_size,
+            items=response)
+
+    async def get_skill_details(self, skill_id) -> GetSkillDataResponse:
+        db_skill = cast(Skills, await Skills.find({"_id": skill_id}).first_or_none())
+        return GetSkillDataResponse(
+            skill_id=db_skill.id,
+            skill_type=ResponseEnumData(id=db_skill.skill_type,
+                                        name=SkillTypeEnum(db_skill.skill_type).name),
+            skill_category=[
+                ResponseEnumData(
+                    id=category_data,
+                    name=SkillCategoryEnum(category_data).name
+                ) for category_data in db_skill.skill_categories
+            ],
+            skill_name=db_skill.skill_name
+        )
+
+    @staticmethod
+    async def get_skill_list() -> GetSkillDataResponseList:
+        db_skills = await Skills.find().to_list()
+        response = GetSkillDataResponseList(skills=[
+            GetSkillDataResponse(
+                skill_id=db_skill.id,
+                skill_type=ResponseEnumData(id=db_skill.skill_type,
+                                            name=SkillTypeEnum(db_skill.skill_type).name),
+                skill_category=[
+                    ResponseEnumData(
+                        id=category_data,
+                        name=SkillCategoryEnum(category_data).name
+                    ) for category_data in db_skill.skill_categories
+                ],
+                skill_name=db_skill.skill_name
+            )
+            for db_skill in db_skills])
+        return response
+
+    async def create_or_update_skill(self, skill_request: MasterSkillRequest)-> GetSkillDataResponse:
+        skill_id = skill_request.skill_id
+        db_skill = cast(Skills, await Skills.find({"_id": skill_id}).first_or_none())
+        max_id = await Skills.find().sort([("_id", -1)]).first_or_none()
+        if db_skill is None:
+            db_skill = Skills(
+                id=max_id.id + 1 if max_id is not None else 1,
+                skill_type=skill_request.skill_type,
+                skill_categories=skill_request.skill_categories,
+                skill_name=skill_request.skill_name
+            )
+            await db_skill.insert()
+        else:
+            db_skill.skill_type = skill_request.skill_type if skill_request.skill_type is not None else db_skill.skill_type
+            db_skill.skill_categories = skill_request.skill_categories if skill_request.skill_categories is not None else db_skill.skill_categories
+            db_skill.skill_name = skill_request.skill_name if skill_request.skill_name is not None else db_skill.skill_name
+            await db_skill.save()
+
+        return GetSkillDataResponse(
+            skill_id=db_skill.id,
+            skill_type=ResponseEnumData(id=db_skill.skill_type,
+                                        name=SkillTypeEnum(db_skill.skill_type).name),
+            skill_category=[
+                ResponseEnumData(
+                    id=category_data,
+                    name=SkillCategoryEnum(category_data).name
+                ) for category_data in db_skill.skill_categories
+            ],
+            skill_name=db_skill.skill_name
+        )
+
+    async def delete_skill(self, skill_id: int|None)-> None:
+         delete_response = await Skills.find({"_id": skill_id}).delete()
+         if delete_response.deleted_count == 0:
+             raise HTTPException(status_code=404, detail="Skill not found")
+         raise HTTPException(status_code=status.HTTP_200_OK, detail="Skill deleted successfully")
+

@@ -824,7 +824,7 @@ class ProfileService:
         return response
 
     async def get_user_profiles_for_admin(self, *,
-                                          skill_id=None,
+                                          skill_ids=None,
                                           employee_name=None,
                                           mobile=None,
                                           email=None,
@@ -833,7 +833,7 @@ class ProfileService:
                                           page_size) -> PaginatedProfileResponse:
         query: dict[str, Any] | ElemMatch = {}
 
-        if skill_id is not None:
+        if skill_ids is not None:
             # query = {ElemMatch(
             #     Profiles.skills,
             #     {
@@ -843,7 +843,9 @@ class ProfileService:
             query = {
                 "skills": {
                     "$elemMatch": {
-                        "skill_id": skill_id
+                        "skill_id": {
+                            "$in": skill_ids
+                        }
                     }
                 }
             }

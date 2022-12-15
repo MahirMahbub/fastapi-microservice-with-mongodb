@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, validator
 
 from skill_management.enums import StatusEnum, UserStatusEnum, SkillTypeEnum, SkillCategoryEnum
 from skill_management.models.file import Files
-from skill_management.schemas.base import ResponseEnumData
+from skill_management.schemas.base import ResponseEnumData, PaginatedResponse
 from skill_management.schemas.file import FileResponse
 
 
@@ -360,6 +360,10 @@ class GetSkillDataResponseList(BaseModel):
         }
 
 
+class PaginatedSkillResponse(PaginatedResponse):
+    items: list[GetSkillDataResponse] | None
+
+
 class ProfileSkillDataResponse(BaseModel):
     skill_id: int | None = Field(description="id of skill")
     experience_year: int | None = Field(le=45, description="experience of the indicated skill")
@@ -482,3 +486,9 @@ class ProfileSkill(BaseModel):
 
 class ProfileSkillDetailsResponse(BaseModel):
     skills: list[ProfileSkillResponse]
+
+class MasterSkillRequest(BaseModel):
+    skill_id: int|None = None
+    skill_name: str|None = None
+    skill_type: SkillTypeEnum|None = None
+    skill_categories: list[SkillCategoryEnum]| None = None

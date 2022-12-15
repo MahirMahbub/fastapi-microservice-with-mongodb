@@ -21,8 +21,8 @@ api_router.include_router(
     fastapi_users.get_verify_router(UserReadVerify),  # type: ignore
     tags=["auth"],
 )
-api_router.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    prefix="/users",
-    tags=["users"],
-)
+# api_router.include_router(
+#     fastapi_users.get_users_router(UserRead, UserUpdate),
+#     prefix="/users",
+#     tags=["users"],
+# )

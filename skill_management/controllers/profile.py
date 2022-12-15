@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime, timezone, timedelta
+from typing import cast
 
 from beanie import PydanticObjectId
 from fastapi import Query, Depends, APIRouter, Path, Body
@@ -34,7 +35,7 @@ logger = get_logger()
                     }
                     )
 async def get_user_profiles_for_admin(request: Request,  # type: ignore
-                                      skill_id: int | None = Query(default=None,
+                                      skill_ids: list[int] | None = Query(default=None,
                                                                    description="input skill id as integer",
                                                                    alias="skill-id"),
                                       employee_name: str | None = Query(default=None,
@@ -57,7 +58,7 @@ async def get_user_profiles_for_admin(request: Request,  # type: ignore
                                       admin_user_id: str = Depends(JWTBearerAdmin()),
                                       service: ProfileService = Depends(),
                                       ):
-    return await service.get_user_profiles_for_admin(skill_id=skill_id,
+    return await service.get_user_profiles_for_admin(skill_ids=skill_ids,
                                                      employee_name=employee_name,
                                                      mobile=mobile,
                                                      email=email,
@@ -108,7 +109,7 @@ async def get_user_profile_by_user(request: Request,  # type: ignore
                                    service: ProfileService = Depends(),
                                    ):
     email = await get_profile_email(request=request, user_id=user_id)
-    return await service.get_user_profile_by_user(email)
+    return await service.get_user_profile_by_user(cast(str, email))
 
 
 # ProfileBasicRequest
