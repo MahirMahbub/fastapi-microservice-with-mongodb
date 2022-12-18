@@ -983,7 +983,7 @@ class ProfileService:
         )
         profile_pictures = await Files.find(
             {
-                "owner": profile_id,
+                "owner": db_profiles.id,
                 "file_type": FileTypeEnum.picture,
                 "status": StatusEnum.active
             }
@@ -1017,7 +1017,7 @@ class ProfileService:
                 cv_urls=[
                     FileResponse(
                         file_name=data.file_name,
-                        url="/profile/files/response/" + str(data.id),
+                        url="/admin/files/response/" + str(data.id),
                         status=ResponseEnumData(
                             id=data.status,
                             name=StatusEnum(data.status).name

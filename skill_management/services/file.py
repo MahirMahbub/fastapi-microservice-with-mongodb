@@ -130,7 +130,6 @@ class FileService:
                          file_size=file_size / 1000,
                          skill_id=skill_id,
                          created_at=cast(datetime, datetime.now(timezone.utc).isoformat()))
-            await file.insert()
             if file_type == FileTypeEnum.picture:
                 file_crud_manager = FileRepository()
                 changed_response = cast(
@@ -143,6 +142,7 @@ class FileService:
                         }
                     )
                 )
+            await file.insert()
         except ValidationError as valid_exec:
             os.remove(location + file_name)
             return None

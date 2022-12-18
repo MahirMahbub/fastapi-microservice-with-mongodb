@@ -122,13 +122,23 @@ class ProfileDetailsResponse(BaseModel):
                     "mobile": "+01611123456",
                     "address": "House: X, State:Y, Z, Country",
                     "about": "about the user",
-                    "picture_url": "/admin/files/response/42242mjj2424",
+                    "picture_url": "/profile/files/response/42242mjj2424",
                     "experience_year": 4
                 },
                 "profile_status": {
                     "id": 1,
                     "name": "active"
-                }
+                },
+                "cv_urls": [
+                    {
+                        "file_name": "Academic CV.pdf",
+                        "url": "/profile/files/response/6399930b837c0dae0cd1cc9b",
+                        "status": {
+                            "id": 1,
+                            "name": "active"
+                        }
+                    }
+                ]
             }
         }
 

@@ -82,7 +82,7 @@ class TableRepository:
 
         document_object = self.entity_collection.find(query)
 
-        if document_object is None:
+        if await document_object.to_list() is None or await document_object.to_list() == []:
             return None
         id_ = (await document_object.to_list())[0].id
         if push_item is not None and item_dict is not None:
