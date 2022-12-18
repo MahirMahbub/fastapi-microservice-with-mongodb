@@ -35,13 +35,13 @@ services:
     depends_on:
       - auth_rabbitmq
 
-  auth:
+  auth_management:
     build:
-      context: auth_management
-      dockerfile: auth_management/AuthDockerfile
-    container_name: "auth"
-    hostname: "auth"
-    command: bash -c "uvicorn auth_management.main:auth_management --host 0.0.0.0 --port 7003 --logs-config=auth_management/logging.conf  --reload"
+      context: ./auth_management
+      dockerfile: AuthDockerfile
+    container_name: "auth_management"
+    hostname: "auth_management"
+    command: bash -c "uvicorn auth_management.main:auth_app --host 0.0.0.0 --port 7003 --log-config=auth_management/logging.conf  --reload"
     volumes:
       - ./:/auth_management
     env_file: auth_management/.env
@@ -78,7 +78,7 @@ services:
     command: "celery -A auth_management.utils.tasks.celery worker -n email-worker --loglevel=info --logfile=auth_management/logs/email_worker.logs -Q send_verify_email,send_change_password_email"
     env_file: email-worker.env
     volumes:
-      - './:/auth_management'
+      - ./:/auth_management
     links:
       - auth_rabbitmq
     depends_on:
@@ -96,7 +96,7 @@ services:
     volumes:
       - ./nginx/nginx_config.conf:/etc/nginx/conf.d/nginx_config.conf
     depends_on:
-      - auth
+      - auth_management
     networks:
       - auth_network
       - skill_management_network
@@ -108,7 +108,7 @@ services:
       dockerfile: SkillDockerfile
     container_name: "skill_management"
     hostname: "skill_management"
-    command: bash -c "uvicorn skill_management.main:skill_app --host 0.0.0.0 --port 7004 --logs-config=skill_management/logging.conf --reload"
+    command: bash -c "uvicorn skill_management.main:skill_app --host 0.0.0.0 --port 7004 --log-config=skill_management/logging.conf --reload"
     volumes:
       - ./:/skill_management
     ports:
@@ -121,10 +121,22 @@ services:
             - email_worker
             - auth_rabbitmq
             - auth_redis
+  skill_management_mongodb:
+    container_name: skill_management_mongodb
+    image: bitnami/mongodb:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - skill_management_mongodb_data:/mongodb
+    networks:
+      - skill_management_network
+      - auth_network
 volumes:
   auth_rabbitmq_data:
   auth_redis_data:
   auth_flower_data:
+  skill_management_mongodb_data:
+  skill_management:
 networks:
   auth_network:
     driver: bridge
