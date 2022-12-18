@@ -384,7 +384,8 @@ class ProfileService:
             mobile=profile_request.mobile,
             address=profile_request.address,
             designation_id=designation_id,
-            about=profile_request.about)
+            about=profile_request.about
+        )
 
         item_dict = update_item.dict(
             exclude_unset=True,
@@ -400,19 +401,79 @@ class ProfileService:
             if key in old_profile_details:
                 old_profile_details[key] = value
         if profile_request.designation_id is not None:
+            # designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
+            # db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
+            #     id_=profile_request.profile_id,  # type: ignore
+            #     item_dict={
+            #         "personal_detail": old_profile_details,
+            #         "designation": {
+            #             'designation_id': designation.id,
+            #             'designation': designation.designation,
+            #             'designation_status': DesignationStatusEnum.active,
+            #             "end_date": None,
+            #             "start_date": None
+            #         }
+            #     }
+            # )
+
+            """
+            The above commented code is for the future use. If the admin approval is required for the designation change.
+            """
+            all_experience_id = [
+                experience.experience_id for experience in old_profile.experiences
+            ]
+
+            if not all_experience_id:
+                new_experience_id = 1
+
+            else:
+                """
+                Calculate new experience id
+                """
+                new_experience_id = max(all_experience_id) + 1
+
+            """
+            Get Designation Data
+            """
             designation: Designations = await Designations.get(profile_request.designation_id)  # type: ignore
-            db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
-                id_=profile_request.profile_id,  # type: ignore
-                item_dict={
-                    "personal_detail": old_profile_details,
-                    "designation": {
-                        'designation_id': designation.id,
-                        'designation': designation.designation,
-                        'designation_status': DesignationStatusEnum.inactive,
-                        "end_date": None,
-                        "start_date": None
+
+            """
+            Create new experience from the designation id provided
+            """
+            new_experience = ProfileExperience(
+                experience_id=new_experience_id,
+                company_name="iXora Solution Ltd.",
+                designation=ExperienceDesignation(
+                    designation=designation.designation,
+                    designation_id=profile_request.designation_id
+                ),
+                start_date=None,
+                end_date=None,
+                job_responsibility=None,
+                status=StatusEnum.active
+            )
+
+            """
+            Update the profile in the database
+            """
+
+            db_profile = cast(
+                Profiles, await profile_crud_manager.update(
+                    id_=profile_request.profile_id,  # type: ignore
+                    item_dict={
+                        "personal_detail": old_profile_details,
+                        "designation": {
+                            'designation_id': designation.id,
+                            'designation': designation.designation,
+                            'start_date': None, 'end_date': None,
+                            'designation_status': DesignationStatusEnum.active
+                        }
+                    },
+                    push_item={
+                        "experiences": new_experience.dict(
+                        )
                     }
-                }
+                )
             )
         else:
             db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
@@ -763,7 +824,7 @@ class ProfileService:
                 designation_id=designation.id,
                 designation=designation.designation,
                 start_date=None, end_date=None,
-                designation_status=DesignationStatusEnum.inactive,
+                designation_status=DesignationStatusEnum.active,
             ),
             skills=[],
             experiences=[],
