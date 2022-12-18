@@ -9,7 +9,7 @@ from skill_management.models.designation import Designations
 from skill_management.models.profile import Profiles
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.schemas.base import ResponseEnumData
-from skill_management.schemas.designation import DesignationDataResponse
+from skill_management.schemas.designation import DesignationDataResponse, ProfileDesignation
 from skill_management.schemas.experience import ExperienceCreateRequest, ExperienceListDataResponse, \
     ExperienceCreateAdminRequest, ExperienceCreateResponse, ProfileExperienceDesignationResponse, ProfileExperience, \
     ExperienceDesignation, ProfileExperienceDetailsResponse, ProfileExperienceResponse
@@ -33,8 +33,8 @@ class ExperienceService:
             """
             return await self._create_experience_by_user(experience_request, email)
 
-    async def create_or_update_experience_by_admin(self,
-                                                   experience_request: ExperienceCreateAdminRequest) -> ExperienceListDataResponse:
+    async def create_or_update_experience_by_admin(self, experience_request: ExperienceCreateAdminRequest) \
+            -> ExperienceListDataResponse:
 
         if experience_request.experience_id is not None:
             """
@@ -47,7 +47,8 @@ class ExperienceService:
             """
             return await self._create_experience_by_admin(experience_request)
 
-    async def _update_experience_by_user(self, experience_request: ExperienceCreateRequest,
+    @staticmethod
+    async def _update_experience_by_user(experience_request: ExperienceCreateRequest,
                                          email: str) -> ExperienceListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_experiences = cast(
@@ -70,7 +71,7 @@ class ExperienceService:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You can only update experience for profile that is active.")
 
-        has_experience = await Profiles.find(
+        db_profile_experience = await Profiles.find(
             {
                 "user_id": email
             },
@@ -81,7 +82,7 @@ class ExperienceService:
                 }
             ),
             projection_model=ProfileDesignationExperiencesView).first_or_none()
-        if has_experience is None:
+        if db_profile_experience is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Must provide a valid experience id to update")
         experience_request_dict = experience_request.dict()
@@ -91,8 +92,8 @@ class ExperienceService:
         designation_name = experience_request_dict.pop("designation")
 
         is_db_designation = False
-        experience_object: ProfileExperience|None = None
-        for exp in has_experience.experiences:
+        experience_object: ProfileExperience | None = None
+        for exp in cast(list[ProfileExperience], db_profile_experience.experiences):
             if exp.experience_id == experience_request.experience_id:
                 experience_object = exp
                 is_db_designation = True if exp.designation.designation_id is not None else False
@@ -126,24 +127,26 @@ class ExperienceService:
         }
         experience_request_dict["experiences.$.designation.designation"] = designation.designation
         experience_request_dict["experiences.$.designation.designation_id"] = designation.designation_id
-        db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
-            query={
-                "experiences.experience_id": experience_request.experience_id,
-                "_id": profile_experiences.id
-            },
-            item_dict=experience_request_dict
+        db_profile: Profiles = cast(
+            Profiles, await profile_crud_manager.update_by_query(
+                query={
+                    "experiences.experience_id": experience_request.experience_id,
+                    "_id": profile_experiences.id
+                },
+                item_dict=experience_request_dict
+            )
         )
         if designation.designation_id is not None:
-            old_designation= profile_experiences.designation
-            old_designation.designation_status= DesignationStatusEnum.inactive
+            old_designation: ProfileDesignation = cast(ProfileDesignation, profile_experiences.designation)
+            old_designation.designation_status = DesignationStatusEnum.inactive
             old_designation.designation_id = designation.designation_id
-            old_designation.designation = designation.designation
+            old_designation.designation = cast(str, designation.designation)
             old_designation_dict = old_designation.dict()
             experience_request_dict = {
                 "designation." + str(key): val for key, val in old_designation_dict.items() if val is not None
             }
             await profile_crud_manager.update_by_query(query={"_id": profile_experiences.id},
-                                                   item_dict=experience_request_dict)
+                                                       item_dict=experience_request_dict)
         return ExperienceListDataResponse(
             experiences=[
                 ExperienceCreateResponse(
@@ -163,7 +166,8 @@ class ExperienceService:
             ]
         )
 
-    async def _create_experience_by_user(self, experience_request: ExperienceCreateRequest,
+    @staticmethod
+    async def _create_experience_by_user(experience_request: ExperienceCreateRequest,
                                          email: str) -> ExperienceListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_experiences = cast(
@@ -207,7 +211,8 @@ class ExperienceService:
             start_date=experience_request.start_date,
             end_date=experience_request.end_date,
             job_responsibility=experience_request.job_responsibility,
-            status=cast(StatusEnum, experience_request.status) if experience_request.status is not None else StatusEnum.active
+            status=cast(StatusEnum,
+                        experience_request.status) if experience_request.status is not None else StatusEnum.active
         )
         db_profile: Profiles = cast(Profiles, await profile_crud_manager.update_by_query(
             query={
@@ -239,8 +244,9 @@ class ExperienceService:
             ]
         )
 
-    async def _update_experience_by_admin(self,
-                                          experience_request: ExperienceCreateAdminRequest) -> ExperienceListDataResponse:
+    @staticmethod
+    async def _update_experience_by_admin(
+            experience_request: ExperienceCreateAdminRequest) -> ExperienceListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_experiences = cast(
             ProfileDesignationExperiencesView,
@@ -255,14 +261,14 @@ class ExperienceService:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
 
-        if not profile_experiences.profile_status in [
+        if profile_experiences.profile_status not in [
             ProfileStatusEnum.full_time,
             ProfileStatusEnum.part_time
         ]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You can only update education for profile that is active.")
 
-        has_experience = await Profiles.find(
+        db_experience_profile = await Profiles.find(
             {
                 "_id": experience_request.profile_id
             },
@@ -273,7 +279,7 @@ class ExperienceService:
             ),
             projection_model=ProfileDesignationExperiencesView
         ).first_or_none()
-        if has_experience is None:
+        if db_experience_profile is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Must provide a valid experience id to update")
 
@@ -286,7 +292,7 @@ class ExperienceService:
 
         is_db_designation = False
         experience_object = None
-        for exp in has_experience.experiences:
+        for exp in cast(list[ProfileExperience], db_experience_profile.experiences):
             if exp.experience_id == experience_request.experience_id:
                 experience_object = exp
                 is_db_designation = True if exp.designation.designation_id is not None else False
@@ -295,7 +301,7 @@ class ExperienceService:
         if experience_status is not None:
             experience_request_dict["status"] = experience_request.status
         else:
-            experience_request_dict["status"] = experience_object.status
+            experience_request_dict["status"] = cast(ProfileExperience, experience_object).status
 
         if is_db_designation:
             db_designation = await Designations.find(
@@ -321,18 +327,20 @@ class ExperienceService:
         }
         experience_request_dict["experiences.$.designation.designation"] = designation.designation
         experience_request_dict["experiences.$.designation.designation_id"] = designation.designation_id
-        db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
-            query={
-                "experiences.experience_id": experience_request.experience_id,
-                "_id": profile_experiences.id
-            },
-            item_dict=experience_request_dict
+        db_profile: Profiles = cast(
+            Profiles, await profile_crud_manager.update_by_query(
+                query={
+                    "experiences.experience_id": experience_request.experience_id,
+                    "_id": profile_experiences.id
+                },
+                item_dict=experience_request_dict
+            )
         )
         if designation.designation_id is not None:
-            old_designation = profile_experiences.designation
+            old_designation: ProfileDesignation = cast(ProfileDesignation, profile_experiences.designation)
             old_designation.designation_status = DesignationStatusEnum.inactive
             old_designation.designation_id = designation.designation_id
-            old_designation.designation = designation.designation
+            old_designation.designation = cast(str, designation.designation)
             old_designation_dict = old_designation.dict()
             experience_request_dict = {
                 "designation." + str(key): val for key, val in old_designation_dict.items() if val is not None
@@ -358,8 +366,9 @@ class ExperienceService:
             ]
         )
 
-    async def _create_experience_by_admin(self,
-                                          experience_request: ExperienceCreateAdminRequest) -> ExperienceListDataResponse:
+    @staticmethod
+    async def _create_experience_by_admin(
+            experience_request: ExperienceCreateAdminRequest) -> ExperienceListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_experiences = cast(
             ProfileExperienceView,
@@ -380,7 +389,6 @@ class ExperienceService:
         ]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You can only update education for profile that is active.")
-
 
         all_experience_ids = [
             experience.experience_id for experience in profile_experiences.experiences
@@ -403,7 +411,8 @@ class ExperienceService:
             start_date=experience_request.start_date,
             end_date=experience_request.end_date,
             job_responsibility=experience_request.job_responsibility,
-            status=cast(StatusEnum, experience_request.status) if experience_request.status is not None else StatusEnum.active,
+            status=cast(StatusEnum,
+                        experience_request.status) if experience_request.status is not None else StatusEnum.active,
         )
         db_profile: Profiles = cast(Profiles, await profile_crud_manager.update_by_query(
             query={
@@ -433,8 +442,8 @@ class ExperienceService:
             ]
         )
 
-    async def get_experiences_details_by_admin(self,
-                                               profile_id: PydanticObjectId) -> ProfileExperienceDetailsResponse:
+    @staticmethod
+    async def get_experiences_details_by_admin(profile_id: PydanticObjectId) -> ProfileExperienceDetailsResponse:
         query = {
             '_id': profile_id,
         }
@@ -465,7 +474,8 @@ class ExperienceService:
             ]
         )
 
-    async def get_experiences_details_by_user(self, email: str) -> ProfileExperienceDetailsResponse:
+    @staticmethod
+    async def get_experiences_details_by_user(email: str) -> ProfileExperienceDetailsResponse:
         query = {
             'user_id': email,
         }

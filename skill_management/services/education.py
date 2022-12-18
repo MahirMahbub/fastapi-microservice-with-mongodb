@@ -30,8 +30,8 @@ class EducationService:
             """
             return await self._create_education_by_user(education_request, email)
 
-    async def create_or_update_education_by_admin(self,
-                                                  education_request: EducationCreateAdminRequest) -> EducationListDataResponse:
+    async def create_or_update_education_by_admin(self, education_request: EducationCreateAdminRequest) \
+            -> EducationListDataResponse:
 
         if education_request.education_id is not None:
             """
@@ -44,7 +44,8 @@ class EducationService:
             """
             return await self._create_education_by_admin(education_request)
 
-    async def _update_education_by_user(self, education_request: EducationCreateRequest,
+    @staticmethod
+    async def _update_education_by_user(education_request: EducationCreateRequest,
                                         email: str) -> EducationListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_educations = cast(
@@ -83,7 +84,7 @@ class EducationService:
         education_request_dict = education_request.dict()
         education_request_dict.pop("education_id")
         education_status = education_request_dict.pop("status")
-        education_object=None
+        education_object: ProfileEducation | None = None
         for edu in profile_educations.educations:
             if edu.education_id == education_request.education_id:
                 education_object = edu
@@ -92,17 +93,19 @@ class EducationService:
         if education_status is not None:
             education_request_dict["status"] = cast(StatusEnum, education_request.status)
         else:
-            education_request_dict["status"] = education_object.status
+            education_request_dict["status"] = cast(ProfileEducation, education_object).status
 
         education_request_dict = {
             "educations.$." + str(key): val for key, val in education_request_dict.items() if val is not None
         }
-        db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
-            query={
-                "educations.education_id": education_request.education_id,
-                "_id": profile_educations.id
-            },
-            item_dict=education_request_dict
+        db_profile: Profiles = cast(
+            Profiles, await profile_crud_manager.update_by_query(
+                query={
+                    "educations.education_id": education_request.education_id,
+                    "_id": profile_educations.id
+                },
+                item_dict=education_request_dict
+            )
         )
         return EducationListDataResponse(
             educations=[
@@ -117,11 +120,12 @@ class EducationService:
                         name=StatusEnum(education.status).name
                     ),
                 )
-                for education in db_profile.educations if education.status==StatusEnum.active
+                for education in db_profile.educations if education.status == StatusEnum.active
             ]
         )
 
-    async def _create_education_by_user(self, education_request: EducationCreateRequest,
+    @staticmethod
+    async def _create_education_by_user(education_request: EducationCreateRequest,
                                         email: str) -> EducationListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_educations = cast(
@@ -137,14 +141,14 @@ class EducationService:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
 
-        if not profile_educations.profile_status in [
+        if profile_educations.profile_status not in [
             ProfileStatusEnum.full_time,
             ProfileStatusEnum.part_time
         ]:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You can only update education for profile that is active.")
 
-        all_education_ids = [
+        all_education_ids: list[int] = [
             education.education_id for education in profile_educations.educations
         ]
         if not all_education_ids:
@@ -186,12 +190,12 @@ class EducationService:
                         name=StatusEnum(education.status).name
                     )
                 )
-                for education in db_profile.educations if education.status==StatusEnum.active
+                for education in db_profile.educations if education.status == StatusEnum.active
             ]
         )
 
-    async def _update_education_by_admin(self,
-                                         education_request: EducationCreateAdminRequest) -> EducationListDataResponse:
+    @staticmethod
+    async def _update_education_by_admin(education_request: EducationCreateAdminRequest) -> EducationListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_educations = cast(
             ProfileEducationView,
@@ -237,7 +241,7 @@ class EducationService:
             "educations.$." + str(key): val for key, val in education_request_dict.items() if val is not None
         }
 
-        education_object=None
+        education_object: ProfileEducation | None = None
         for edu in profile_educations.educations:
             if edu.education_id == education_request.education_id:
                 education_object = edu
@@ -246,15 +250,16 @@ class EducationService:
         if education_status is not None:
             education_request_dict["status"] = cast(StatusEnum, education_request.status)
         else:
-            education_request_dict["status"] = education_object.status
+            education_request_dict["status"] = cast(ProfileEducation, education_object).status
 
-        db_profile: Profiles = await profile_crud_manager.update_by_query(
+        db_profile: Profiles = cast(Profiles, await profile_crud_manager.update_by_query(
             query={
                 "educations.education_id": education_request.education_id,
                 "_id": profile_educations.id
             },
             item_dict=education_request_dict
         )
+                                    )
         return EducationListDataResponse(
             educations=[
                 EducationCreateResponse(
@@ -270,8 +275,8 @@ class EducationService:
             ]
         )
 
-    async def _create_education_by_admin(self,
-                                         education_request: EducationCreateAdminRequest) -> EducationListDataResponse:
+    @staticmethod
+    async def _create_education_by_admin(education_request: EducationCreateAdminRequest) -> EducationListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_educations = cast(
             ProfileEducationView,
@@ -336,7 +341,8 @@ class EducationService:
             ]
         )
 
-    async def get_education_details_by_admin(self, profile_id: PydanticObjectId) -> ProfileEducationDetailsResponse:
+    @staticmethod
+    async def get_education_details_by_admin(profile_id: PydanticObjectId) -> ProfileEducationDetailsResponse:
         query = {
             '_id': profile_id,
         }
@@ -363,7 +369,8 @@ class EducationService:
                 ) for data in db_profiles.educations if data.status in [StatusEnum.active, StatusEnum.cancel]]
         )
 
-    async def get_education_details_by_user(self, email: str) -> ProfileEducationDetailsResponse:
+    @staticmethod
+    async def get_education_details_by_user(email: str) -> ProfileEducationDetailsResponse:
         query = {
             'user_id': email,
         }

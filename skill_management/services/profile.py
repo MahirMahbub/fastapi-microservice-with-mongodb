@@ -1,6 +1,6 @@
 from typing import cast, Any
 
-from beanie.odm.operators.find.array import ElemMatch
+from beanie import PydanticObjectId
 from fastapi import HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
@@ -32,15 +32,15 @@ class ProfileService:
             """
             Checking if the user profile is the owner of the profile request to update or create the profile
             """
-            profile_data = await ProfileRepository().get_by_query({"user_id": email})
-            if not profile_data.id == profile_request.profile_id:  # type: ignore
+            profile_data = cast(Profiles, await ProfileRepository().get_by_query({"user_id": email}))
+            if not profile_data.id == profile_request.profile_id:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                     detail="You are not allowed to update the user profile")
         if profile_request.profile_id is None:
             """ 
             It is  a create operation. 
             """
-            response = await self._create_user_profile_by_user(profile_request, email)
+            response = await self._create_user_profile_by_user(profile_request, cast(str, email))
         else:
             """ 
             It is  a update operation. 
@@ -66,8 +66,10 @@ class ProfileService:
     @staticmethod
     async def _update_user_profile_by_admin(profile_request: ProfileBasicForAdminRequest) -> ProfileResponse:
         profile_crud_manager = ProfileRepository()
-        old_profile: Profiles = await profile_crud_manager.get(id_=profile_request.profile_id)  # type: ignore
-        db_profile: Profiles
+        old_profile: Profiles = cast(
+            Profiles, await profile_crud_manager.get(id_=profile_request.profile_id)
+        )
+        db_profile: Profiles | None = None
 
         if old_profile is None:
             """
@@ -89,7 +91,7 @@ class ProfileService:
             mobile=profile_request.mobile,
             address=profile_request.address,
             designation_id=profile_request.designation_id,
-            profile_status=profile_request.designation_status,  # type: ignore
+            profile_status=profile_request.profile_status,
             designation_status=profile_request.designation_status,
             about=profile_request.about,
             experience_year=profile_request.experience_year,
@@ -109,11 +111,13 @@ class ProfileService:
                 old_profile_details[key] = value
 
         if profile_request.designation_id is None:
-            db_profile = await profile_crud_manager.update(  # type: ignore
-                id_=profile_request.profile_id,  # type: ignore
-                item_dict={
-                    "personal_detail": old_profile_details
-                }
+            db_profile = cast(
+                Profiles, await profile_crud_manager.update(
+                    id_=profile_request.profile_id,
+                    item_dict={
+                        "personal_detail": old_profile_details
+                    }
+                )
             )
         elif profile_request.designation_id is not None:
             # if profile_request.designation_status == DesignationStatusEnum.active:
@@ -155,23 +159,25 @@ class ProfileService:
             Update the profile in the database
             """
 
-            db_profile = await profile_crud_manager.update(  # type: ignore
-                id_=profile_request.profile_id,  # type: ignore
-                item_dict={
-                    "personal_detail": old_profile_details,
-                    "designation": {
-                        'designation_id': designation.id,
-                        'designation': designation.designation,
-                        'start_date': None, 'end_date': None,
-                        'designation_status': profile_request.designation_status
-                        if profile_request.designation_status is not None
-                        else DesignationStatusEnum.active
+            db_profile = cast(
+                Profiles, await profile_crud_manager.update(
+                    id_=profile_request.profile_id,
+                    item_dict={
+                        "personal_detail": old_profile_details,
+                        "designation": {
+                            'designation_id': designation.id,
+                            'designation': designation.designation,
+                            'start_date': None, 'end_date': None,
+                            'designation_status': profile_request.designation_status
+                            if profile_request.designation_status is not None
+                            else DesignationStatusEnum.active
+                        }
+                    },
+                    push_item={
+                        "experiences": new_experience.dict(
+                        )
                     }
-                },
-                push_item={
-                    "experiences": new_experience.dict(
-                    )
-                }
+                )
             )
         # if profile_request.designation_status == DesignationStatusEnum.inactive:
         #     designation= None
@@ -331,7 +337,7 @@ class ProfileService:
                     passing_year=education.passing_year,
                     school_name=education.school_name,
                     status=ResponseEnumData(id=education.status,
-                                            name=StatusEnum(education.status).name)
+                                            name=StatusEnum(cast(int, education.status)).name)
                 ) for education in db_profile.educations
             ],
             personal_details=personal_detail_response,
@@ -345,7 +351,7 @@ class ProfileService:
     @staticmethod
     async def _update_user_profile_by_user(profile_request: ProfileBasicRequest) -> ProfileResponse:
         profile_crud_manager = ProfileRepository()
-        old_profile: Profiles = await profile_crud_manager.get(id_=profile_request.profile_id)  # type: ignore
+        old_profile: Profiles = cast(Profiles, await profile_crud_manager.get(id_=profile_request.profile_id))
 
         if old_profile is None:
             """
@@ -459,7 +465,7 @@ class ProfileService:
 
             db_profile = cast(
                 Profiles, await profile_crud_manager.update(
-                    id_=profile_request.profile_id,  # type: ignore
+                    id_=profile_request.profile_id,
                     item_dict={
                         "personal_detail": old_profile_details,
                         "designation": {
@@ -476,11 +482,13 @@ class ProfileService:
                 )
             )
         else:
-            db_profile: Profiles = await profile_crud_manager.update(  # type: ignore
-                id_=profile_request.profile_id,  # type: ignore
-                item_dict={
-                    "personal_detail": old_profile_details
-                }
+            db_profile = cast(
+                Profiles, await profile_crud_manager.update(
+                    id_=profile_request.profile_id,
+                    item_dict={
+                        "personal_detail": old_profile_details
+                    }
+                )
             )
 
         """
@@ -661,7 +669,7 @@ class ProfileService:
         personal_detail = ProfilePersonalDetails(
             name=profile_request.name,
             date_of_birth=profile_request.date_of_birth,
-            gender=profile_request.gender,
+            gender=cast(GenderEnum, profile_request.gender),
             mobile=profile_request.mobile,
             about=None,
             address=None,
@@ -715,7 +723,7 @@ class ProfileService:
         try:
             await db_profile.insert()
         except DuplicateKeyError as duplicate_key_exec:
-            duplicate_values = duplicate_key_exec.details["keyValue"].values()  # type: ignore
+            duplicate_values = cast(dict[str, Any], duplicate_key_exec.details)["keyValue"].values()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Duplicate Value is not allowed. " + ", ".join(
                                     duplicate_values) + " already exists")
@@ -838,7 +846,7 @@ class ProfileService:
         try:
             await db_profile.insert()
         except DuplicateKeyError as duplicate_key_exec:
-            duplicate_values = duplicate_key_exec.details["keyValue"].values()  # type: ignore
+            duplicate_values = cast(dict[str, Any], duplicate_key_exec.details)["keyValue"].values()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Duplicate Value is not allowed. " + ", ".join(
                                     duplicate_values) + " already exists")
@@ -884,23 +892,18 @@ class ProfileService:
         )
         return response
 
-    async def get_user_profiles_for_admin(self, *,
-                                          skill_ids=None,
-                                          employee_name=None,
-                                          mobile=None,
-                                          email=None,
-                                          profile_status=None,
-                                          page_number,
-                                          page_size) -> PaginatedProfileResponse:
-        query: dict[str, Any] | ElemMatch = {}
+    @staticmethod
+    async def get_user_profiles_for_admin(*,
+                                          skill_ids: list[int] | None = None,
+                                          employee_name: str | None = None,
+                                          mobile: str | None = None,
+                                          email: str | None = None,
+                                          profile_status: ProfileStatusEnum | None = None,
+                                          page_number: int,
+                                          page_size: int) -> PaginatedProfileResponse:
+        query: dict[str, Any] = {}
 
         if skill_ids is not None:
-            # query = {ElemMatch(
-            #     Profiles.skills,
-            #     {
-            #         "skill_id": skill_id
-            #     }
-            # )}
             query = {
                 "skills": {
                     "$elemMatch": {
@@ -968,7 +971,8 @@ class ProfileService:
             pages=(count // page_size + 1) if count % page_size > 0 else count // page_size,
             items=response)
 
-    async def get_user_profile_by_admin(self, profile_id) -> ProfileDetailsResponse:
+    @staticmethod
+    async def get_user_profile_by_admin(profile_id: PydanticObjectId) -> ProfileDetailsResponse:
         query = {'_id': profile_id}
         db_profiles: ProfileProfileDetailsView = cast(
             ProfileProfileDetailsView,
@@ -1029,7 +1033,8 @@ class ProfileService:
 
         return response
 
-    async def get_user_profile_by_user(self, email: str) -> ProfileDetailsResponse:
+    @staticmethod
+    async def get_user_profile_by_user(email: str) -> ProfileDetailsResponse:
         query = {
             'user_id': email,
         }

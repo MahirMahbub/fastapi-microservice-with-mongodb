@@ -1,18 +1,19 @@
-from typing import cast
+from typing import cast, Iterable, Any
 
-from beanie import PydanticObjectId
+from beanie import PydanticObjectId, Link
 from fastapi import HTTPException, status
 from pymongo.errors import DuplicateKeyError
 
 from skill_management.enums import PlanTypeEnum, StatusEnum, SkillTypeEnum, TaskStatusEnum
 from skill_management.models.plan import Plans
+from skill_management.models.profile import Profiles
 from skill_management.models.skill import Skills
 from skill_management.repositories.plan import PlanRepository
 from skill_management.repositories.profile import ProfileRepository
 from skill_management.repositories.skill import SkillRepository
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.plan import PlanCreateRequest, PlanCreateResponse, Task, TaskResponse, \
-    PlanCreateAdminRequest, PlanListDataResponse
+    PlanCreateAdminRequest, PlanListDataResponse, TaskCreate
 from skill_management.schemas.profile import ProfileView
 
 
@@ -45,7 +46,8 @@ class PlanService:
             """
             return await self._create_plan_by_admin(plan_request)
 
-    async def _update_plan_by_user(self, plan_request: PlanCreateRequest, email: str) -> PlanListDataResponse:
+    @staticmethod
+    async def _update_plan_by_user(plan_request: PlanCreateRequest, email: str) -> PlanListDataResponse:
         profile_crud_manager = ProfileRepository()
         old_profile = await profile_crud_manager.get_by_query(
             query={
@@ -69,20 +71,20 @@ class PlanService:
         if plan_request.task is not None or not plan_request.task == []:
 
             all_task_ids = [
-                task.id for task in old_plan.task
+                task.id for task in cast(list[Task], old_plan.task)
             ]
             if not all_task_ids:
                 new_start_task_id = 1
             else:
                 new_start_task_id = max(all_task_ids) + 1
-            # new_task_list = []
-            for data in plan_request.task:
+
+            for data in cast(list[TaskCreate], plan_request.task):
                 if data.task_id is None:
                     tasks.append(
                         Task(
                             id=new_start_task_id,
                             description=data.description,
-                            status=data.status,
+                            status=cast(TaskStatusEnum, data.status),
                             duration=data.duration,
                             spend_time=data.spend_time,
 
@@ -94,7 +96,7 @@ class PlanService:
                         Task(
                             id=data.task_id,
                             description=data.description,
-                            status=data.status,
+                            status=cast(TaskStatusEnum, data.status),
                             duration=data.duration,
                             spend_time=data.spend_time,
                         )
@@ -113,7 +115,10 @@ class PlanService:
         )
         # plan_type = cast(PlanTypeEnum | None, db_plan.plan_type)
 
-        db_plans = await Plans.find(Plans.profile.id == old_profile.id, fetch_links=True).to_list()
+        db_plans = await Plans.find(
+            cast(Profiles, Plans.profile).id == old_profile.id,
+            fetch_links=True
+        ).to_list()
 
         plan_response = PlanListDataResponse(
             plans=[
@@ -124,11 +129,11 @@ class PlanService:
                         name=PlanTypeEnum(db_plan.plan_type).name
                     ),
                     notes=db_plan.notes,
-                    skill_id=db_plan.skill.id,
-                    skill_name=db_plan.skill.skill_name,
+                    skill_id=cast(Skills, db_plan.skill).id,
+                    skill_name=cast(Skills, db_plan.skill).skill_name,
                     skill_type=ResponseEnumData(
-                        id=db_plan.skill.skill_type,
-                        name=SkillTypeEnum(db_plan.skill.skill_type).name
+                        id=cast(Skills, db_plan.skill).skill_type,
+                        name=SkillTypeEnum(cast(Skills, db_plan.skill).skill_type).name
                     ),
                     task=[
                         TaskResponse(
@@ -138,7 +143,8 @@ class PlanService:
                                 id=data.status,
                                 name=StatusEnum(data.status).name
                             )
-                        ) for data in db_plan.task],
+                        ) for data in cast(list[Task], db_plan.task)
+                    ],
                     start_date=db_plan.start_date,
                     end_date=db_plan.end_date,
                     status=ResponseEnumData(id=db_plan.status,
@@ -147,7 +153,8 @@ class PlanService:
         )
         return plan_response
 
-    async def _create_plan_by_user(self, plan_request: PlanCreateRequest, email: str) -> PlanListDataResponse:
+    @staticmethod
+    async def _create_plan_by_user(plan_request: PlanCreateRequest, email: str) -> PlanListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_plans = await profile_crud_manager.get_by_query(
             query={
@@ -161,39 +168,41 @@ class PlanService:
         skill_crud_manager = SkillRepository()
         skill = await skill_crud_manager.get_by_query({"_id": plan_request.skill_id})
         plan = Plans(
-            profile=profile_plans,
-            plan_type=plan_request.plan_type,
+            profile=cast(Link[Profiles], profile_plans),
+            plan_type=cast(PlanTypeEnum, plan_request.plan_type),
             notes=plan_request.notes,
             start_date=plan_request.start_date,
             end_date=plan_request.end_date,
-            skill=skill,
-            status=plan_request.status,
+            skill=cast(Link[Skills], skill),
+            status=cast(StatusEnum, plan_request.status),
             task=[
                 Task(
-                    id=indx + 1,
+                    id=index + 1,
                     description=data.description,
-                    status=data.status,
+                    status=cast(TaskStatusEnum, data.status),
                     duration=data.duration,
                     spend_time=data.spend_time
-                ) for indx, data in enumerate(plan_request.task)
+                ) for index, data in enumerate(cast(Iterable[TaskCreate], plan_request.task))
             ]
         )
         plan_crud_manager = PlanRepository()
         try:
             cast(Plans, await plan_crud_manager.insert(plan))
         except DuplicateKeyError as duplicate_key_exec:
-            duplicate_values = duplicate_key_exec.details["keyValue"].values()  # type: ignore
+            duplicate_values = cast(dict[str, Any], duplicate_key_exec.details)["keyValue"].values()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Duplicate Value is not allowed. " + ", ".join(
                                     duplicate_values) + " already exists")
-        db_plans = await Plans.find(Plans.profile.id == profile_plans.id, fetch_links=True).to_list()
+        db_plans = await Plans.find(
+            cast(Profiles, Plans.profile).id == profile_plans.id,
+            fetch_links=True).to_list()
         plan_response = PlanListDataResponse(
             plans=[
                 PlanCreateResponse(
                     id=db_plan.id,
                     plan_type=ResponseEnumData(id=db_plan.plan_type, name=PlanTypeEnum(db_plan.plan_type).name),
                     notes=db_plan.notes,
-                    skill_id=db_plan.skill.id,
+                    skill_id=cast(Skills, db_plan.skill).id,
                     task=[
                         TaskResponse(
                             id=data.id,
@@ -204,22 +213,23 @@ class PlanService:
                             ),
                             spend_time=data.spend_time,
                             duration=data.duration
-                        ) for data in db_plan.task
+                        ) for data in cast(list[Task], db_plan.task)
                     ],
                     start_date=db_plan.start_date,
                     end_date=db_plan.end_date,
                     status=ResponseEnumData(id=db_plan.status,
                                             name=StatusEnum(db_plan.status).name),
-                    skill_name=db_plan.skill.skill_name,
-                    skill_type=ResponseEnumData(id=db_plan.skill.skill_type,
-                                                name=SkillTypeEnum(db_plan.skill.skill_type).name)
+                    skill_name=cast(Skills, db_plan.skill).skill_name,
+                    skill_type=ResponseEnumData(id=cast(Skills, db_plan.skill).skill_type,
+                                                name=SkillTypeEnum(cast(Skills, db_plan.skill).skill_type).name)
                 )
                 for db_plan in db_plans
             ]
         )
         return plan_response
 
-    async def _update_plan_by_admin(self, plan_request: PlanCreateAdminRequest) -> PlanListDataResponse:
+    @staticmethod
+    async def _update_plan_by_admin(plan_request: PlanCreateAdminRequest) -> PlanListDataResponse:
         profile_crud_manager = ProfileRepository()
         old_profile = await profile_crud_manager.get_by_query(
             query={
@@ -243,20 +253,20 @@ class PlanService:
         if plan_request.task is not None or not plan_request.task == []:
 
             all_task_ids = [
-                task.id for task in old_plan.task
+                task.id for task in cast(list[Task], old_plan.task)
             ]
             if not all_task_ids:
                 new_start_task_id = 1
             else:
                 new_start_task_id = max(all_task_ids) + 1
             # new_task_list = []
-            for data in plan_request.task:
+            for data in cast(list[TaskCreate], plan_request.task):
                 if data.task_id is None:
                     tasks.append(
                         Task(
                             id=new_start_task_id,
                             description=data.description,
-                            status=data.status,
+                            status=cast(TaskStatusEnum, data.status),
                             duration=data.duration,
                             spend_time=data.spend_time,
                         )
@@ -267,7 +277,7 @@ class PlanService:
                         Task(
                             id=data.task_id,
                             description=data.description,
-                            status=data.status,
+                            status=cast(TaskStatusEnum, data.status),
                             duration=data.duration,
                             spend_time=data.spend_time,
 
@@ -315,14 +325,17 @@ class PlanService:
         #     status=ResponseEnumData(id=db_plan.status,
         #                             name=StatusEnum(db_plan.status).name)
         # )
-        db_plans = await Plans.find(Plans.profile.id == old_profile.id, fetch_links=True).to_list()
+        db_plans = await Plans.find(
+            cast(Profiles, Plans.profile).id == old_profile.id,
+            fetch_links=True
+        ).to_list()
         plan_response = PlanListDataResponse(
             plans=[
                 PlanCreateResponse(
                     id=db_plan.id,
                     plan_type=ResponseEnumData(id=db_plan.plan_type, name=PlanTypeEnum(db_plan.plan_type).name),
                     notes=db_plan.notes,
-                    skill_id=db_plan.skill.id,
+                    skill_id=cast(Skills, db_plan.skill).id,
                     task=[
                         TaskResponse(
                             id=data.id,
@@ -333,22 +346,23 @@ class PlanService:
                             ),
                             spend_time=data.spend_time,
                             duration=data.duration
-                        ) for data in db_plan.task
+                        ) for data in cast(list[Task], db_plan.task)
                     ],
                     start_date=db_plan.start_date,
                     end_date=db_plan.end_date,
                     status=ResponseEnumData(id=db_plan.status,
                                             name=StatusEnum(db_plan.status).name),
-                    skill_name=db_plan.skill.skill_name,
-                    skill_type=ResponseEnumData(id=db_plan.skill.skill_type,
-                                                name=SkillTypeEnum(db_plan.skill.skill_type).name)
+                    skill_name=cast(Skills, db_plan.skill).skill_name,
+                    skill_type=ResponseEnumData(id=cast(Skills, db_plan.skill).skill_type,
+                                                name=SkillTypeEnum(cast(Skills, db_plan.skill).skill_type).name)
                 )
                 for db_plan in db_plans
             ]
         )
         return plan_response
 
-    async def _create_plan_by_admin(self, plan_request: PlanCreateAdminRequest) -> PlanListDataResponse:
+    @staticmethod
+    async def _create_plan_by_admin(plan_request: PlanCreateAdminRequest) -> PlanListDataResponse:
         profile_crud_manager = ProfileRepository()
         profile_plans = await profile_crud_manager.get_by_query(
             query={
@@ -362,13 +376,13 @@ class PlanService:
         skill_crud_manager = SkillRepository()
         skill = await skill_crud_manager.get_by_query({"_id": plan_request.skill_id})
         plan = Plans(
-            profile=profile_plans,
-            plan_type=plan_request.plan_type,
+            profile=cast(Link[Profiles], profile_plans),
+            plan_type=cast(PlanTypeEnum, plan_request.plan_type),
             notes=plan_request.notes,
             start_date=plan_request.start_date,
             end_date=plan_request.end_date,
-            skill=skill,
-            status=plan_request.status if plan_request.status is not None else StatusEnum.active,
+            skill=cast(Link[Skills], skill),
+            status=cast(StatusEnum, plan_request.status) if plan_request.status is not None else StatusEnum.active,
             task=[
                 Task(
                     id=index + 1,
@@ -376,25 +390,28 @@ class PlanService:
                     status=data.status if data.status is not None else TaskStatusEnum.incomplete,
                     duration=data.duration,
                     spend_time=data.spend_time
-                ) for index, data in enumerate(plan_request.task)
+                ) for index, data in enumerate(cast(list[TaskCreate], plan_request.task))
             ]
         )
         plan_crud_manager = PlanRepository()
         try:
             cast(Plans, await plan_crud_manager.insert(plan))
         except DuplicateKeyError as duplicate_key_exec:
-            duplicate_values = duplicate_key_exec.details["keyValue"].values()  # type: ignore
+            duplicate_values = cast(dict[str, Any], duplicate_key_exec.details)["keyValue"].values()
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Duplicate Value is not allowed. " + ", ".join(
                                     duplicate_values) + " already exists")
-        db_plans = await Plans.find(Plans.profile.id == profile_plans.id, fetch_links=True).to_list()
+        db_plans = await Plans.find(
+            cast(Profiles, Plans.profile).id == profile_plans.id,
+            fetch_links=True
+        ).to_list()
         plan_response = PlanListDataResponse(
             plans=[
                 PlanCreateResponse(
                     id=db_plan.id,
                     plan_type=ResponseEnumData(id=db_plan.plan_type, name=PlanTypeEnum(db_plan.plan_type).name),
                     notes=db_plan.notes,
-                    skill_id=db_plan.skill.id,
+                    skill_id=cast(Skills, db_plan.skill).id,
                     task=[
                         TaskResponse(
                             id=data.id,
@@ -405,32 +422,36 @@ class PlanService:
                             ),
                             spend_time=data.spend_time,
                             duration=data.duration
-                        ) for data in db_plan.task
+                        ) for data in cast(list[Task], db_plan.task)
                     ],
                     start_date=db_plan.start_date,
                     end_date=db_plan.end_date,
                     status=ResponseEnumData(id=db_plan.status,
                                             name=StatusEnum(db_plan.status).name),
-                    skill_name=db_plan.skill.skill_name,
-                    skill_type=ResponseEnumData(id=db_plan.skill.skill_type,
-                                                name=SkillTypeEnum(db_plan.skill.skill_type).name)
+                    skill_name=cast(Skills, db_plan.skill).skill_name,
+                    skill_type=ResponseEnumData(id=cast(Skills, db_plan.skill).skill_type,
+                                                name=SkillTypeEnum(cast(Skills, db_plan.skill).skill_type).name)
                 )
                 for db_plan in db_plans
             ]
         )
         return plan_response
 
-    async def get_plan_details_by_admin(self, profile_id: PydanticObjectId):
-        db_plans = await Plans.find(Plans.profile.id == profile_id, fetch_links=True).to_list()
+    @staticmethod
+    async def get_plan_details_by_admin(profile_id: PydanticObjectId) -> PlanListDataResponse:
+        db_plans = await Plans.find(
+            cast(Profiles, Plans.profile).id == profile_id,
+            fetch_links=True
+        ).to_list()
         plan_response = [
             PlanCreateResponse(
                 id=str(db_plan.id),
                 plan_type=ResponseEnumData(id=db_plan.plan_type, name=PlanTypeEnum(db_plan.plan_type).name),
                 notes=db_plan.notes,
-                skill_id=db_plan.skill.id,
-                skill_name=db_plan.skill.skill_name,
-                skill_type=ResponseEnumData(id=db_plan.skill.skill_type,
-                                            name=SkillTypeEnum(db_plan.skill.skill_type).name),
+                skill_id=cast(Skills, db_plan.skill).id,
+                skill_name=cast(Skills, db_plan.skill).skill_name,
+                skill_type=ResponseEnumData(id=cast(Skills, db_plan.skill).skill_type,
+                                            name=SkillTypeEnum(cast(Skills, db_plan.skill).skill_type).name),
                 task=[
                     TaskResponse(
                         id=data.id,
@@ -441,7 +462,7 @@ class PlanService:
                         ),
                         duration=data.duration,
                         spend_time=data.spend_time
-                    ) for data in db_plan.task if data.status == StatusEnum.active],
+                    ) for data in cast(list[Task], db_plan.task) if data.status == StatusEnum.active],
                 start_date=db_plan.start_date,
                 end_date=db_plan.end_date,
                 status=ResponseEnumData(id=db_plan.status,
@@ -450,18 +471,29 @@ class PlanService:
         ]
         return PlanListDataResponse(plans=plan_response)
 
-    async def get_plan_details_by_user(self, email: str):
-        user_id = await ProfileRepository().get_by_query({"user_id": email}, projection_model=ProfileView)
-        db_plans = await Plans.find(Plans.profile.id == user_id.id, fetch_links=True).to_list()
+    @staticmethod
+    async def get_plan_details_by_user(email: str) -> PlanListDataResponse:
+        user = cast(
+            ProfileView,
+            await ProfileRepository().get_by_query(
+                {
+                    "user_id": email
+                },
+                projection_model=ProfileView
+            )
+        )
+        db_plans = await Plans.find(
+            cast(Profiles, Plans.profile).id == user.id,
+            fetch_links=True).to_list()
         plan_response = [
             PlanCreateResponse(
                 id=str(db_plan.id),
                 plan_type=ResponseEnumData(id=db_plan.plan_type, name=PlanTypeEnum(db_plan.plan_type).name),
                 notes=db_plan.notes,
-                skill_id=db_plan.skill.id,
-                skill_name=db_plan.skill.skill_name,
-                skill_type=ResponseEnumData(id=db_plan.skill.skill_type,
-                                            name=SkillTypeEnum(db_plan.skill.skill_type).name),
+                skill_id=cast(Skills, db_plan.skill).id,
+                skill_name=cast(Skills, db_plan.skill).skill_name,
+                skill_type=ResponseEnumData(id=cast(Skills, db_plan.skill).skill_type,
+                                            name=SkillTypeEnum(cast(Skills, db_plan.skill).skill_type).name),
                 task=[
                     TaskResponse(
                         id=data.id,
@@ -472,7 +504,7 @@ class PlanService:
                         ),
                         spend_time=data.spend_time,
                         duration=data.duration
-                    ) for data in db_plan.task],
+                    ) for data in cast(list[Task], db_plan.task)],
                 start_date=db_plan.start_date,
                 end_date=db_plan.end_date,
                 status=ResponseEnumData(id=db_plan.status,

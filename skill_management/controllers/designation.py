@@ -51,7 +51,7 @@ async def get_designation(request: Request,  # type: ignore
                             },
                         }
                         )
-async def get_designation_list(request: Request,  # type: ignore
+async def get_designation_list(request: Request,
                                designation_name: str | None = Query(default=None,
                                                                     description="input designation name as string",
                                                                     alias="designation-name"),
@@ -59,10 +59,8 @@ async def get_designation_list(request: Request,  # type: ignore
                                service: DesignationService = Depends()):
     return await service.get_master_designation_list(designation_name)
 
-    pass
 
-
-@designation_router.post("/profile/designations",  # type: ignore
+@designation_router.post("/profile/designations",
                          response_class=ORJSONResponse,
                          response_model=ProfileDesignationResponse,
                          status_code=201,
@@ -76,7 +74,7 @@ async def get_designation_list(request: Request,  # type: ignore
                              },
                          }
                          )
-async def create_or_update_designation(request: Request,
+async def create_or_update_designation(request: Request,  # type: ignore
                                        designation_request: DesignationCreateRequest = Body(..., examples={
                                            # "CREATE": {
                                            #     "summary": "Create Body",
@@ -112,7 +110,7 @@ async def create_or_update_designation(request: Request,
                                                     email=cast(str, email))
 
 
-@designation_router.post("/admin/profile/designations",  # type: ignore
+@designation_router.post("/admin/profile/designations",
                          response_class=ORJSONResponse,
                          response_model=ProfileDesignationResponse,
                          status_code=201,
@@ -126,7 +124,7 @@ async def create_or_update_designation(request: Request,
                              },
                          }
                          )
-async def update_designation_by_admin(request: Request,
+async def update_designation_by_admin(request: Request,  # type: ignore
                                       designation_request: DesignationCreateAdminRequest = Body(..., examples={
                                           # "CREATE": {
                                           #     "summary": "Create Body",

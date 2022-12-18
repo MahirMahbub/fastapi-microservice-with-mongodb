@@ -21,8 +21,8 @@ async def initiate_database() -> None:
     else:
         client = AsyncIOMotorClient(os.getenv("DATABASE_URL"))
     await init_beanie(database=client.get_default_database(),
-                      document_models=[EnumInitializer, PlanType, Status, UserStatus, FileType, SkillCategory,
-                                       SkillType, DesignationStatus, Gender, Designations, Files, Profiles, Plans,
+                      document_models=[EnumInitializer, PlanType, Status, UserStatus, FileType, SkillCategory, # type: ignore
+                                       SkillType, DesignationStatus, Gender, Designations, Files, Profiles, Plans, # type: ignore
                                        ProfileStatus, Skills, CustomDesignations])  # type: ignore
     # , Files, Plans,
     # Profiles, Skills

@@ -1,8 +1,10 @@
-from typing import cast
+from typing import cast, Any
 
 from beanie import PydanticObjectId
+from beanie.odm.enums import SortDirection
 from beanie.odm.operators.find.array import ElemMatch
 from fastapi import HTTPException, status, UploadFile
+from pymongo.results import DeleteResult
 
 from skill_management.enums import FileTypeEnum, SkillCategoryEnum, SkillTypeEnum, StatusEnum, UserStatusEnum, \
     ProfileStatusEnum
@@ -14,7 +16,7 @@ from skill_management.repositories.profile import ProfileRepository
 from skill_management.repositories.skill import SkillRepository
 from skill_management.schemas.base import ResponseEnumData
 from skill_management.schemas.file import FileResponse, SkillCertificateResponse
-from skill_management.schemas.profile import ProfileSkillView
+from skill_management.schemas.profile import ProfileSkillView, ProfileView
 from skill_management.schemas.skill import CreateSkillDataRequest, ProfileSkill, CreateSkillDataResponse, \
     CreateSkillListDataResponse, CreateSkillDataAdminRequest, ProfileSkillDetailsResponse, ProfileSkillResponse, \
     GetSkillDataResponse, PaginatedSkillResponse, GetSkillDataResponseList, MasterSkillRequest
@@ -23,20 +25,26 @@ from skill_management.services.file import FileService
 
 class SkillService:
     @staticmethod
-    async def create_or_update_skill_by_user(email: str, skill_request: CreateSkillDataRequest):
+    async def create_or_update_skill_by_user(email: str | None,
+                                             skill_request: CreateSkillDataRequest) -> CreateSkillListDataResponse:
         skill_id = skill_request.skill_id
         """
         Check if the skill is valid
         """
         skill_crud_manager = SkillRepository()
         profile_crud_manager = ProfileRepository()
-        skill_data: Skills | None = await skill_crud_manager.get_by_modified_id(skill_id)  # type: ignore
+        skill_data: Skills | None = cast(Skills, await skill_crud_manager.get_by_modified_id(skill_id))
         if skill_data is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Must provide a valid skill")
-        profile_skill: ProfileSkillView | None = await profile_crud_manager.get_by_query(
-            query={"user_id": email},
-            projection_model=ProfileSkillView)
+        profile_skill: ProfileSkillView | None = cast(
+            ProfileSkillView | None, await profile_crud_manager.get_by_query(
+                query={
+                    "user_id": email
+                },
+                projection_model=ProfileSkillView
+            )
+        )
         if profile_skill is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
@@ -68,23 +76,29 @@ class SkillService:
                 achievements_description=skill_request.achievements_description,
                 certificate=skill_request.certificate,
                 certificate_files=[])
-            db_profile: Profiles | None = await profile_crud_manager.update(
-                id_=profile_skill.id,  # type: ignore
-                push_item={
-                    "skills": new_skill.dict(
-                        exclude_unset=True, exclude_none=True
-                    )
-                }
+            db_profile: Profiles = cast(
+                Profiles, await profile_crud_manager.update(
+                    id_=profile_skill.id,
+                    push_item={
+                        "skills": new_skill.dict(
+                            exclude_unset=True, exclude_none=True
+                        )
+                    }
+                )
             )
             skill_list = []
-            for skill_ in db_profile.skills:  # type: ignore
+            for skill_ in db_profile.skills:
                 certificate_files = [
                     FileResponse(
                         file_name=file,
-                        url="/files/%s" % file.id
+                        url="/files/%s" % file.id,
+                        status=ResponseEnumData(
+                            id=file.status,
+                            name=StatusEnum(file.status).name
+                        )
                     ) async for file in Files.find(
                         {
-                            "owner": db_profile.id,  # type: ignore
+                            "owner": db_profile.id,
                             "file_type": FileTypeEnum.certificate
                         }
                     )
@@ -125,23 +139,29 @@ class SkillService:
             skill_request_dict = skill_request.dict(exclude_unset=True, exclude_defaults=True)
             skill_request_dict.pop('skill_id')
             skill_request_dict = {"skills.$." + str(key): val for key, val in skill_request_dict.items()}
-            db_profile: Profiles | None = await profile_crud_manager.update_by_query(  # type: ignore
-                query={
-                    "skills.skill_id": skill_request.skill_id,
-                    "_id": profile_skill.id
-                },
-                item_dict=skill_request_dict
+            db_profile = cast(
+                Profiles, await profile_crud_manager.update_by_query(
+                    query={
+                        "skills.skill_id": skill_request.skill_id,
+                        "_id": profile_skill.id
+                    },
+                    item_dict=skill_request_dict
+                )
             )
 
             skill_list = []
-            for skill_ in db_profile.skills:  # type: ignore
+            for skill_ in db_profile.skills:
                 certificate_files = [
                     FileResponse(
                         file_name=file.file_name,
-                        url="/files/%s" % file.id
+                        url="/files/%s" % file.id,
+                        status=ResponseEnumData(
+                            id=file.status,
+                            name=StatusEnum(file.status).name
+                        )
                     ) async for file in Files.find(
                         {
-                            "owner": db_profile.id,  # type: ignore
+                            "owner": db_profile.id,
                             "file_type": FileTypeEnum.certificate
                         }
                     )
@@ -180,22 +200,25 @@ class SkillService:
             return CreateSkillListDataResponse(skills=skill_list)
 
     @staticmethod
-    async def create_or_update_skill_by_admin(skill_request: CreateSkillDataAdminRequest):
+    async def create_or_update_skill_by_admin(
+            skill_request: CreateSkillDataAdminRequest) -> CreateSkillListDataResponse:
         skill_id = skill_request.skill_id
         """
         Check if the skill is valid
         """
         skill_crud_manager = SkillRepository()
         profile_crud_manager = ProfileRepository()
-        skill_data: Skills | None = await skill_crud_manager.get_by_modified_id(skill_id)  # type: ignore
+        skill_data: Skills | None = cast(Skills | None, await skill_crud_manager.get_by_modified_id(skill_id))
         if skill_data is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
                                 detail="Must provide a valid skill")
-        profile_skill: ProfileSkillView | None = await profile_crud_manager.get_by_query(
-            query={
-                "_id": skill_request.profile_id
-            })  # type: ignore
-        # projection_model=ProfileSkillView)
+        profile_skill: ProfileSkillView | None = cast(
+            ProfileSkillView | None, await profile_crud_manager.get_by_query(
+                query={
+                    "_id": skill_request.profile_id
+                }
+            )
+        )
         if profile_skill is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                                 detail="You are not allowed to update the user profile")
@@ -215,33 +238,40 @@ class SkillService:
                 skill_type=skill_data.skill_type,
                 skill_category=skill_data.skill_categories,
                 skill_name=skill_data.skill_name,
-                status=skill_request.status,  # type: ignore
+                status=cast(StatusEnum, skill_request.status),
                 experience_year=skill_request.experience_year,
                 number_of_projects=skill_request.number_of_projects,
                 level=skill_request.level, training_duration=skill_request.training_duration,
-                achievements=skill_request.achievements,  # type: ignore
+                achievements=skill_request.achievements,
                 achievements_description=skill_request.achievements_description,
-                certificate=skill_request.certificate,  # type: ignore
-                certificate_files=[])
+                certificate=skill_request.certificate,
+                certificate_files=[]
+            )
             # except ValueError as val_exec:
             #     raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(val_exec))
-            db_profile: Profiles | None = await profile_crud_manager.update(
-                id_=profile_skill.id,  # type: ignore
-                push_item={
-                    "skills": new_skill.dict(
-                        exclude_unset=True, exclude_none=True
-                    )
-                }
+            db_profile: Profiles = cast(
+                Profiles, await profile_crud_manager.update(
+                    id_=profile_skill.id,
+                    push_item={
+                        "skills": new_skill.dict(
+                            exclude_unset=True, exclude_none=True
+                        )
+                    }
+                )
             )
             skill_list = []
-            for skill_ in db_profile.skills:  # type: ignore
+            for skill_ in db_profile.skills:
                 certificate_files = [
                     FileResponse(
                         file_name=file,
-                        url="/files/%s" % file.id
+                        url="/files/%s" % file.id,
+                        status=ResponseEnumData(
+                            id=file.status,
+                            name=StatusEnum(file.status).name
+                        )
                     ) async for file in Files.find(
                         {
-                            "owner": db_profile.id,  # type: ignore
+                            "owner": db_profile.id,
                             "file_type": FileTypeEnum.certificate
                         }
                     )
@@ -272,7 +302,8 @@ class SkillService:
                         skill_type=ResponseEnumData(
                             id=skill_.skill_type,
                             name=SkillTypeEnum(skill_.skill_type).name
-                        )
+                        ),
+                        certificates_url=certificate_files
                     )
 
                 )
@@ -281,23 +312,30 @@ class SkillService:
             skill_request_dict = skill_request.dict(exclude_unset=True, exclude_defaults=True)
             skill_request_dict.pop("profile_id")
             skill_request_dict = {"skills.$." + str(key): val for key, val in skill_request_dict.items()}
-            db_profile: Profiles | None = await profile_crud_manager.update_by_query(  # type: ignore
-                query={
-                    "skills.skill_id": skill_request.skill_id,
-                    "_id": profile_skill.id
-                },  # type: ignore
-                item_dict=skill_request_dict
+            db_profile = cast(
+                Profiles, await profile_crud_manager.update_by_query(
+                    query={
+                        "skills.skill_id": skill_request.skill_id,
+                        "_id": profile_skill.id
+                    },
+                    item_dict=skill_request_dict
+                )
             )
 
             skill_list = []
-            for skill_ in db_profile.skills:  # type: ignore
+            for skill_ in db_profile.skills:
                 certificate_files = [
                     FileResponse(
                         file_name=file,
-                        url="/files/%s" % file.id
+                        url="/files/%s" % file.id,
+                        status=ResponseEnumData(
+                            id=file.status,
+                            name=StatusEnum(file.status).name
+                        )
+
                     ) async for file in Files.find(
                         {
-                            "owner": db_profile.id,  # type: ignore
+                            "owner": db_profile.id,
                             "file_type": FileTypeEnum.certificate
                         }
                     )
@@ -328,20 +366,41 @@ class SkillService:
                         skill_type=ResponseEnumData(
                             id=skill_.skill_type,
                             name=SkillTypeEnum(skill_.skill_type).name
-                        )
+                        ),
+                        certificates_url=certificate_files
                     )
 
                 )
             return CreateSkillListDataResponse(skills=skill_list)
 
-    async def upload_certificate(self, skill_id: int,
+    @staticmethod
+    async def upload_certificate(skill_id: int,
                                  files: list[UploadFile],
-                                 email: str):
+                                 email: str | None) -> SkillCertificateResponse:
         """
         Create a certificate for a skill
         """
+        profile_crud_manager = ProfileRepository()
+        profile_data: ProfileView | None = cast(
+            ProfileView | None, await profile_crud_manager.get_by_query(
+                query={
+                    "user_id": email
+                },
+                projection_model=ProfileSkillView
+            )
+        )
+        if profile_data is None:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
+                                detail="You are not allowed to update the user profile")
+
         skill_crud_manager = SkillRepository()
-        skill_data: Skills | None = await skill_crud_manager.get_by_query({"_id": skill_id})
+        skill_data: Skills | None = cast(
+            Skills, await skill_crud_manager.get_by_query(
+                {
+                    "_id": skill_id
+                }
+            )
+        )
         if skill_data is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Must provide a valid skill id")
         file_service = FileService()
@@ -351,7 +410,7 @@ class SkillService:
             file_response = await file_service.create_certificate(
                 file=file,
                 skill_id=skill_id,
-                email=email,
+                email=cast(str, email),
                 file_status=cast(UserStatusEnum, StatusEnum.active))
 
             if file_response is None:
@@ -360,7 +419,8 @@ class SkillService:
                 successful_files.append(file.filename)
         return SkillCertificateResponse(succeed_upload_list=successful_files, failed_upload_list=failed_files)
 
-    async def get_skill_details_by_admin(self, profile_id: PydanticObjectId) -> ProfileSkillDetailsResponse:
+    @staticmethod
+    async def get_skill_details_by_admin(profile_id: PydanticObjectId) -> ProfileSkillDetailsResponse:
         query = {
             '_id': profile_id,
         }
@@ -489,9 +549,11 @@ class SkillService:
         )
 
     @staticmethod
-    async def get_paginated_skills_by_admin(skill_categories,
-                                            skill_name, skill_types,
-                                            page_number, page_size) -> PaginatedSkillResponse:
+    async def get_paginated_skills_by_admin(skill_categories: list[SkillCategoryEnum] | None,
+                                            skill_name: str | None,
+                                            skill_types: list[SkillTypeEnum] | None,
+                                            page_number: int,
+                                            page_size: int) -> PaginatedSkillResponse:
         query: dict[str, Any] = {}
 
         if skill_categories is not None and not skill_categories == []:
@@ -542,7 +604,8 @@ class SkillService:
             pages=(count // page_size + 1) if count % page_size > 0 else count // page_size,
             items=response)
 
-    async def get_skill_details(self, skill_id) -> GetSkillDataResponse:
+    @staticmethod
+    async def get_skill_details(skill_id: int) -> GetSkillDataResponse:
         db_skill = cast(Skills, await Skills.find({"_id": skill_id}).first_or_none())
         return GetSkillDataResponse(
             skill_id=db_skill.id,
@@ -576,10 +639,11 @@ class SkillService:
             for db_skill in db_skills])
         return response
 
-    async def create_or_update_skill(self, skill_request: MasterSkillRequest)-> GetSkillDataResponse:
+    @staticmethod
+    async def create_or_update_skill(skill_request: MasterSkillRequest) -> GetSkillDataResponse:
         skill_id = skill_request.skill_id
         db_skill = cast(Skills, await Skills.find({"_id": skill_id}).first_or_none())
-        max_id = await Skills.find().sort([("_id", -1)]).first_or_none()
+        max_id = await Skills.find().sort([("_id", cast(SortDirection, -1))]).first_or_none()
         if db_skill is None:
             db_skill = Skills(
                 id=max_id.id + 1 if max_id is not None else 1,
@@ -589,9 +653,15 @@ class SkillService:
             )
             await db_skill.insert()
         else:
-            db_skill.skill_type = skill_request.skill_type if skill_request.skill_type is not None else db_skill.skill_type
-            db_skill.skill_categories = skill_request.skill_categories if skill_request.skill_categories is not None else db_skill.skill_categories
-            db_skill.skill_name = skill_request.skill_name if skill_request.skill_name is not None else db_skill.skill_name
+            db_skill.skill_type = skill_request.skill_type \
+                if skill_request.skill_type is not None \
+                else db_skill.skill_type
+            db_skill.skill_categories = skill_request.skill_categories \
+                if skill_request.skill_categories is not None \
+                else db_skill.skill_categories
+            db_skill.skill_name = skill_request.skill_name \
+                if skill_request.skill_name is not None \
+                else db_skill.skill_name
             await db_skill.save()
 
         return GetSkillDataResponse(
@@ -607,9 +677,9 @@ class SkillService:
             skill_name=db_skill.skill_name
         )
 
-    async def delete_skill(self, skill_id: int|None)-> None:
-         delete_response = await Skills.find({"_id": skill_id}).delete()
-         if delete_response.deleted_count == 0:
-             raise HTTPException(status_code=404, detail="Skill not found")
-         raise HTTPException(status_code=status.HTTP_200_OK, detail="Skill deleted successfully")
-
+    @staticmethod
+    async def delete_skill(skill_id: int | None) -> None:
+        delete_response: DeleteResult = cast(DeleteResult, await Skills.find({"_id": skill_id}).delete())
+        if delete_response.deleted_count == 0:
+            raise HTTPException(status_code=404, detail="Skill not found")
+        raise HTTPException(status_code=status.HTTP_200_OK, detail="Skill deleted successfully")

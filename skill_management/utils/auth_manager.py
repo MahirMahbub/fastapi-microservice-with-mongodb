@@ -1,7 +1,7 @@
 import os
 import time
 from logging import Logger
-from typing import Any
+from typing import Any, cast
 
 from fastapi import Request, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -58,7 +58,7 @@ class JWTBearer(HTTPBearer, CredentialChecker):
     def __init__(self, auto_error: bool = True):
         super(JWTBearer, self).__init__(auto_error=auto_error)
 
-    async def __call__(self, request: Request) -> str | None:  # type: ignore
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials:
         credentials: HTTPAuthorizationCredentials | None = await super(JWTBearer, self).__call__(request)
         if credentials:
             if not await self.is_bearer(credentials):
@@ -66,10 +66,10 @@ class JWTBearer(HTTPBearer, CredentialChecker):
             payload: dict[str, Any] | None = await self.verify_jwt(credentials.credentials)
             if not await self.is_payload(payload):
                 raise HTTPException(status_code=403, detail="Invalid token or expired token.")
-            user_auth_data = await request.app.state.redis_connection.hgetall(payload["user_id"])
+            user_auth_data = await request.app.state.redis_connection.hgetall(cast(dict[str, str], payload)["user_id"])
             if user_auth_data["is_verified"]=="0":
                 raise HTTPException(status_code=403, detail="User is not verified.")
-            return payload["user_id"]  # type: ignore
+            return cast(dict[str, str], payload)["user_id"] # type: ignore
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
 
@@ -86,7 +86,7 @@ class JWTBearerInactive(HTTPBearer, CredentialChecker):
     def __init__(self, auto_error: bool = True):
         super(JWTBearerInactive, self).__init__(auto_error=auto_error)
 
-    async def __call__(self, request: Request) -> str | None:  # type: ignore
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials:
         credentials: HTTPAuthorizationCredentials | None = await super(JWTBearerInactive, self).__call__(request)
         if credentials:
             if not await self.is_bearer(credentials):
@@ -94,7 +94,7 @@ class JWTBearerInactive(HTTPBearer, CredentialChecker):
             payload: dict[str, Any] | None = await self.verify_jwt(credentials.credentials)
             if not await self.is_payload(payload):
                 raise HTTPException(status_code=403, detail="Invalid token or expired token.")
-            return payload["user_id"]  # type: ignore
+            return cast(dict[str, str], payload)["user_id"] # type: ignore
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
 
@@ -112,7 +112,7 @@ class JWTBearerAdmin(HTTPBearer, CredentialChecker):
     def __init__(self, auto_error: bool = True):
         super(JWTBearerAdmin, self).__init__(auto_error=auto_error)
 
-    async def __call__(self, request: Request) -> str | None:  # type: ignore
+    async def __call__(self, request: Request) -> HTTPAuthorizationCredentials:
         credentials: HTTPAuthorizationCredentials | None = await super(JWTBearerAdmin, self).__call__(request)
         if credentials:
             if not await self.is_bearer(credentials):
@@ -120,10 +120,10 @@ class JWTBearerAdmin(HTTPBearer, CredentialChecker):
             payload: dict[str, Any] | None = await self.verify_jwt(credentials.credentials)
             if not await self.is_payload(payload):
                 raise HTTPException(status_code=403, detail="Invalid authentication scheme.")
-            user_auth_data = await request.app.state.redis_connection.hgetall(payload["user_id"])
+            user_auth_data = await request.app.state.redis_connection.hgetall(cast(dict[str, str], payload)["user_id"])
             if user_auth_data["is_admin"]=="0":
                 raise HTTPException(status_code=403, detail="User is not admin.")
-            return payload["user_id"]  # type: ignore
+            return cast(dict[str, str], payload)["user_id"] # type: ignore
         else:
             raise HTTPException(status_code=403, detail="Invalid authorization code.")
 

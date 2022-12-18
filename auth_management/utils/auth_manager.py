@@ -1,7 +1,7 @@
 import os
 import re
 from logging import Logger
-from typing import Optional, Any
+from typing import Optional, Any, cast
 
 from anyio import to_thread
 from asyncer import asyncify
@@ -77,13 +77,15 @@ class UserManager(ObjectIDIDMixin, BaseUserManager[User, PydanticObjectId]):
     async def on_after_login(
             self, user: models.UP, request: Optional[Request] = None
     ) -> None:
-        await request.app.state.redis_connection.hset(name=str(user.id), mapping={  # type: ignore
+        await cast(Request, request).app.state.redis_connection.hset(name=str(user.id), mapping={
             "email": user.email,
             "is_admin": 1 if user.is_superuser else 0,
             "is_verified": 1 if user.is_verified else 0
         })
-        await request.app.state.redis_connection.expire(name=str(user.id),  # type: ignore
-                                                        time=int(os.getenv("JWT_LIFETIME", default=3600)))
+        await cast(Request, request).app.state.redis_connection.expire(
+            name=str(user.id),
+            time=int(os.getenv("JWT_LIFETIME", default=3600))
+        )
 
 
 async def get_user_manager(user_db: BeanieUserDatabase = Depends(get_user_db)) -> bool:  # type: ignore

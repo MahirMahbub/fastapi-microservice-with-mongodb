@@ -2,10 +2,9 @@ from typing import Optional, Type, Any, Sequence
 
 from beanie import PydanticObjectId, Document
 from beanie.odm.operators.update.general import Set
-from beanie.odm.queries.delete import DeleteOne
+from beanie.odm.queries.find import FindMany
 from beanie.odm.queries.update import UpdateMany
 from pydantic import BaseModel
-from pymongo import DeleteMany
 from pymongo.results import DeleteResult
 
 
@@ -41,8 +40,8 @@ class TableRepository:
             return None
         return await document_object.delete()
 
-    async def delete_by_query(self, attr: str, value: Any) -> Optional[DeleteOne | DeleteMany]:
-        document_object: Document | None = await self.entity_collection.find(  # type: ignore
+    async def delete_by_query(self, attr: str, value: Any) -> DeleteResult | None:
+        document_object: FindMany[Document] = self.entity_collection.find(
             getattr(self.entity_collection, attr) == value)
         if document_object is None:
             return None
@@ -58,7 +57,7 @@ class TableRepository:
 
     async def update_by_query(self, attr: str, value: Any, item: BaseModel) -> Optional[UpdateMany]:
         item_dict = item.dict(exclude_unset=True)
-        document_object = await self.entity_collection.find(  # type: ignore
+        document_object = self.entity_collection.find(
             getattr(self.entity_collection, attr) == value)
         if document_object is None:
             return None

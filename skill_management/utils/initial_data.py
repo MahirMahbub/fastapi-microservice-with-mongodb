@@ -68,10 +68,10 @@ async def initialize_database() -> None:
     """
     with open("skill_management/static/data/designations.csv", 'r') as file:
         csv_reader = csv.DictReader(file)
-        skill_data = []
+        designation_data = []
         for row in csv_reader:
-            skill_data.append(Designations.parse_obj(row))
-        await Designations.insert_many(skill_data)
+            designation_data.append(Designations.parse_obj(row))
+        await Designations.insert_many(designation_data)
 
     """
     Insert Designation
@@ -81,8 +81,8 @@ async def initialize_database() -> None:
         skill_data = []
         for row in csv_reader:
             row['skill_categories'] = [int(data) for data in row['skill_categories'].split(",")]
-            skill_data.append(Skills.parse_obj(row))  # type: ignore
-        await Skills.insert_many(skill_data)  # type: ignore
+            skill_data.append(Skills.parse_obj(row))
+        await Skills.insert_many(skill_data)
 
     """
     Change Initiating Value

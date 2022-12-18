@@ -24,18 +24,21 @@ IMAGE_FORMAT = (
 
 
 class FileService:
-    def __init__(self):
-        self.file_path = os.getcwd() + os.getenv("FILE_UPLOAD_PATH")
+    def __init__(self) -> None:
+        self.file_path = os.getcwd() + cast(str, os.getenv("FILE_UPLOAD_PATH"))
 
-    async def read(self, path):
+    @staticmethod
+    async def read(path: str) -> str:
         with open(path, 'r') as f:
             return f.read()
 
-    async def write(self, data, save_path):
+    @staticmethod
+    async def write(data: bytes, save_path: str) -> int:
         with open(save_path, 'wb') as f:
-            f.write(data)
+            return f.write(data)
 
-    async def create_resume(self, file: UploadFile, file_status: UserStatusEnum, email: str):
+    async def create_resume(self, file: UploadFile, file_status: UserStatusEnum,
+                            email: str) -> FileUploadResponse | None:
         extension, file_pattern, main_file_name = await self._get_filename_and_extension(file)
         if not extension == "pdf":
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
@@ -45,16 +48,21 @@ class FileService:
         save_path = self.file_path + file_name
         await self.write(file.file.read(), save_path)
         profile_crud_manager = ProfileRepository()
-        profile: ProfileView | None = await profile_crud_manager.get_by_query(
-            query={"user_id": email},
-            projection_model=ProfileView)
-        return await self._create_file(file_name=file_name, location=self.file_path, owner=profile.id,
+        profile: ProfileView | None = cast(
+            ProfileView, await profile_crud_manager.get_by_query(
+                query={"user_id": email},
+                projection_model=ProfileView
+            )
+        )
+        return await self._create_file(file_name=file_name, location=self.file_path,
+                                       owner=cast(ProfileView, profile).id,
                                        file_status=file_status, file_type=FileTypeEnum.resume,
                                        file_size=os.path.getsize(save_path), skill_id=None)
         # headers = {'Content-Disposition': 'attachment; filename=%s' % file_name}
         # return FileResponse(path=save_path, headers=headers)
 
-    async def create_profile_picture(self, file: UploadFile, file_status: UserStatusEnum, email: str):
+    async def create_profile_picture(self, file: UploadFile,
+                                     file_status: UserStatusEnum, email: str) -> FileUploadResponse | None:
         extension, file_pattern, main_file_name = await self._get_filename_and_extension(file)
         if not "." + extension in IMAGE_FORMAT:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
@@ -74,7 +82,10 @@ class FileService:
         # headers = {'Content-Disposition': 'attachment; filename=%s' % file_name}
         # return FileResponse(path=save_path, headers=headers)
 
-    async def create_certificate(self, file: UploadFile, skill_id, file_status: UserStatusEnum, email: str):
+    async def create_certificate(self, file: UploadFile,
+                                 skill_id: int,
+                                 file_status: UserStatusEnum,
+                                 email: str) -> FileUploadResponse | None:
         extension, file_pattern, main_file_name = await self._get_filename_and_extension(file)
         if not "." + extension in IMAGE_FORMAT:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
@@ -84,23 +95,32 @@ class FileService:
         save_path = self.file_path + file_name
         await self.write(file.file.read(), save_path)
         profile_crud_manager = ProfileRepository()
-        profile: ProfileView | None = await profile_crud_manager.get_by_query(
-            query={"user_id": email},
-            projection_model=ProfileView)
-        return await self._create_file(file_name=file_name, location=self.file_path, owner=profile.id,
-                                       file_status=file_status, file_type=FileTypeEnum.certificate,
-                                       file_size=os.path.getsize(save_path), skill_id=skill_id)
+        profile: ProfileView | None = cast(
+            ProfileView, await profile_crud_manager.get_by_query(
+                query={"user_id": email},
+                projection_model=ProfileView
+            )
+        )
+        return await self._create_file(file_name=file_name,
+                                       location=self.file_path,
+                                       owner=cast(ProfileView, profile).id,
+                                       file_status=file_status,
+                                       file_type=FileTypeEnum.certificate,
+                                       file_size=os.path.getsize(save_path),
+                                       skill_id=skill_id)
 
-    async def _get_filename_and_extension(self, file):
+    @staticmethod
+    async def _get_filename_and_extension(file: UploadFile) -> tuple[str, str, str]:
         name, extension = file.filename.split(".")
         file_pattern: str = name + "(" + "%s" + ")" + "." + extension
         main_file_name: str = name + "." + extension
         return extension, file_pattern, main_file_name
 
-    async def _create_file(self, file_name: str, location: str,
+    @staticmethod
+    async def _create_file(file_name: str, location: str,
                            owner: PydanticObjectId, file_status: UserStatusEnum,
                            file_type: FileTypeEnum,
-                           file_size, skill_id: int | None = None):
+                           file_size: int, skill_id: int | None = None) -> FileUploadResponse | None:
         try:
             file = Files(file_name=file_name,
                          location=location,
@@ -109,7 +129,7 @@ class FileService:
                          file_type=file_type,
                          file_size=file_size / 1000,
                          skill_id=skill_id,
-                         created_at=datetime.now(timezone.utc).isoformat())
+                         created_at=cast(datetime, datetime.now(timezone.utc).isoformat()))
             await file.insert()
             if file_type == FileTypeEnum.picture:
                 file_crud_manager = FileRepository()
@@ -127,7 +147,7 @@ class FileService:
             os.remove(location + file_name)
             return None
         try:
-            response = FileUploadResponse(file_id=file.id,
+            response = FileUploadResponse(file_id=cast(PydanticObjectId, file.id),
                                           file_name=file.file_name,
                                           file_type=ResponseEnumData(id=file.file_type,
                                                                      name=FileTypeEnum(file.file_type).name),
@@ -140,18 +160,21 @@ class FileService:
             response = None
         return response
 
-    async def get_file_response_by_user(self, file_id: PydanticObjectId, email: str):
+    @staticmethod
+    async def get_file_response_by_user(file_id: PydanticObjectId, email: str) -> FileResponse:
         profile_crud_manager = ProfileRepository()
-        profile: ProfileView | None = await profile_crud_manager.get_by_query(
-            query={"user_id": email},
-            projection_model=ProfileView
+        profile: ProfileView | None = cast(
+            ProfileView | None, await profile_crud_manager.get_by_query(
+                query={"user_id": email},
+                projection_model=ProfileView
+            )
         )
         if profile is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Profile is not found"
             )
-        file: Files = await Files.find(
+        file: Files | None = await Files.find(
             {
                 "_id": file_id, "owner": profile.id
             }
@@ -168,8 +191,9 @@ class FileService:
         else:
             return FileResponse(path=file.location + file.file_name)
 
-    async def get_file_response_by_admin(self, file_id: PydanticObjectId):
-        file: Files = await Files.find(
+    @staticmethod
+    async def get_file_response_by_admin(file_id: PydanticObjectId) -> FileResponse:
+        file: Files | None = await Files.find(
             {
                 "_id": file_id
             }
@@ -186,7 +210,8 @@ class FileService:
         else:
             return FileResponse(path=file.location + file.file_name)
 
-    async def delete_file_by_admin(self, file_id: PydanticObjectId):
+    @staticmethod
+    async def delete_file_by_admin(file_id: PydanticObjectId) -> None:
         file_crud_manager = FileRepository()
         file: Files = cast(Files, await file_crud_manager.get_by_query(query={
             "_id": file_id,
@@ -214,12 +239,16 @@ class FileService:
                 status_code=status.HTTP_200_OK,
                 detail="File deleted")
 
-    async def delete_file_by_user(self, file_id, email):
+    @staticmethod
+    async def delete_file_by_user(file_id: PydanticObjectId, email: str) -> None:
         file_crud_manager = FileRepository()
         profile_crud_manager = ProfileRepository()
-        profile: ProfileView | None = await profile_crud_manager.get_by_query(
-            query={"user_id": email},
-            projection_model=ProfileView)
+        profile: ProfileView | None = cast(
+            ProfileView | None, await profile_crud_manager.get_by_query(
+                query={"user_id": email},
+                projection_model=ProfileView
+            )
+        )
         if profile is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Profile not found")
 

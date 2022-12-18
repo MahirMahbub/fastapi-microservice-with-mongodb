@@ -27,7 +27,7 @@ class DesignationService:
             )
         )
 
-        if not profile_designation_experiences.profile_status in [
+        if profile_designation_experiences.profile_status not in [
             ProfileStatusEnum.full_time,
             ProfileStatusEnum.part_time
         ]:
@@ -67,12 +67,14 @@ class DesignationService:
 
             experience_request_dict["experiences.$.designation.designation"] = designation["designation"]
             experience_request_dict["experiences.$.designation.designation_id"] = designation["designation_id"]
-            db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
-                query={
-                    "experiences.experience_id": exist_experience.experience_id,
-                    "_id": profile_designation_experiences.id
-                },
-                item_dict=experience_request_dict
+            db_profile: Profiles = cast(
+                Profiles, await profile_crud_manager.update_by_query(
+                    query={
+                        "experiences.experience_id": exist_experience.experience_id,
+                        "_id": profile_designation_experiences.id
+                    },
+                    item_dict=experience_request_dict
+                )
             )
             # old_designation_data["designation_status"] = DesignationStatusEnum.inactive
             """
@@ -117,18 +119,20 @@ class DesignationService:
                 job_responsibility="",
                 status=StatusEnum.active
             )
-            db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
-                query={
-                    "_id": profile_designation_experiences.id
-                },
-                item_dict={
-                    "designation": old_designation_data
-                },
-                push_item={
-                    "experiences": new_experience.dict(
-                        exclude_unset=True,
-                    )
-                }
+            db_profile = cast(
+                Profiles, await profile_crud_manager.update_by_query(
+                    query={
+                        "_id": profile_designation_experiences.id
+                    },
+                    item_dict={
+                        "designation": old_designation_data
+                    },
+                    push_item={
+                        "experiences": new_experience.dict(
+                            exclude_unset=True,
+                        )
+                    }
+                )
             )
 
         return ProfileDesignationResponse(
@@ -146,7 +150,7 @@ class DesignationService:
     async def update_designation_by_admin(
             designation_request: DesignationCreateAdminRequest) -> ProfileDesignationResponse:
         profile_crud_manager = ProfileRepository()
-        old_profile: Profiles = await profile_crud_manager.get(id_=designation_request.profile_id)  # type: ignore
+        old_profile: Profiles = cast(Profiles, await profile_crud_manager.get(id_=designation_request.profile_id))
         profile_designation_experiences = cast(
             ProfileDesignationExperiencesView,
             await profile_crud_manager.get_by_query(
@@ -249,18 +253,20 @@ class DesignationService:
                     job_responsibility="",
                     status=StatusEnum.active
                 )
-                db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
-                    query={
-                        "_id": designation_request.profile_id
-                    },
-                    item_dict={
-                        "designation": old_designation_data
-                    },
-                    push_item={
-                        "experiences": new_experience.dict(
-                            exclude_unset=True,
-                        )
-                    }
+                db_profile = cast(
+                    Profiles, await profile_crud_manager.update_by_query(
+                        query={
+                            "_id": designation_request.profile_id
+                        },
+                        item_dict={
+                            "designation": old_designation_data
+                        },
+                        push_item={
+                            "experiences": new_experience.dict(
+                                exclude_unset=True,
+                            )
+                        }
+                    )
                 )
         else:
             exist_experience = None
@@ -295,13 +301,16 @@ class DesignationService:
                 )
             # old_designation_data["designation_status"] = DesignationStatusEnum.inactive
             old_designation_data["designation_status"] = DesignationStatusEnum.active
-            db_profile: Profiles = await profile_crud_manager.update_by_query(  # type: ignore
-                query={
-                    "_id": designation_request.profile_id
-                },
-                item_dict={
-                    "designation": old_designation_data
-                },
+            db_profile = cast(
+                Profiles,
+                await profile_crud_manager.update_by_query(
+                    query={
+                        "_id": designation_request.profile_id
+                    },
+                    item_dict={
+                        "designation": old_designation_data
+                    },
+                )
             )
         return ProfileDesignationResponse(
             designation=db_profile.designation.designation,
@@ -315,7 +324,7 @@ class DesignationService:
         )
 
     @staticmethod
-    async def get_master_designation_list(designation_name: str) -> list[DesignationDataResponse]:
+    async def get_master_designation_list(designation_name: str | None) -> list[DesignationDataResponse]:
         query = {}
         if designation_name is not None:
             query = {
@@ -335,7 +344,8 @@ class DesignationService:
     #     designation_crud_manager = DesignationRepository()
     #     designation_list = cast(list[Designations], designation_crud_manager.gets(query))
     #     return response
-    async def get_designation_details_by_admin(self, profile_id: PydanticObjectId) -> ProfileDesignationDetailsResponse:
+    @staticmethod
+    async def get_designation_details_by_admin(profile_id: PydanticObjectId) -> ProfileDesignationDetailsResponse:
         query = {
             '_id': profile_id,
         }
@@ -360,7 +370,7 @@ class DesignationService:
         )
 
     @staticmethod
-    async def get_designation_details_by_user(email: str) -> ProfileDesignationDetailsResponse:
+    async def get_designation_details_by_user(email: str | None) -> ProfileDesignationDetailsResponse:
         query: dict[str, Any] = {
             'user_id': email,
         }
