@@ -4,6 +4,7 @@ import os
 from fastapi import FastAPI
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.openapi.utils import get_openapi
+from fastapi.middleware.cors import CORSMiddleware
 
 from skill_management.config.config import initiate_database, initiate_redis_pool
 from skill_management.controllers.router import api_router
@@ -32,7 +33,16 @@ else:
         # root_path="/api/v1"
     )
 skill_app.add_middleware(GZipMiddleware)
+skill_app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 skill_app.include_router(api_router, prefix='/api/v1')
+
+
 
 @skill_app.on_event("startup")
 async def start_database() -> None:
