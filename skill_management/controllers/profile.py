@@ -3,7 +3,7 @@ from datetime import datetime, timezone, timedelta
 from typing import cast
 
 from beanie import PydanticObjectId
-from fastapi import Query, Depends, APIRouter, Path, Body
+from fastapi import Query, Depends, APIRouter, Path, Body, HTTPException
 from fastapi.responses import ORJSONResponse
 from starlette.requests import Request
 
@@ -19,7 +19,16 @@ from skill_management.utils.profile_manager import get_profile_email
 profile_router: APIRouter = APIRouter(tags=["profile"])
 logger = get_logger()
 
+@profile_router.get("/users/me", response_class=ORJSONResponse)
+async def get_profile(request: Request, user_id: str = Depends(JWTBearerInactive())):
+    """
+    Get profile details
+    """
 
+    user_auth_data = await request.app.state.redis_connection.hgetall(user_id)
+    if not user_auth_data:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user_auth_data
 @profile_router.get("/admin/profiles/",
                     response_class=ORJSONResponse,
                     response_model=PaginatedProfileResponse,
