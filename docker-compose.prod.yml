@@ -27,6 +27,7 @@ services:
       - auth-redis.env
     networks:
       - auth_network
+      - skill_management_network
     restart: always
     volumes:
       - auth_redis_data:/data
@@ -34,7 +35,6 @@ services:
       - /etc/localtime:/etc/localtime:ro
     depends_on:
       - auth_rabbitmq
-      - skill_management_network
 
   auth_management:
     build:
