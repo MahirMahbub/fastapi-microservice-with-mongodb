@@ -623,43 +623,20 @@ class SkillService:
     @staticmethod
     async def get_skill_list() -> GetSkillDataResponseList:
         db_skills = await Skills.find().to_list()
-        soft_skills = []
-        core_skills = []
-        for db_skill in db_skills:
-            if db_skill.skill_type == SkillTypeEnum.soft_skill:
-                soft_skills.append(
-                    GetSkillDataResponse(
-                        skill_id=db_skill.id,
-                        skill_type=ResponseEnumData(id=db_skill.skill_type,
-                                                    name=SkillTypeEnum(db_skill.skill_type).name),
-                        skill_category=[
-                            ResponseEnumData(
-                                id=category_data,
-                                name=SkillCategoryEnum(category_data).name
-                            ) for category_data in db_skill.skill_categories
-                        ],
-                        skill_name=db_skill.skill_name
-                    )
-                )
-            elif db_skill.skill_type == SkillTypeEnum.core_skill:
-                core_skills.append(
-                    GetSkillDataResponse(
-                        skill_id=db_skill.id,
-                        skill_type=ResponseEnumData(id=db_skill.skill_type,
-                                                    name=SkillTypeEnum(db_skill.skill_type).name),
-                        skill_category=[
-                            ResponseEnumData(
-                                id=category_data,
-                                name=SkillCategoryEnum(category_data).name
-                            ) for category_data in db_skill.skill_categories
-                        ],
-                        skill_name=db_skill.skill_name
-                    )
-                )
-        response = GetSkillDataResponseList(
-            core_skills=core_skills,
-            soft_skills=soft_skills
-        )
+        response = GetSkillDataResponseList(skills=[
+            GetSkillDataResponse(
+                skill_id=db_skill.id,
+                skill_type=ResponseEnumData(id=db_skill.skill_type,
+                                            name=SkillTypeEnum(db_skill.skill_type).name),
+                skill_category=[
+                    ResponseEnumData(
+                        id=category_data,
+                        name=SkillCategoryEnum(category_data).name
+                    ) for category_data in db_skill.skill_categories
+                ],
+                skill_name=db_skill.skill_name
+            )
+            for db_skill in db_skills])
         return response
 
     @staticmethod
