@@ -310,13 +310,14 @@ class GetSkillDataResponse(BaseModel):
 
 
 class GetSkillDataResponseList(BaseModel):
-    skills: list[GetSkillDataResponse] | None
+    core_skills: list[GetSkillDataResponse] | None
+    soft_skills: list[GetSkillDataResponse] | None
 
     class Config:
         schema_extra = {
             "example":
                 {
-                    "skills": [
+                    "soft_skills": [
                         {
                             "id": 1,
                             "skill_name": "react",
