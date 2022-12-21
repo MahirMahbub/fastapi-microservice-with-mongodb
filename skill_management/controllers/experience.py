@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime, timezone, timedelta
 from typing import cast
 
 from beanie import PydanticObjectId
@@ -6,10 +7,8 @@ from fastapi import APIRouter, Request, Depends, Body, Path
 from fastapi.responses import ORJSONResponse
 
 from skill_management.schemas.base import ErrorMessage
-from skill_management.schemas.education import ProfileEducationDetailsResponse
 from skill_management.schemas.experience import ExperienceCreateRequest, ExperienceListDataResponse, \
     ExperienceCreateAdminRequest, ProfileExperienceDetailsResponse
-from skill_management.services.education import EducationService
 from skill_management.services.experience import ExperienceService
 from skill_management.utils.auth_manager import JWTBearer, JWTBearerAdmin
 from skill_management.utils.logger import get_logger
@@ -42,8 +41,12 @@ async def create_experience_by_user(request: Request,  # type: ignore
                                                 "company_name": "X Software",
                                                 "job_responsibility": "Backend Development",
                                                 "designation": "Software Engineer",
-                                                "start_date": "2021-07-12T11:55:30.858969+00:00",
-                                                "end_date": "2022-05-08T11:55:30.858980+00:00",
+                                                "start_date": datetime.now(
+                                                    timezone.utc
+                                                ).date(),
+                                                "end_date": datetime.now(
+                                                    timezone.utc
+                                                ).date() + timedelta(days=100),
                                             },
                                         },
 
@@ -57,8 +60,12 @@ async def create_experience_by_user(request: Request,  # type: ignore
                                                         "company_name": "X Software",
                                                         "job_responsibility": "Backend Development",
                                                         "designation": "Software Engineer",
-                                                        "start_date": "2021-07-12T11:55:30.858969+00:00",
-                                                        "end_date": "2022-05-08T11:55:30.858980+00:00",
+                                                        "start_date": datetime.now(
+                                                            timezone.utc
+                                                        ).date(),
+                                                        "end_date": datetime.now(
+                                                            timezone.utc
+                                                        ).date()+timedelta(days=100),
                                                         "status": 2
                                                     },
                                             }

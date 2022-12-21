@@ -1,4 +1,4 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone, timedelta, date
 from typing import Any
 
 from beanie import PydanticObjectId
@@ -20,12 +20,12 @@ class ProfileExperienceResponse(BaseModel):
     job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
     designation: ProfileExperienceDesignationResponse | None = Field(
         description="designation for this profile experience")
-    start_date: datetime | None = Field(description="start date of experience")
-    end_date: datetime | None = Field(description="end date of experience")
+    start_date: date | None = Field(description="start date of experience")
+    end_date: date | None = Field(description="end date of experience")
     status: ResponseEnumData | None = Field(description="designation status of experience")
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -44,12 +44,12 @@ class ProfileExperience(BaseModel):
     designation: ExperienceDesignation = Field(
         description="designation for this profile experience")
     # designation_id: int | None = Field(None, description="designation id for profile experience")
-    start_date: datetime | None = Field(description="start date of experience")
-    end_date: datetime | None = Field(description="end date of experience")
+    start_date: date | None = Field(description="start date of experience")
+    end_date: date | None = Field(description="end date of experience")
     status: StatusEnum = Field(default=StatusEnum.active, description="designation status of experience")
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -62,8 +62,8 @@ class ExperienceCreateRequest(BaseModel):
     company_name: str | None = Field(max_length=30, description="name of company that user worked on")
     job_responsibility: str | None = Field(description="responsibility for job on the company")
     designation: str | None = Field(description="designation for profile experience")
-    start_date: datetime | None = Field(description="start date of experience")
-    end_date: datetime | None = Field(description='''end date of experience
+    start_date: date | None = Field(description="start date of experience")
+    end_date: date | None = Field(description='''end date of experience
     
     > start_date''')
     status: UserStatusEnum | None = Field(None,
@@ -86,7 +86,7 @@ class ExperienceCreateRequest(BaseModel):
         return values
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -100,8 +100,8 @@ class ExperienceCreateRequest(BaseModel):
                     "company_name": "X Software",
                     "job_responsibility": "Backend Development",
                     "designation_id": 2,
-                    "start_date": datetime.now(timezone.utc) - timedelta(days=500),
-                    "end_date": datetime.now(timezone.utc) - timedelta(days=200),
+                    "start_date": datetime.now(timezone.utc).date() - timedelta(days=500),
+                    "end_date": datetime.now(timezone.utc).date() - timedelta(days=200),
                     "status": 1
                 }
         }
@@ -119,8 +119,8 @@ class ExperienceCreateResponse(ProfileExperienceResponse):
                         "designation_id": 2,
                         "designation": "Software Developer"
                     },
-                    "start_date": datetime.now(timezone.utc) - timedelta(days=500),
-                    "end_date": datetime.now(timezone.utc) - timedelta(days=200),
+                    "start_date": datetime.now(timezone.utc).date() - timedelta(days=500),
+                    "end_date": datetime.now(timezone.utc).date() - timedelta(days=200),
                     "status": {
                         "id": 1,
                         "name": "active"
@@ -135,8 +135,8 @@ class ExperienceCreateAdminRequest(BaseModel):
     company_name: str | None = Field(max_length=30, description="name of company that user worked on")
     job_responsibility: str | None = Field(max_length=255, description="responsibility for job on the company")
     designation: str | None = Field(description="designation for profile experience")
-    start_date: datetime | None = Field(description="start date of experience")
-    end_date: datetime | None = Field(description='''end date of experience
+    start_date: date | None = Field(description="start date of experience")
+    end_date: date | None = Field(description='''end date of experience
 
     > start_date''')
     status: UserStatusEnum = Field(UserStatusEnum.active,
@@ -156,7 +156,7 @@ class ExperienceCreateAdminRequest(BaseModel):
         return values
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -170,8 +170,8 @@ class ExperienceCreateAdminRequest(BaseModel):
                     "company_name": "X Software",
                     "job_responsibility": "Backend Development",
                     "designation_id": 2,
-                    "start_date": datetime.now(timezone.utc) - timedelta(days=500),
-                    "end_date": datetime.now(timezone.utc) - timedelta(days=200),
+                    "start_date": datetime.now(timezone.utc).date() - timedelta(days=500),
+                    "end_date": datetime.now(timezone.utc).date() - timedelta(days=200),
                     "status": 1
                 }
         }

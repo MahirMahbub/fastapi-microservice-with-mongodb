@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone, date
 from typing import Optional, Any
 
 from beanie import PydanticObjectId
@@ -55,8 +55,8 @@ class PlanCreateRequest(PlanBase):
     plan_id: PydanticObjectId|None = Field(default=None, description="id for plan")
     skill_id: int | None = Field(gt=0, description="skill_id is related to skill collection")
     task: list[TaskCreate] | None = []
-    start_date: datetime | None = Field(None, description="start date of plan")
-    end_date: datetime | None = Field(None, description='''end date of plan
+    start_date: date | None = Field(None, description="start date of plan")
+    end_date: date | None = Field(None, description='''end date of plan
     
     > start_date''')
     # delete_tasks: list[int] | None = Field(None, description="list of task id to delete")
@@ -79,7 +79,7 @@ class PlanCreateRequest(PlanBase):
         return v
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -106,12 +106,12 @@ class PlanCreateResponse(BaseModel):
     skill_id: int | None = Field(gt=0, description="skill_id is related to skill collection")
     # profile_id: int | None = Field(gt=0, description="profile_id is related to profile collection")
     task: list[TaskResponse] | None = Field([], description="task list for plan")
-    start_date: datetime | None = Field(description="start date of plan")
-    end_date: datetime | None = Field(description="end date of plan, must be none or greater than start_date")
+    start_date: date | None = Field(description="start date of plan")
+    end_date: date | None = Field(description="end date of plan, must be none or greater than start_date")
     status: ResponseEnumData | None = Field(description="status of plan from fixed list of values")
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> Optional[datetime]:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date|None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -131,8 +131,8 @@ class PlanCreateResponse(BaseModel):
                     "notes": "It is a note for the planning",
                     "skill_id": 1,
                     "profile_id": 1,
-                    "start_date": datetime.now(timezone.utc),
-                    "end_date": datetime.now(timezone.utc) + timedelta(days=1),
+                    "start_date": datetime.now(timezone.utc).date(),
+                    "end_date": datetime.now(timezone.utc).date() + timedelta(days=1),
                     "task":
                         [
                             {

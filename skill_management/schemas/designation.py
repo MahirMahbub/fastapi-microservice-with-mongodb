@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from typing import Any
 
 from beanie import PydanticObjectId
@@ -17,12 +17,12 @@ class DesignationDataResponse(DesignationBase):
 
 
 class ProfileDesignationResponse(DesignationDataResponse):
-    start_date: datetime | None = Field(description="start date of designated job")
-    end_date: datetime | None = Field(description="end date of designated job")
+    start_date: date | None = Field(description="start date of designated job")
+    end_date: date | None = Field(description="end date of designated job")
     designation_status: ResponseEnumData | None = Field(description="designation status of designated job")
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -37,7 +37,7 @@ class DesignationDataCreate(DesignationDataResponse):
                                                       description="designation status of designated job")
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -47,8 +47,8 @@ class DesignationDataCreate(DesignationDataResponse):
 
 class DesignationCreateRequest(BaseModel):
     # designation_id: int = Field(ge=1, description="autoincrement id of designation")
-    start_date: datetime | None = Field(description="start date of designated job")
-    end_date: datetime | None = Field(description='''end date of designated job
+    start_date: date | None = Field(description="start date of designated job")
+    end_date: date | None = Field(description='''end date of designated job
     
     > start_date''')
 
@@ -58,7 +58,7 @@ class DesignationCreateRequest(BaseModel):
     # 1: active, 3: delete""")
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -69,8 +69,8 @@ class DesignationCreateRequest(BaseModel):
 class DesignationCreateAdminRequest(BaseModel):
     # designation_id: int = Field(ge=1, description="autoincrement id of designation")
     profile_id: PydanticObjectId = Field(description="id of profile")
-    start_date: datetime | None = Field(description="start date of designated job")
-    end_date: datetime | None = Field(description='''end date of designated job
+    start_date: date | None = Field(description="start date of designated job")
+    end_date: date | None = Field(description='''end date of designated job
 
     > start_date''')
 
@@ -80,7 +80,7 @@ class DesignationCreateAdminRequest(BaseModel):
     1: active, 3: delete""")
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:
@@ -91,13 +91,13 @@ class DesignationCreateAdminRequest(BaseModel):
 class ProfileDesignation(BaseModel):
     designation_id: int = Field(ge=1, description="id of designation")
     designation: str = Field(min_length=2, description="designation of the user")
-    start_date: datetime | None = Field(description="start date of designated job")
-    end_date: datetime | None = Field(description="end date of designated job")
+    start_date: date | None = Field(description="start date of designated job")
+    end_date: date | None = Field(description="end date of designated job")
     designation_status: DesignationStatusEnum = Field(default=DesignationStatusEnum.active,
                                                       description="designation status of designated job")
 
     @validator("end_date", always=True)
-    def validate_end_date(cls, value: datetime, values: dict[str, Any]) -> datetime | None:
+    def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:

@@ -162,8 +162,8 @@ class ProfileResponse(BaseModel):
                     "designation": {
                         "designation": "Software Engineer",
                         "designation_id": 1,
-                        "start_date": datetime.datetime.now(timezone.utc),
-                        "end_date": datetime.datetime.now(timezone.utc) + timedelta(days=1),
+                        "start_date": datetime.datetime.now(timezone.utc).date(),
+                        "end_date": (datetime.datetime.now(timezone.utc) + timedelta(days=1)).date(),
                         "designation_status": {
                             "id": 1,
                             "name": "active"
@@ -231,8 +231,8 @@ class ProfileResponse(BaseModel):
                                 "designation_id": 1,
                                 "designation": "Software Developer"
                             },
-                            "start_date": datetime.datetime.now(timezone.utc) - timedelta(days=1000),
-                            "end_date": datetime.datetime.now(timezone.utc) - timedelta(days=500),
+                            "start_date": (datetime.datetime.now(timezone.utc) - timedelta(days=1000)).date(),
+                            "end_date": (datetime.datetime.now(timezone.utc) - timedelta(days=500)).date(),
                             "status": {
                                 "id": 1,
                                 "name": "active"
@@ -246,8 +246,8 @@ class ProfileResponse(BaseModel):
                                 "designation_id": 1,
                                 "designation": "Software Engineer"
                             },
-                            "start_date": datetime.datetime.now(timezone.utc) - timedelta(days=500),
-                            "end_date": datetime.datetime.now(timezone.utc) - timedelta(days=200),
+                            "start_date": (datetime.datetime.now(timezone.utc) - timedelta(days=500)).date(),
+                            "end_date": (datetime.datetime.now(timezone.utc) - timedelta(days=200)).date(),
                             "status": {
                                 "id": 1,
                                 "name": "active"
