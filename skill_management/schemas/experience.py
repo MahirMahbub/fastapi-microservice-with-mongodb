@@ -74,6 +74,7 @@ class ExperienceCreateRequest(BaseModel):
     @root_validator
     def any_of(cls, values: dict[str, Any]) -> dict[str, Any]:
         experience_id = values.pop('experience_id')
+        job_responsibility = values.pop('job_responsibility')
         try:
             status = values.pop('status')
         except KeyError as key_exec:
@@ -82,6 +83,7 @@ class ExperienceCreateRequest(BaseModel):
             if None in values.values():
                 raise ValueError("You must provide all the experience information when constructing the new experience")
         values['experience_id'] = experience_id
+        values['job_responsibility'] = job_responsibility
         values['status'] = status
         return values
 
@@ -147,12 +149,14 @@ class ExperienceCreateAdminRequest(BaseModel):
     @root_validator
     def any_of(cls, values: dict[str, Any]) -> dict[str, Any]:
         experience_id = values.pop('experience_id')
+        job_responsibility = values.pop('job_responsibility')
         status = values.pop('status')
         if experience_id is None:
             if None in values.values():
                 raise ValueError("You must provide all the experience information when constructing the new experience")
         values['experience_id'] = experience_id
         values['status'] = status
+        values['job_responsibility'] = job_responsibility
         return values
 
     @validator("end_date", always=True)
