@@ -54,7 +54,7 @@ class SkillService:
                 "user_id": email
             },
             ElemMatch(
-                Profiles.skills, {"skill_id": skill_request.skill_id, "status": StatusEnum.active}
+                Profiles.skills, {"skill_id": skill_request.skill_id}
             ),
             projection_model=ProfileSkillView
         ).first_or_none()
@@ -143,8 +143,7 @@ class SkillService:
                 Profiles, await profile_crud_manager.update_by_query(
                     query={
                         "skills.skill_id": skill_request.skill_id,
-                        "_id": profile_skill.id,
-                        "status": StatusEnum.active
+                        "_id": profile_skill.id
                     },
                     item_dict=skill_request_dict
                 )
