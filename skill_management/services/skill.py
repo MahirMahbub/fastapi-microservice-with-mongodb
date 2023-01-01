@@ -54,7 +54,7 @@ class SkillService:
                 "user_id": email
             },
             ElemMatch(
-                Profiles.skills, {"skill_id": skill_request.skill_id}
+                Profiles.skills, {"skill_id": skill_request.skill_id, "status": StatusEnum.active}
             ),
             projection_model=ProfileSkillView
         ).first_or_none()
