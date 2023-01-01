@@ -143,7 +143,8 @@ class SkillService:
                 Profiles, await profile_crud_manager.update_by_query(
                     query={
                         "skills.skill_id": skill_request.skill_id,
-                        "_id": profile_skill.id
+                        "_id": profile_skill.id,
+                        "status": StatusEnum.active
                     },
                     item_dict=skill_request_dict
                 )
