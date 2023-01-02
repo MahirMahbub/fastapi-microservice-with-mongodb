@@ -27,6 +27,7 @@ class ProfileBasicResponse(ProfileBase):
     mobile: str | None = Field(description="mobile number of the user")
     designation: DesignationDataResponse | None = Field(description="designation basic details of the profile user")
     skills: list[ProfileSkillDataResponse] | None
+    profile_status: ResponseEnumData | None = Field(description="profile status of the user")
 
     class Config:
         schema_extra = {

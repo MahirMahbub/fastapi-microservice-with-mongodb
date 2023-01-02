@@ -959,7 +959,11 @@ class ProfileService:
                 ],
                 mobile=db_profile.personal_detail.mobile,
                 name=db_profile.personal_detail.name,
-                url=f"/admin/user-profiles/%s" % (str(db_profile.id))
+                url=f"/admin/user-profiles/%s" % (str(db_profile.id)),
+                profile_status=ResponseEnumData(
+                    id=db_profile.profile_status,
+                    name=ProfileStatusEnum(db_profile.profile_status).name
+                )
             ) for db_profile in db_profiles if not db_profile.profile_status == ProfileStatusEnum.delete]
         return PaginatedProfileResponse(
 
