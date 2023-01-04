@@ -106,7 +106,7 @@ class ExperienceService:
         if is_db_designation:
             db_designation = await Designations.find(
                 {
-                    "designation_id": cast(ProfileExperience, experience_object).designation.designation_id
+                    "designation": cast(ProfileExperience, experience_object).designation.designation
                 }
             ).first_or_none()
             if db_designation is None:
