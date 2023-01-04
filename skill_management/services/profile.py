@@ -481,6 +481,7 @@ class ProfileService:
                     }
                 )
             )
+
         else:
             db_profile = cast(
                 Profiles, await profile_crud_manager.update(
