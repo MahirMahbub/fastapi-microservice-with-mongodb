@@ -91,7 +91,7 @@ class ProfilePersonalDetailsResponse(BaseModel):
     about: str | None = Field(max_length=500, description="about of the user")
     picture_url: str | None = Field(max_length=255, description="image response api url of user profile picture")
     experience_year: int | None = Field(description="experience year of the user")
-    cv_urls: list[FileResponse] = Field(min_items=0, max_items=3, description="cv urls of the user")
+    cv_urls: list[FileResponse] = Field(description="cv urls of the user")
 
     @validator("date_of_birth", always=True)
     def validate_date_of_birth(cls, value: date | None) -> date | None:
