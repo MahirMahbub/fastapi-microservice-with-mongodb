@@ -75,10 +75,10 @@ async def upload_profile_picture(request: Request,  # type: ignore
 async def get_file_response_for_user(request: Request,  # type: ignore
                                      file_id: PydanticObjectId = Path(...,
                                                                       description="input file id for file response"),
-                                     user_id: str = Depends(JWTBearer()),
+                                     # user_id: str = Depends(JWTBearer()),
                                      service: FileService = Depends(FileService)):
-    email = await get_profile_email(user_id=user_id, request=request)
-    return await service.get_file_response_by_user(file_id, email)
+    # email = await get_profile_email(user_id=user_id, request=request)
+    return await service.get_file_response_by_user(file_id)
 
 
 @file_router.get('/admin/files/response/{file_id}',
