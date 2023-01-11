@@ -6,6 +6,7 @@ from beanie import PydanticObjectId
 from fastapi import UploadFile, status, HTTPException
 from fastapi.responses import FileResponse
 from pydantic import ValidationError
+from starlette.requests import Request
 
 from skill_management.enums import UserStatusEnum, FileTypeEnum, StatusEnum
 from skill_management.models.file import Files
@@ -282,19 +283,21 @@ class FileService:
                 detail="File deleted")
 
     @staticmethod
-    async def get_profile_picture(profile_id: PydanticObjectId) -> FileResponse:
-        file: Files | None = await Files.find(
-            {
-                "owner": profile_id,
-                "status": UserStatusEnum.active,
-                "file_type": FileTypeEnum.picture
-            }
-        ).first_or_none()
+    async def get_profile_picture_response(profile_id: PydanticObjectId, request: Request) -> FileResponse:
+        file_crud_manager = FileRepository()
+
+        file: Files | None = await file_crud_manager.get_by_query(query={
+            "owner": profile_id,
+            "status": UserStatusEnum.active,
+            "file_type": FileTypeEnum.picture
+        })
         if file is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Profile picture not found"
             )
         else:
-            headers = {'Content-Disposition': 'attachment; filename=%s' % file.file_name}
-            return FileResponse(path=file.location + file.file_name, headers=headers)
+        # headers = {'Content-Disposition': 'attachment; filename=%s' % file.file_name}
+            return FileResponse(path=file.location + file.file_name,
+                            # headers=headers
+                            )

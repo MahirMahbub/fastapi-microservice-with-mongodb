@@ -149,20 +149,21 @@ async def delete_file_by_user(request: Request,  # type: ignore
 
 
 @file_router.get('/profile-picture/{profile_id}',
-                    response_class=ORJSONResponse,
-                    status_code=status.HTTP_200_OK,
-                    responses={
-                        404: {
-                            "model": ErrorMessage,
-                            "description": "The profile picture can not be found"
-                        },
-                        200: {
-                            "model": SuccessMessage,
-                            "description": "The profile picture is found successfully",
-                        },
-                    })
-async def get_profile_picture(request: Request,
-                              profile_id: PydanticObjectId = Path(...,
-                                                                  description="input file id for file response"),
-                              service: FileService = Depends(FileService)):
-    return await service.get_profile_picture(cast(PydanticObjectId, profile_id))
+                 response_class=FileResponse,
+                 status_code=status.HTTP_200_OK,
+                 responses={
+                     400: {
+                         "model": ErrorMessage,
+                         "description": "The profile picture can not be found"
+                     },
+                     200: {
+                         "model": SuccessMessage,
+                         "description": "The profile picture is found successfully",
+                     },
+                 })
+async def get_profile_picture_response(request: Request, # type: ignore
+                                       profile_id: PydanticObjectId = Path(...,
+                                                              description="input file id for file response"),
+                                       service: FileService = Depends(FileService)):
+    print("profile_id: ", profile_id)
+    return await service.get_profile_picture_response(cast(PydanticObjectId, profile_id), request)
