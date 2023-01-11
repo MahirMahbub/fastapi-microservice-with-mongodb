@@ -127,7 +127,7 @@ class CreateSkillDataAdminRequest(SkillCreate):
     certificate: str | None = Field(None, max_length=1, description='''marker for having the certificate
 
     0 or 1''')
-    status: StatusEnum | None = Field(UserStatusEnum.active,
+    status: StatusEnum | None = Field(None,
                                       description="""skill data validity status 
 
     1: active, 3: delete""")

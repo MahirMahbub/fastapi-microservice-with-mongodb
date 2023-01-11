@@ -311,6 +311,7 @@ class SkillService:
         else:
             skill_request_dict = skill_request.dict(exclude_unset=True, exclude_defaults=True)
             skill_request_dict.pop("profile_id")
+            skill_request_dict.pop('skill_id')
             skill_request_dict = {"skills.$." + str(key): val for key, val in skill_request_dict.items()}
             db_profile = cast(
                 Profiles, await profile_crud_manager.update_by_query(
