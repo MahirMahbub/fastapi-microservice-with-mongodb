@@ -251,16 +251,17 @@ class ProfileService:
         """
         Create personal detail for response
         """
-        profile_pictures = await Files.find(
-            {
-                "owner": db_profile.id,
-                "file_type": FileTypeEnum.picture,
-                "status": StatusEnum.active
-            }
-        ).sort("-created_at").to_list()
-        profile_url = None
-        if profile_pictures:
-            profile_url = "/admin/files/response/" + str(profile_pictures[0].id)
+        # profile_pictures = await Files.find(
+        #     {
+        #         "owner": db_profile.id,
+        #         "file_type": FileTypeEnum.picture,
+        #         "status": StatusEnum.active
+        #     }
+        # ).sort("-created_at").to_list()
+        # profile_url = None
+        # if profile_pictures:
+        #     profile_url = "/admin/files/response/" + str(profile_pictures[0].id)
+        profile_url = "/profile-picture/" + str(db_profile.id)
         cv_files = await Files.find(
             {
                 "owner": db_profile.id,
@@ -544,17 +545,18 @@ class ProfileService:
             """
             Create personal detail for response
             """
-        profile_pictures = await Files.find(
-            {
-                "owner": db_profile.id,
-                "file_type": FileTypeEnum.picture,
-                "status": StatusEnum.active
-            }
-        ).sort("-created_at").to_list()
-        profile_url = None
-
-        if profile_pictures:
-            profile_url = "/profile/files/response/" + str(profile_pictures[0].id)
+        # profile_pictures = await Files.find(
+        #     {
+        #         "owner": db_profile.id,
+        #         "file_type": FileTypeEnum.picture,
+        #         "status": StatusEnum.active
+        #     }
+        # ).sort("-created_at").to_list()
+        profile_url = "/profile-picture/" + str(db_profile.id)
+        # profile_url = None
+        #
+        # if profile_pictures:
+        #     profile_url = "/profile/files/response/" + str(profile_pictures[0].id)
         cv_files = await Files.find(
             {
                 "owner": db_profile.id,
@@ -910,7 +912,8 @@ class ProfileService:
                     "$elemMatch": {
                         "skill_id": {
                             "$in": skill_ids
-                        }
+                        },
+                        "status": StatusEnum.active
                     }
                 }
             }
@@ -987,13 +990,13 @@ class ProfileService:
                 projection_model=ProfileProfileDetailsView
             ).first_or_none()
         )
-        profile_pictures = await Files.find(
-            {
-                "owner": db_profiles.id,
-                "file_type": FileTypeEnum.picture,
-                "status": StatusEnum.active
-            }
-        ).sort("-created_at").to_list()
+        # profile_pictures = await Files.find(
+        #     {
+        #         "owner": db_profiles.id,
+        #         "file_type": FileTypeEnum.picture,
+        #         "status": StatusEnum.active
+        #     }
+        # ).sort("-created_at").to_list()
         cv_files = await Files.find(
             {
                 "owner": db_profiles.id,
@@ -1001,9 +1004,10 @@ class ProfileService:
                 "status": StatusEnum.active
             }
         ).sort("-created_at").to_list()
-        profile_url = None
-        if profile_pictures:
-            profile_url = "/admin/files/response/" + str(profile_pictures[0].id)
+        profile_url = "/profile-picture/" + str(db_profiles.id)
+        # profile_url = None
+        # if profile_pictures:
+        #     profile_url = "/admin/files/response/" + str(profile_pictures[0].id)
 
         response = ProfileDetailsResponse(
             id=db_profiles.id,
@@ -1062,13 +1066,13 @@ class ProfileService:
                 detail="Must be an active profile"
             )
 
-        profile_pictures = await Files.find(
-            {
-                "owner": db_profiles.id,
-                "file_type": FileTypeEnum.picture,
-                "status": StatusEnum.active
-            }
-        ).sort("-created_at").to_list()
+        # profile_pictures = await Files.find(
+        #     {
+        #         "owner": db_profiles.id,
+        #         "file_type": FileTypeEnum.picture,
+        #         "status": StatusEnum.active
+        #     }
+        # ).sort("-created_at").to_list()
         cv_files = await Files.find(
             {
                 "owner": db_profiles.id,
@@ -1076,9 +1080,9 @@ class ProfileService:
                 "status": StatusEnum.active
             }
         ).sort("-created_at").to_list()
-        profile_url = None
-        if profile_pictures:
-            profile_url = "/profile/files/response/" + str(profile_pictures[0].id)
+        # profile_url = None
+        # if profile_pictures:
+        profile_url = "/profile-picture/" + str(db_profiles.id)
 
         response = ProfileDetailsResponse(
             id=db_profiles.id,

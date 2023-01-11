@@ -161,19 +161,19 @@ class FileService:
         return response
 
     @staticmethod
-    async def get_file_response_by_user(file_id: PydanticObjectId) -> FileResponse:
-        # profile_crud_manager = ProfileRepository()
-        # profile: ProfileView | None = cast(
-        #     ProfileView | None, await profile_crud_manager.get_by_query(
-        #         query={"user_id": email},
-        #         projection_model=ProfileView
-        #     )
-        # )
-        # if profile is None:
-        #     raise HTTPException(
-        #         status_code=status.HTTP_404_NOT_FOUND,
-        #         detail="Profile is not found"
-        #     )
+    async def get_file_response_by_user(file_id: PydanticObjectId, email: str) -> FileResponse:
+        profile_crud_manager = ProfileRepository()
+        profile: ProfileView | None = cast(
+            ProfileView | None, await profile_crud_manager.get_by_query(
+                query={"user_id": email},
+                projection_model=ProfileView
+            )
+        )
+        if profile is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Profile is not found"
+            )
         file: Files | None = await Files.find(
             {
                 "_id": file_id,
