@@ -1,3 +1,5 @@
+from typing import cast
+
 from beanie import PydanticObjectId
 from fastapi import APIRouter, Request, Depends, UploadFile, File, Path, Form, status
 from fastapi.responses import ORJSONResponse
@@ -116,12 +118,13 @@ async def get_file_response_for_admin(request: Request,  # type: ignore
                         },
                     })
 async def delete_file_by_admin(request: Request,  # type: ignore
-                                      file_id: PydanticObjectId = Path(...,
-                                                                       description="input file id for file response"),
-                                      admin_user_id: str = Depends(JWTBearerAdmin()),
-                                      service: FileService = Depends(FileService)):
+                               file_id: PydanticObjectId = Path(...,
+                                                                description="input file id for file response"),
+                               admin_user_id: str = Depends(JWTBearerAdmin()),
+                               service: FileService = Depends(FileService)):
     # email = await get_profile_email(user_id=user_id, request=request)
     return await service.delete_file_by_admin(file_id)
+
 
 @file_router.delete('/profile/files/{file_id}',
                     response_class=ORJSONResponse,
@@ -137,9 +140,29 @@ async def delete_file_by_admin(request: Request,  # type: ignore
                         },
                     })
 async def delete_file_by_user(request: Request,  # type: ignore
-                                      file_id: PydanticObjectId = Path(...,
-                                                                       description="input file id for file response"),
-                                      user_id: str = Depends(JWTBearer()),
-                                      service: FileService = Depends(FileService)):
+                              file_id: PydanticObjectId = Path(...,
+                                                               description="input file id for file response"),
+                              user_id: str = Depends(JWTBearer()),
+                              service: FileService = Depends(FileService)):
     email = await get_profile_email(user_id=user_id, request=request)
     return await service.delete_file_by_user(file_id, email)
+
+
+@file_router.get('/profile-picture/{profile_id}',
+                    response_class=ORJSONResponse,
+                    status_code=status.HTTP_200_OK,
+                    responses={
+                        404: {
+                            "model": ErrorMessage,
+                            "description": "The profile picture can not be found"
+                        },
+                        200: {
+                            "model": SuccessMessage,
+                            "description": "The profile picture is found successfully",
+                        },
+                    })
+async def get_profile_picture(request: Request,
+                              profile_id: PydanticObjectId = Path(...,
+                                                                  description="input file id for file response"),
+                              service: FileService = Depends(FileService)):
+    return await service.get_profile_picture(cast(PydanticObjectId, profile_id))

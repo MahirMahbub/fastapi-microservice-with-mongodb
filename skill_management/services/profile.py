@@ -959,6 +959,7 @@ class ProfileService:
                                                         or skill.status == StatusEnum.cancel
                 ],
                 mobile=db_profile.personal_detail.mobile,
+                profile_picture_url="/profile-picture/{profile_id}".format(profile_id=db_profile.id),
                 name=db_profile.personal_detail.name,
                 url=f"/admin/user-profiles/%s" % (str(db_profile.id)),
                 profile_status=ResponseEnumData(

@@ -28,6 +28,7 @@ class ProfileBasicResponse(ProfileBase):
     designation: DesignationDataResponse | None = Field(description="designation basic details of the profile user")
     skills: list[ProfileSkillDataResponse] | None
     profile_status: ResponseEnumData | None = Field(description="profile status of the user")
+    profile_picture_url: str | None = Field(description="profile picture url of the user")
 
     class Config:
         schema_extra = {

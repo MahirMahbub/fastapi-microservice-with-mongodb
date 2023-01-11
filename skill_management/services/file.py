@@ -280,3 +280,21 @@ class FileService:
             raise HTTPException(
                 status_code=status.HTTP_200_OK,
                 detail="File deleted")
+
+    @staticmethod
+    async def get_profile_picture(profile_id: PydanticObjectId) -> FileResponse:
+        file: Files | None = await Files.find(
+            {
+                "owner": profile_id,
+                "status": UserStatusEnum.active,
+                "file_type": FileTypeEnum.picture
+            }
+        ).first_or_none()
+        if file is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Profile picture not found"
+            )
+        else:
+            headers = {'Content-Disposition': 'attachment; filename=%s' % file.file_name}
+            return FileResponse(path=file.location + file.file_name, headers=headers)
