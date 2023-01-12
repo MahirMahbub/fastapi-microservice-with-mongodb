@@ -167,6 +167,8 @@ class ExperienceCreateAdminRequest(BaseModel):
 
     @validator("end_date", always=True)
     def validate_end_date(cls, value: date, values: dict[str, Any]) -> date | None:
+        if value is None:
+            return None
         if values["start_date"] is None:
             return None
         if values["start_date"] > value:

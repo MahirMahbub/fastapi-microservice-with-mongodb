@@ -65,7 +65,7 @@ async def create_experience_by_user(request: Request,  # type: ignore
                                                         ).date(),
                                                         "end_date": datetime.now(
                                                             timezone.utc
-                                                        ).date()+timedelta(days=100),
+                                                        ).date() + timedelta(days=100),
                                                         "status": 2
                                                     },
                                             }
@@ -98,41 +98,41 @@ async def create_experience_by_user(request: Request,  # type: ignore
                             },
                         },
                         )
-async def create_experience_by_admin(request: Request,  # type: ignore
-                                     experience_request: ExperienceCreateAdminRequest = Body(..., examples={
-                                         "CREATE": {
-                                             "summary": "Create Body",
-                                             "description": "a example of body for create operation",
-                                             "value": {
-                                                 "profile_id": uuid.uuid4(),
-                                                 "company_name": "X Software",
-                                                 "job_responsibility": "Backend Development",
-                                                 "designation": "Software Engineer",
-                                                 "start_date": "2021-07-12T11:55:30.858969+00:00",
-                                                 "end_date": "2022-05-08T11:55:30.858980+00:00",
-                                             },
-                                         },
+async def create_or_update_experience_by_admin(request: Request,  # type: ignore
+                                               experience_request: ExperienceCreateAdminRequest = Body(..., examples={
+                                                   "CREATE": {
+                                                       "summary": "Create Body",
+                                                       "description": "a example of body for create operation",
+                                                       "value": {
+                                                           "profile_id": uuid.uuid4(),
+                                                           "company_name": "X Software",
+                                                           "job_responsibility": "Backend Development",
+                                                           "designation": "Software Engineer",
+                                                           "start_date": "2021-07-12T11:55:30.858969+00:00",
+                                                           "end_date": "2022-05-08T11:55:30.858980+00:00",
+                                                       },
+                                                   },
 
-                                         "UPDATE":
-                                             {
-                                                 "summary": "Update Body",
-                                                 "description": "a example of body for update operation",
-                                                 "value":
-                                                     {
-                                                         "experience_id": 1,
-                                                         "profile_id": uuid.uuid4(),
-                                                         "company_name": "X Software",
-                                                         "job_responsibility": "Backend Development",
-                                                         "designation": "Software Engineer",
-                                                         "start_date": "2021-07-12T11:55:30.858969+00:00",
-                                                         "end_date": "2022-05-08T11:55:30.858980+00:00",
-                                                         "status": 2
-                                                     },
-                                             }
+                                                   "UPDATE":
+                                                       {
+                                                           "summary": "Update Body",
+                                                           "description": "a example of body for update operation",
+                                                           "value":
+                                                               {
+                                                                   "experience_id": 1,
+                                                                   "profile_id": uuid.uuid4(),
+                                                                   "company_name": "X Software",
+                                                                   "job_responsibility": "Backend Development",
+                                                                   "designation": "Software Engineer",
+                                                                   "start_date": "2021-07-12T11:55:30.858969+00:00",
+                                                                   "end_date": "2022-05-08T11:55:30.858980+00:00",
+                                                                   "status": 2
+                                                               },
+                                                       }
 
-                                     }, description="input experience data"),
-                                     admin_user_id: str = Depends(JWTBearerAdmin()),
-                                     service: ExperienceService = Depends()):
+                                               }, description="input experience data"),
+                                               admin_user_id: str = Depends(JWTBearerAdmin()),
+                                               service: ExperienceService = Depends()):
     """
     **Create:** Must provide all the data except *"experience_id"*. *"status"* is optional.
 
