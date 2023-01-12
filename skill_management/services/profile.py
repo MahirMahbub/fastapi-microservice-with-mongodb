@@ -840,7 +840,8 @@ class ProfileService:
             skills=[],
             experiences=[],
             educations=[],
-            cv_files=[]
+            cv_files=[],
+            profile_status=ProfileStatusEnum.full_time
         )
 
         """
