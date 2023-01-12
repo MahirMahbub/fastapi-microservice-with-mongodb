@@ -838,7 +838,17 @@ class ProfileService:
                 designation_status=DesignationStatusEnum.active,
             ),
             skills=[],
-            experiences=[],
+            experiences=[
+                ProfileExperience(
+                    experience_id=1,
+                    company_name="iXora Solution Ltd.",
+                    designation=ExperienceDesignation(designation=designation.designation,
+                                                      designation_id=1),
+                    start_date=None,
+                    end_date=None,
+                    job_responsibility=None
+                )
+            ],
             educations=[],
             cv_files=[],
             profile_status=ProfileStatusEnum.full_time
